@@ -90,14 +90,15 @@ test('authored Mermaid themes cannot override the light print variant', async ({
   }
 });
 
-test('Mermaid math support still excludes authored HTML, links and security overrides', async ({ page }) => {
+test('Mermaid math and HTML labels exclude active content and security overrides', async ({ page }) => {
   const requests = [];
   await page.route('https://evil.test/**', route => { requests.push(route.request().url()); return route.fulfill({ body: '' }); });
   const source = fence('sequenceDiagram\nA->>B: $$x^2$$\nB-->>A: $$\\href{https://evil.test/math}{x}$$') + '\n\n'
     + fence('%%{init: {"securityLevel":"loose", "htmlLabels":true, "flowchart":{"htmlLabels":true}}}%%\nflowchart LR\nA["<b>Safe</b><img src=\'https://evil.test/tracker\' onerror=\'window.pwned=true\'>"] --> B[Plain]\nclick B href "https://evil.test/link"');
   await start(page, source);
   await expect(page.locator('.diagram-screen math').first()).toBeVisible();
-  await expect(page.locator('.diagram a, .diagram image, .diagram img, .diagram script, .diagram [onerror], .diagram foreignObject div')).toHaveCount(0);
+  await expect(page.locator('.diagram a, .diagram image, .diagram img, .diagram script, .diagram [onerror]')).toHaveCount(0);
+  await expect(page.locator('.diagram-screen .nodeLabel').filter({hasText:'Safe'})).toBeVisible();
   expect(await page.evaluate(() => window.pwned)).toBeUndefined();
   expect(requests).toEqual([]);
 });

@@ -133,6 +133,7 @@ Directory.CreateDirectory(temp);
 try
 {
     QiitaImageTests.Run(Check, temp);
+    GithubImageTests.Run(Check, temp);
     QiitaCardTests.Run(Check, temp);
     var root = Path.Combine(temp, "docs");
     Directory.CreateDirectory(Path.Combine(root, "images"));

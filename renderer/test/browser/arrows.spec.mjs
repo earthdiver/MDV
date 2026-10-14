@@ -24,8 +24,8 @@ for(const mode of ['github','qiita']) test(`${mode}: authored root class does no
    const shape=svg.locator('.node.root .label-container').first();
    await expect(shape).toHaveCSS('fill','rgb(188, 226, 232)');
    await expect(shape).toHaveCSS('stroke','rgb(127, 184, 191)');
-   await expect(svg.locator('.node.root text')).toHaveText('AIスキル学習プラン');
-   await expect(svg.locator('.node.root text')).toHaveCSS('fill','rgb(11, 15, 16)');
+   await expect(svg.locator('.node.root .nodeLabel')).toHaveText('AIスキル学習プラン');
+   await expect(svg.locator('.node.root .nodeLabel')).toHaveCSS('color','rgb(11, 15, 16)');
    if(media==='screen') await svg.screenshot({path:`artifacts/flowchart-arrows/${mode}-${theme}-after.png`});
   }
  }

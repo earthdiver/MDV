@@ -1,10 +1,12 @@
+import { createDiagramMeasurement } from './diagram-layout.mjs';
+import { cleanSvg, diagramLabelSanitizer } from './diagram-svg.mjs';
 import {prepareGithubDiagramViewport} from './github-diagram.mjs';
 import { imageDimensionStyle } from './image-styles.mjs';
 import { mathRuntime, queueMathRender, prepareQiitaMathScope,renderMathBlock } from './math-runtime.mjs';
 import { text as uiText } from './language.mjs';
 import { prepareServicePresentation } from './service-presentation.mjs';
 import createDOMPurify from 'dompurify';
-import mermaid from 'mermaid';
+import { mermaidRuntime, mermaidVersion } from './mermaid-runtime.mjs';
 import GithubSlugger from 'github-slugger';
 import { gemoji } from 'gemoji';
 
@@ -15,7 +17,7 @@ let sequence = 0;
 export function prepareHtml(html, mode) {
   const changes = [];
   const fragment = purify.sanitize(html, { USE_PROFILES: { html: true }, RETURN_DOM_FRAGMENT: true,
-    FORBID_TAGS: ['style', 'form', 'iframe', 'object', 'embed', 'script', 'video', 'audio', 'link', 'meta', 'base'] });
+    FORBID_TAGS: ['style', 'form', 'iframe', 'object', 'embed', 'script', 'video', 'audio', 'link', 'meta', 'base', ...(mode === 'github' ? ['font'] : [])] });
   for (const item of purify.removed) changes.push({ stage: 'sanitize', kind: 'removed',
     element: item.element?.localName || item.from?.localName, attribute: item.attribute?.name });
   const root = document.createElement('div'); root.append(fragment);
@@ -35,7 +37,7 @@ export function prepareHtml(html, mode) {
     if (node.hasAttribute('style')) {
       const before = node.getAttribute('style'), allowed = document.createElement('span').style;
       if (node.localName === 'img') allowed.cssText = imageDimensionStyle(before);
-      for (const property of ['text-align', 'color', 'background-color']) {
+      for (const property of (mode === 'github' ? ['text-align'] : ['text-align', 'color', 'background-color'])) {
         const value = node.style.getPropertyValue(property);
         if (value && !/url\(|var\(|expression|\\/i.test(value)) allowed.setProperty(property, value);
       }
@@ -105,13 +107,6 @@ export function prepareHtml(html, mode) {
   return { root, sanitized, prepared: root.innerHTML, outline, changes, aliases: Object.fromEntries(aliases) };
 }
 
-function cleanSvg(svg) {
-  return purify.sanitize(svg, {
-    USE_PROFILES: { html: true, svg: true, svgFilters: true, mathMl: true }, ADD_TAGS: ['foreignObject'],
-    HTML_INTEGRATION_POINTS: { foreignobject: true },
-    FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'image', 'img', 'video', 'audio'], FORBID_ATTR: ['href', 'xlink:href'],
-  });
-}
 
 async function render(article, result, { theme = 'light', captureStages = false, prepareResources, articleClass = '' } = {}) {
   if (!['github', 'qiita'].includes(result.metadata?.mode) || typeof result.html !== 'string') throw new Error('Invalid original rendering result');
@@ -131,20 +126,17 @@ async function render(article, result, { theme = 'light', captureStages = false,
     container.className = language === 'mermaid' ? 'diagram' : 'math-display'; container.dataset.mdvSource = code; block.replaceWith(container);
     try {
       if (language === 'mermaid') {
+        const mermaid = await mermaidRuntime(result.metadata.mode);
         if (diagrams >= 40 || code.length > 50000) throw new Error('Diagram limit');
         for (const variant of ['screen', 'print']) {
-          mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', htmlLabels: true,
+          mermaid.initialize({ startOnLoad: false, dompurifyConfig: diagramLabelSanitizer, securityLevel: 'strict', htmlLabels: true,
             theme: variant === 'print' || theme !== 'dark' ? 'default' : 'dark',
             deterministicIds: true, deterministicIDSeed: 'compatibility', handDrawnSeed: 1, suppressErrorRendering: true,
             maxTextSize: 50000, maxEdges: 500,
             ...(result.metadata.mode==='github'?{flowchart:{diagramPadding:48},sequence:{diagramMarginY:40},gantt:{useWidth:1200},pie:{useWidth:1200}}:{}),
-            secure: ['secure', 'securityLevel', 'startOnLoad', 'maxTextSize', 'maxEdges', 'suppressErrorRendering',
+            secure: ['secure', 'dompurifyConfig', 'securityLevel', 'startOnLoad', 'maxTextSize', 'maxEdges', 'suppressErrorRendering',
               ...(variant === 'print' ? ['theme', 'themeVariables'] : [])] });
-          // Measurement must not inherit the editor/UI font. Use an isolated
-          // measurement container with the same base font as the diagram view.
-          const measurement = document.createElement('div');
-          measurement.style.cssText = `position:absolute;left:0;top:0;font:16px Arial,sans-serif;width:${article.clientWidth - parseFloat(getComputedStyle(article).paddingLeft) - parseFloat(getComputedStyle(article).paddingRight)}px`;
-          document.body.append(measurement);
+          const measurement = createDiagramMeasurement(article);
           let svg;
           try { ({ svg } = await mermaid.render(`original-diagram-${++sequence}`, code, measurement)); }
           finally { measurement.remove(); }
@@ -180,7 +172,7 @@ async function render(article, result, { theme = 'light', captureStages = false,
   if (captureStages) stages.rendered = article.innerHTML;
   return { diagrams, mathBlocks, math: article.querySelectorAll('mjx-container').length, diagnostics,
     outline: prepared.outline, aliases: prepared.aliases, changes: prepared.changes, stages, graphics,
-    displayProfile: { theme, mermaid: '12.1.0', mathjax: '3.2.2', styles: 'mdv-original-v1', serviceStatus: 'unverified' } };
+    displayProfile: { theme, mermaid: mermaidVersion(result.metadata.mode), mathjax: '3.2.2', styles: 'mdv-original-v1', serviceStatus: 'unverified' } };
 }
 
 // Both libraries keep global state: serialize mode/theme/document transitions.

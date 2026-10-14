@@ -248,6 +248,7 @@ test('Qiita preserves legacy font colors without accepting active attributes or 
   assert.match(html, /<font color="red">New!/);
   assert.doesNotMatch(html, /onclick|style=|face=/);
   assert.doesNotMatch(render(source, 'github').html, /<font/);
+  assert.doesNotMatch(render(source, 'github').html, /onclick|style=|face=/);
 });
 
 test('horizontal rules enclosing ordinary Markdown are not YAML metadata', () => {
@@ -267,4 +268,11 @@ test('GitHub outdented HTML ends a list and keeps its body literal',()=>{
   assert.match(render('Before\n<example>\n## Heading\n</example>').html,/<h2/);
   assert.match(render('- Before\n  <example>\n  ## Heading\n  </example>').html,/<h2/);
   assert.match(render('```html\n1. Before\n<example>\n## Heading\n```').html,/language-html/);
+});
+
+test('GitHub strips authored HTML text colors as the service does', () => {
+  const html = render('<font color="red">Red</font><span style="color:blue">Blue</span>', 'github').html;
+  assert.doesNotMatch(html, /<font|color=|style=/);
+  assert.match(html, /Red/);
+  assert.match(html, /Blue/);
 });

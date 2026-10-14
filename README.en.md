@@ -9,7 +9,7 @@ MDV is a Windows app for reading Markdown documents from GitHub repositories and
 - GitHub/Qiita syntax and two rendering engines.
 - Tabs, outline, text search, source view, and automatic reload.
 - Tables, highlighted code, math, Mermaid, dark theme, printing, and PDF export.
-- Explicit online downloads of Qiita images and link cards, saved for subsequent offline use.
+- Explicit online downloads of GitHub repository images, Qiita images and link cards, saved for subsequent offline use.
 - Japanese/English interface and portable settings beside the EXE.
 
 ## Choose an edition
@@ -19,8 +19,6 @@ MDV is a Windows app for reading Markdown documents from GitHub repositories and
 | `dual` — Dual engine edition | Switch between the custom and upstream engines. Defaults to upstream. Recommended if you are unsure |
 | `upstream` — Upstream engine edition | Uses the conversion implementations published by GitHub and Qiita. No engine switch |
 | `custom` — Custom engine edition | MDV's own conversion pipeline built from third-party libraries. No engine switch |
-
-The custom edition is published only when its EXE is smaller than both other editions built under the same conditions. Syntax interpretation, math, and highlighting vary by engine. Every edition supports GitHub and Qiita modes.
 
 ## Get started
 
@@ -32,9 +30,9 @@ The distribution targets **Windows 10/11 x64**. Runtimes are bundled, so no addi
 
 The interface automatically uses Japanese when the Windows display language is Japanese, and English otherwise. Choose **Language → Automatic (system language) / 日本語 / English** to override this. Changes apply immediately and are retained after restarting.
 
-Settings are stored beside the EXE in an `.ini` file with the same base name. For example, `MDV-v0.3.0-dual-win-x64.exe` uses `MDV-v0.3.0-dual-win-x64.ini`. Copy both files to carry your settings with you.
+Settings are stored beside the EXE in an `.ini` file with the same base name. For example, `MDV-v0.3.1-dual-win-x64.exe` uses `MDV-v0.3.1-dual-win-x64.ini`. Copy both files to carry your settings with you.
 
-**MDV is not fully compatible with GitHub or Qiita.** Using their published implementations does not guarantee identical results to the live websites. Qiita styling is implemented by MDV. MDV is not an official GitHub or Qiita app.
+**MDV is not fully compatible with GitHub or Qiita.** Development aims to reproduce the appearance and behavior of the live websites, but some differences in syntax support and rendering remain. MDV is not an official GitHub or Qiita app.
 
 ## More information
 

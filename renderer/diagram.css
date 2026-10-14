@@ -1,0 +1,21 @@
+/* Services render diagrams outside their article CSS. In particular, Qiita's
+   text-autospace changes a measured Japanese label's width after insertion. */
+.markdown-body .diagram, .mdv-diagram-measurement {
+  font:16px Arial,sans-serif;
+  text-autospace:no-autospace;
+  overflow-wrap:normal;
+  word-break:normal;
+  white-space:normal;
+  letter-spacing:normal;
+  text-indent:0;
+}
+/* Mermaid classDef names belong to the diagram, not Qiita's note callouts. */
+.markdown-body .diagram svg g.note {
+  display:inline;
+  white-space:normal;
+  padding:0;
+  margin:0;
+  border:0;
+  border-radius:0;
+  background:none;
+}

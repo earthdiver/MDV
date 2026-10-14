@@ -82,6 +82,7 @@ public partial class MainWindow : Window
         RemoteImagesMenu.IsChecked = _settings.AllowRemoteImages;
         SavedQiitaCardsMenu.IsChecked = _settings.UseSavedQiitaCards;
         SavedQiitaImagesMenu.IsChecked = _settings.UseSavedQiitaImages;
+        SavedGithubImagesMenu.IsChecked = _settings.UseSavedGithubImages;
         OriginalEngineMenu.IsChecked = _settings.Engine == "original";
         OriginalEngineMenu.Visibility = BuildEdition.CanSwitch ? Visibility.Visible : Visibility.Collapsed;
         Title = "MDV — " + BuildEdition.DisplayName;
@@ -251,6 +252,7 @@ public partial class MainWindow : Window
         CloseTabMenu.IsEnabled = available && (_workspace.Tabs.Count > 1 || _document != null);
         QiitaCardsMenu.IsEnabled = available && !_importingQiitaCards && _document != null && _settings.Mode == "qiita";
         QiitaImagesMenu.IsEnabled = available && !_importingQiitaImages && _document != null && _settings.Mode == "qiita";
+        GithubImagesMenu.IsEnabled = available && !_importingGithubImages && _document != null && _settings.Mode == "github";
     }
 
     private async void Back_Click(object sender, RoutedEventArgs e) => await NavigateHistoryAsync(-1);
@@ -343,12 +345,15 @@ public partial class MainWindow : Window
         var language = UiLanguage.Current;
         var allowRemoteImages = _settings.AllowRemoteImages;
         var useSavedQiitaCards = _settings.UseSavedQiitaCards && mode == "qiita";
+        var useSavedGithubImages = _settings.UseSavedGithubImages && mode == "github";
         var useSavedQiitaImages = _settings.UseSavedQiitaImages && mode == "qiita";
         var documentPath = _document?.FilePath;
         _savedQiitaCardManifest = null;
         _savedQiitaCardDocument = null;
         _savedQiitaManifest = null;
         _savedQiitaDocument = null;
+        _savedGithubManifest = null;
+        _savedGithubDocument = null;
         var view = _pendingView;
         var anchor = _pendingAnchor;
         _conversionCancellation?.Cancel();
@@ -371,6 +376,14 @@ public partial class MainWindow : Window
                     catch (Exception error) when (error is IOException or UnauthorizedAccessException or JsonException or ArgumentException)
                     { savedImageFailure = UiLanguage.Text("保存したQiita画像を読み込めません: ", "Unable to read saved Qiita images: ") + error.Message; }
                 }
+                QiitaImageManifest? savedGithubManifest = null;
+                if (useSavedGithubImages && documentPath != null)
+                {
+                    try { savedGithubManifest = await Task.Run(() => QiitaImageArchive.Load(documentPath, github: true), cancellation.Token); }
+                    catch (Exception error) when (error is IOException or UnauthorizedAccessException or JsonException or ArgumentException)
+                    { savedImageFailure = UiLanguage.Text("保存したGitHub画像を読み込めません: ", "Unable to read saved GitHub images: ") + error.Message; }
+                }
+                var savedGithubImages = savedGithubManifest?.Images.ToDictionary(i => i.OriginalUrl, i => "https://document.mdv.invalid/github-image/" + i.Hash);
                 QiitaCardManifest? savedCards = null;
                 string? savedCardFailure = null;
                 if (useSavedQiitaCards && documentPath != null)
@@ -396,8 +409,10 @@ public partial class MainWindow : Window
                     _savedQiitaCardDocument = documentPath;
                     _savedQiitaManifest = savedManifest;
                     _savedQiitaDocument = documentPath;
+                    _savedGithubManifest = savedGithubManifest;
+                    _savedGithubDocument = documentPath;
                     Send(new { type = "render", requestId, markdown, original, highlightFailure, savedImageFailure, engine, mode, theme, language,
-                        allowRemoteImages, savedQiitaImages, savedQiitaCards, savedCardFailure, resetScroll, view, anchor });
+                        allowRemoteImages, savedGithubImages, savedQiitaImages, savedQiitaCards, savedCardFailure, resetScroll, view, anchor });
                 }
             }
             catch (OperationCanceledException) { }
@@ -498,6 +513,11 @@ public partial class MainWindow : Window
         if (uri.Host == "document.mdv.invalid" && uri.Scheme == "https" && uri.AbsolutePath.StartsWith("/qiita-card-image/"))
         {
             await ServeSavedQiitaCardImageAsync(uri, e);
+            return;
+        }
+        if (uri.Host == "document.mdv.invalid" && uri.Scheme == "https" && uri.AbsolutePath.StartsWith("/github-image/"))
+        {
+            await ServeSavedGithubImageAsync(uri, e);
             return;
         }
         if (uri.Host == "document.mdv.invalid" && uri.Scheme == "https" && uri.AbsolutePath.StartsWith("/qiita-image/"))

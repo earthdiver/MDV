@@ -1,0 +1,55 @@
+{
+  "observedAt": "2026-10-14T11:15:53.978Z",
+  "scope": "Read-only public runtime scripts, rendered GitHub mindmap SVG, and GitHub Markdown API. Not a claim of complete visual equivalence.",
+  "github": {
+    "markdownApi": "https://api.github.com/markdown",
+    "input": "<font color=\"red\">MDV_FONT_RED</font>\n\n<span style=\"color:blue\">MDV_SPAN_BLUE</span>",
+    "output": "<p>MDV_FONT_RED</p>\n<p><span>MDV_SPAN_BLUE</span></p>",
+    "mermaid": "12.1.0",
+    "script": "https://viewscreen.githubusercontent.com/static/assets/mermaidMarkdown-b7a72e620cce2b94b88a.js",
+    "sha256": "ab001b5ce4b5305ade451dd4534797ccabefe1f7c553bfe7f6a5a49a3f05fe3d",
+    "mindmapPage": "https://github.com/mermaid-js/mermaid/blob/develop/docs/syntax/mindmap.md",
+    "mindmapSvgEvidence": [
+      {
+        "svgPrefix": "<svg id=\"diagram\" width=\"100%\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" class=\"mindmapDiagram\" style=\"max-width: 795.0490112304688px;\" viewBox=\"5 5 795.0490112304688 754.9505615234375\" role=\"graphics-document document\" aria-roledescription=\"mindmap\" height=\"754.9",
+        "labels": "mindmap\n\nOrigins\n\nLong history\n\nPopularisation\n\nBritish popular psychology author Tony Buzan\n\nResearch\n\nOn effectiveness\nand features\n\nOn Automatic creation\n\nUses\n\nCreative techniques\n\nStrategic plann"
+      },
+      {
+        "svgPrefix": "<svg id=\"diagram\" width=\"100%\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" class=\"mindmapDiagram\" style=\"max-width: 248.12612915039062px;\" viewBox=\"5 5 248.12612915039062 209.49513244628906\" role=\"graphics-document document\" aria-roledescription=\"mindmap\" height=\"20",
+        "labels": "Root\n\nA\n\nB\n\nC"
+      }
+    ],
+    "userSampleComparison": {
+      "observedAt": "2026-10-14",
+      "scope": "Read-only temporarily public user README; source and private repository URL omitted. Compared in the same Linux Chromium environment, not Windows WebView2.",
+      "source": "Both Mermaid blocks exactly match the supplied local files after removal of fences and surrounding whitespace.",
+      "result": "All 21 node texts, transforms and foreignObject widths/heights in each diagram match the live GitHub SVG in both custom and upstream display engines.",
+      "flowchartWrappedLabels": {
+        "count": 2,
+        "width": 120,
+        "height": 48
+      },
+      "limitation": "User-reported Windows layout differences are not reproduced in this environment. Browser zoom and font environment remain possible factors, not confirmed causes."
+    }
+  },
+  "qiita": {
+    "page": "https://qiita.com/hirokiwa/items/fa4632efa50e2811770b",
+    "mermaid": "11.12.1",
+    "runtime": "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.min.js",
+    "script": "https://cdn.qiita.com/assets/public/470-a4ee4583ba4391ab.min.js",
+    "sha256": "d15c7cab6972c6a8c0f2df28d1a18fd67f8efa28250d5620bdc9effa740f1a23",
+    "indentationObservation": {
+      "observedAt": "2026-10-14",
+      "scope": "User-provided unlisted article, read-only. Private URL and contents intentionally omitted.",
+      "result": "The article Markdown preserved indentation, but all three iframe data-content values collapsed runs of ASCII spaces to a single space. The two mindmap blocks displayed Syntax error in text; Mermaid 11.12.1. The flowchart rendered.",
+      "localVerification": "Original mindmap renders in bundled 11.12.1; the extracted, collapsed iframe input fails in the same runtime. Do not infer a Mermaid version mismatch or reject the original source.",
+      "labelMeasurement": {
+        "label": "Japanese short label ending in an italic character",
+        "serviceForeignObjectWidth": 63.046875,
+        "serviceTextAutospace": "no-autospace",
+        "appBeforeFixLabelWidth": 65.0469,
+        "cause": "Article text-autospace and note callout CSS leaked into diagram nodes."
+      }
+    }
+  }
+}

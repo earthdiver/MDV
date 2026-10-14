@@ -46,6 +46,8 @@ The choice is saved immediately beside the EXE and survives restarts. Select **A
 
 ## Images and links
 
+GitHub mode removes authored HTML text colors (`font color` and `style="color:…"`) as GitHub does. Qiita retains `font color`. Both engines bundle Mermaid 12.1.0 for GitHub and 11.12.1 for Qiita, matching the service scripts observed on October 14, 2026. Mindmap SVG rendering was also verified on GitHub. The public Markdown converters do not include all service sanitization or browser diagram rendering; MDV applies these adjustments at display time.
+
 Remote images are disabled by default. Enabling **View → Load remote images** connects to the image hosts. Document text is never sent to an external conversion service. Web and email links open in the default application when clicked.
 
 Normally, images use their authored sources. To use Qiita's resized/converted service images, select Qiita mode, then **View → Qiita service images → Download and save from article**, and enter the document's public article URL. Only images whose source URLs match the open document are saved, and saved-image use is enabled. This operation contacts the Qiita article page and image CDN. You can cancel it; failure or cancellation preserves the previous snapshot.
@@ -53,6 +55,10 @@ Normally, images use their authored sources. To use Qiita's resized/converted se
 Saved images work offline in both engines, including when remote images are disabled. Uncheck **Use saved service images** to restore authored images. This application-wide setting only affects documents with saved snapshots. Unsaved remote images still follow the remote-image setting. Opening, reloading and switching modes never download a new snapshot. Use the download command again to update it, or **Delete saved images for this document** to remove it.
 
 Images for `example.md` are stored beside it in `example.md.mdv-qiita-images.zip`. Move both files together. If you rename the document, rename the corresponding part of the snapshot filename too. The folder must be writable. Limits are 128 images and 256 MiB per document, with 32 MiB per image. Snapshots preserve the images at download time and do not automatically follow service changes.
+
+In GitHub mode, use **View → GitHub images → Download and save from GitHub** and enter the public document's GitHub blob URL or raw URL. Relative paths resolve from that document; leading `/` paths resolve from the repository root. Parent paths such as `../images/a.png` work within the repository. Downloads are restricted to GitHub raw images; private repositories requiring authentication are unsupported. For branch names containing `/`, use a commit SHA in the URL.
+
+GitHub snapshots are saved beside the Markdown as `example.md.mdv-github-images.zip`. **Use saved images** enables offline display in both engines without changing the Markdown. Moving, renaming, refreshing, deleting, size limits and failure preservation work as for Qiita images. The GitHub and Qiita settings are independent.
 
 Local images and linked Markdown must be in the open document's folder or its subfolders. Parent-folder references and files or folders accessed through junctions or symbolic links are unsupported.
 

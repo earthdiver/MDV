@@ -1,6 +1,6 @@
 {
   "name": "mdv-desktop-renderer",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "type": "module",
   "description": "Bundled, offline Markdown renderer for the MDV Windows desktop application",
@@ -39,6 +39,7 @@
     "mathjax": "3.2.2",
     "mdast-util-to-string": "4.0.0",
     "mermaid": "12.1.0",
+    "mermaid-qiita": "npm:mermaid@11.12.1",
     "rehype-raw": "7.0.0",
     "rehype-sanitize": "6.0.0",
     "rehype-stringify": "10.0.1",

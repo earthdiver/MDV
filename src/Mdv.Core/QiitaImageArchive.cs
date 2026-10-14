@@ -16,7 +16,7 @@ public static class QiitaImageArchive
     public const int MaxImages = 128;
     internal static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
     private static readonly Regex HashPattern = new("^[a-f0-9]{64}$", RegexOptions.CultureInvariant);
-    public static string PathFor(string documentPath) => Path.GetFullPath(documentPath) + ".mdv-qiita-images.zip";
+    public static string PathFor(string documentPath, bool github = false) => Path.GetFullPath(documentPath) + (github ? ".mdv-github-images.zip" : ".mdv-qiita-images.zip");
     public static bool IsImageType(string type) => type is "image/png" or "image/jpeg" or "image/gif" or "image/webp" or "image/avif" or "image/svg+xml";
     public static string Hash(byte[] bytes) => Convert.ToHexStringLower(SHA256.HashData(bytes));
     private static void CheckArchivePath(string path)
@@ -25,9 +25,9 @@ public static class QiitaImageArchive
             throw new InvalidDataException("Linked Qiita image archives are not supported.");
     }
 
-    public static QiitaImageManifest? Load(string documentPath)
+    public static QiitaImageManifest? Load(string documentPath, bool github = false)
     {
-        var path = PathFor(documentPath);
+        var path = PathFor(documentPath, github);
         if (!File.Exists(path)) return null;
         CheckArchivePath(path);
         if (new FileInfo(path).Length > MaxTotalBytes + 1024 * 1024) throw new InvalidDataException("Qiita image archive exceeds 256 MiB.");
@@ -41,13 +41,15 @@ public static class QiitaImageArchive
         if (manifest.Version != 1 || manifest.Images is not { Length: > 0 and <= MaxImages } || manifest.Images.Any(i => i is null) ||
             manifest.Images.Select(i => i.OriginalUrl).Distinct().Count() != manifest.Images.Length)
             throw new InvalidDataException("Invalid Qiita image manifest.");
-        QiitaImageImporter.ArticleUri(manifest.ArticleUrl);
+        if (github) GithubImageImporter.DocumentUri(manifest.ArticleUrl);
+        else QiitaImageImporter.ArticleUri(manifest.ArticleUrl);
         long total = 0;
         foreach (var image in manifest.Images)
         {
             if (image.Hash is null || !HashPattern.IsMatch(image.Hash) || !IsImageType(image.ContentType) ||
                 image.Bytes is <= 0 or > RemoteImageLoader.MaxBytes ||
-                QiitaImageImporter.OriginalUrl(image.ServiceUrl) is not { } original || original != image.OriginalUrl ||
+                (github ? GithubImageImporter.ResolveImage(manifest.ArticleUrl, image.OriginalUrl)?.AbsoluteUri != image.ServiceUrl :
+                    QiitaImageImporter.OriginalUrl(image.ServiceUrl) is not { } original || original != image.OriginalUrl) ||
                 zip.GetEntry("images/" + image.Hash)?.Length != image.Bytes)
                 throw new InvalidDataException("Invalid saved Qiita image.");
             total += image.Bytes;
@@ -56,10 +58,10 @@ public static class QiitaImageArchive
         return manifest;
     }
 
-    public static RemoteImage Read(string documentPath, QiitaSavedImage image)
+    public static RemoteImage Read(string documentPath, QiitaSavedImage image, bool github = false)
     {
         if (!HashPattern.IsMatch(image.Hash) || image.Bytes is <= 0 or > RemoteImageLoader.MaxBytes) throw new InvalidDataException("Invalid saved image.");
-        var path = PathFor(documentPath);
+        var path = PathFor(documentPath, github);
         CheckArchivePath(path);
         using var zip = ZipFile.OpenRead(path);
         var entry = zip.GetEntry("images/" + image.Hash);

@@ -20,7 +20,7 @@ const inputs = Object.keys(result.metafile.inputs);
 if (!custom && inputs.includes('renderer/markdown.mjs')) throw new Error('Custom converter leaked into upstream edition');
 if (!upstream && inputs.includes('renderer/upstream-display.mjs')) throw new Error('Upstream converter leaked into custom edition');
 await buildGithubAssets(out);
-for (const name of ['github-host.css', 'qiita.css', 'qiita-host.css']) await cp(join('renderer', name), join(out, name));
+for (const name of ['github-host.css', 'qiita.css', 'qiita-host.css', 'diagram.css']) await cp(join('renderer', name), join(out, name));
 let html = await readFile('renderer/index.html', 'utf8');
 if (!custom) html = html.replace(/.*href="katex.min.css".*\n/, '');
 await writeFile(join(out, 'index.html'), html);

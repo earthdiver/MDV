@@ -17,7 +17,7 @@ Use Windows x64, .NET 10 SDK, Node.js 22 or newer, and PowerShell 7. The dual an
 .\scripts\build.ps1 -Edition all -OriginalEngineDirectory artifacts/OriginalEngines -CompressionCodec zstd -CompressionQuality 22
 ```
 
-Outputs are `artifacts/MDV-<edition>-win-x64/MDV-v0.3.0-<edition>-win-x64.exe` and SHA-256 files. Output directories are recreated: do not keep personal settings or actively used EXEs there. Distribute dual and upstream; distribute custom only when it is strictly smaller than both. Sizes and the selection are recorded in `artifacts/edition-sizes-win-x64.json`. The script does not upload files.
+Outputs are `artifacts/MDV-<edition>-win-x64/MDV-v0.3.1-<edition>-win-x64.exe` and SHA-256 files. Output directories are recreated: do not keep personal settings or actively used EXEs there. Distribute dual and upstream; distribute custom only when it is strictly smaller than both. Sizes and the selection are recorded in `artifacts/edition-sizes-win-x64.json`. The script does not upload files.
 
 Development builds default to Zstandard level 3. Explicitly select `-CompressionQuality 22` for releases. Every compressed payload file is verified against its original SHA-256. .NET single-file publishing is also used.
 

@@ -37,6 +37,11 @@
      <MenuItem x:Name="SavedQiitaImagesMenu" Header="{DynamicResource TextUseSavedQiitaImages}" IsCheckable="True" Click="SavedQiitaImages_Click" />
      <MenuItem Header="{DynamicResource TextDeleteQiitaImages}" Click="DeleteQiitaImages_Click" />
     </MenuItem>
+    <MenuItem x:Name="GithubImagesMenu" Header="{DynamicResource TextGithubImagesMenu}">
+     <MenuItem Header="{DynamicResource TextImportGithubImages}" Click="ImportGithubImages_Click" />
+     <MenuItem x:Name="SavedGithubImagesMenu" Header="{DynamicResource TextUseSavedGithubImages}" IsCheckable="True" Click="SavedGithubImages_Click" />
+     <MenuItem Header="{DynamicResource TextDeleteGithubImages}" Click="DeleteGithubImages_Click" />
+    </MenuItem>
     <MenuItem x:Name="QiitaCardsMenu" Header="{DynamicResource TextQiitaCardsMenu}">
      <MenuItem Header="{DynamicResource TextImportQiitaCards}" Click="ImportQiitaCards_Click" />
      <MenuItem x:Name="SavedQiitaCardsMenu" Header="{DynamicResource TextUseSavedQiitaCards}" IsCheckable="True" Click="SavedQiitaCards_Click" />

@@ -1,3 +1,6 @@
+import { createDiagramMeasurement } from './diagram-layout.mjs';
+import { mermaidRuntime } from './mermaid-runtime.mjs';
+import { cleanSvg, diagramLabelSanitizer } from './diagram-svg.mjs';
 import {prepareGithubDiagramViewport} from './github-diagram.mjs';
 import { text as uiText, setLanguage } from './language.mjs';
 import '@github/clipboard-copy-element';
@@ -19,7 +22,6 @@ let currentOutline = [];
 let originalAliases = {};
 let searchRanges = [];
 let searchIndex = -1;
-let mermaidModule;
 let currentRequestId = 0;
 let restoration;
 const post = message => window.chrome?.webview?.postMessage(message);
@@ -139,7 +141,7 @@ function resolveImageSource(src, allowRemoteImages, savedImages = {}) {
   src = src.replace(/^[\u0000-\u0020]+|[\u0000-\u0020]+$/g, '');
   let canonical = src;
   try { canonical = new URL(src).href; } catch { /* Relative images keep their normal path. */ }
-  if (Object.hasOwn(savedImages, canonical) && /^https:\/\/document\.mdv\.invalid\/qiita-image\/[a-f0-9]{64}$/.test(savedImages[canonical]))
+  if (Object.hasOwn(savedImages, canonical) && /^https:\/\/document\.mdv\.invalid\/(?:qiita|github)-image\/[a-f0-9]{64}$/.test(savedImages[canonical]))
     return savedImages[canonical];
   const proxy = route => {
     const hash = src.indexOf('#');
@@ -194,7 +196,7 @@ function prepareImages(root, allowRemoteImages, savedImages) {
     img.referrerPolicy = 'no-referrer';
     img.loading = 'lazy';
     const resolved = resolveImageSource(src, allowRemoteImages, savedImages);
-    if (resolved.startsWith('https://document.mdv.invalid/qiita-image/'))
+    if (/^https:\/\/document\.mdv\.invalid\/(?:qiita|github)-image\//.test(resolved))
       img.closest('picture')?.querySelectorAll('source').forEach(n => n.remove());
     if (resolved) img.src = resolved;
     else {
@@ -249,16 +251,16 @@ function sanitizeDiagram(svg) {
 async function diagrams(localGeneration, theme, diagnostics) {
   const sources = [...article.querySelectorAll('pre.mermaid-source')];
   if (!sources.length) return;
-  mermaidModule ||= import('mermaid');
-  const { default: mermaid } = await mermaidModule;
+  const mermaid = await mermaidRuntime(article.classList.contains('qiita') ? 'qiita' : 'github');
   // Markdown cannot override these options using frontmatter or init directives.
-  const initialize = (diagramTheme, printing) => mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', htmlLabels: false, theme: diagramTheme,
+  const initialize = (diagramTheme, printing, htmlLabels) => mermaid.initialize({ startOnLoad: false, dompurifyConfig: diagramLabelSanitizer, securityLevel: 'strict', htmlLabels, theme: diagramTheme,
+    deterministicIds: true, deterministicIDSeed: 'compatibility', handDrawnSeed: 1,
     // Journey's SVG fallback otherwise inherits the section rectangle's fill.
     themeCSS: 'text.journey-section { fill: currentColor; }',
     maxTextSize: 50_000, maxEdges: 500, suppressErrorRendering: true,
-    secure: ['secure', 'securityLevel', 'startOnLoad', 'maxTextSize', 'maxEdges', 'suppressErrorRendering', 'htmlLabels', 'themeCSS',
+    secure: ['secure', 'dompurifyConfig', 'securityLevel', 'startOnLoad', 'maxTextSize', 'maxEdges', 'suppressErrorRendering', 'htmlLabels', 'themeCSS',
       ...(printing ? ['theme', 'themeVariables'] : [])],
-    flowchart: { htmlLabels: false, ...(article.classList.contains('github')?{diagramPadding:48}:{}) },
+    flowchart: { htmlLabels, ...(article.classList.contains('github')?{diagramPadding:48}:{}) },
     ...(article.classList.contains('github')?{sequence:{diagramMarginY:40},gantt:{useWidth:1200},pie:{useWidth:1200}}:{}), });
   // Printing cannot wait for an async Mermaid render. Prepare its light SVG before
   // reporting the document ready, and let the print stylesheet select it.
@@ -273,12 +275,18 @@ async function diagrams(localGeneration, theme, diagnostics) {
       container.className = 'diagram';
       container.dataset.mdvSource = code;
       for (const [variantIndex, diagramTheme] of themes.entries()) {
-        initialize(diagramTheme, variantIndex === 1);
-        const { svg } = await mermaid.render(`mdv-diagram-${localGeneration}-${i}-${variantIndex}`, code);
+        initialize(diagramTheme, variantIndex === 1, false);
+        const { diagramType } = await mermaid.parse(code);
+        const htmlLabels = diagramType === 'mindmap' || diagramType.startsWith('flowchart');
+        initialize(diagramTheme, variantIndex === 1, htmlLabels);
+        const measurement = htmlLabels ? createDiagramMeasurement(article) : undefined;
+        let svg;
+        try { ({ svg } = await mermaid.render(`mdv-diagram-${localGeneration}-${i}-${variantIndex}`, code, measurement)); }
+        finally { measurement?.remove(); }
         if (localGeneration !== generation) return;
         const variant = document.createElement('div');
         variant.className = variantIndex === 0 ? 'diagram-screen' : 'diagram-print';
-        variant.innerHTML = sanitizeDiagram(svg);
+        variant.innerHTML = htmlLabels ? cleanSvg(svg) : sanitizeDiagram(svg);
         if(article.classList.contains('github'))prepareGithubDiagramViewport(variant);
         container.append(variant);
       }
@@ -376,7 +384,7 @@ async function render(options) {
     const { renderOriginalDocument } = await import('./upstream-display.mjs');
     result = await renderOriginalDocument(article, options.original, { theme, articleClass: qiita ? 'markdown-body it-MdContent' : 'markdown-body',
       prepareResources: root => {
-        prepareImages(root, options.allowRemoteImages, qiita ? options.savedQiitaImages : undefined);
+        prepareImages(root, options.allowRemoteImages, qiita ? options.savedQiitaImages : options.savedGithubImages);
         if (options.mode === 'github') for (const pre of root.querySelectorAll('pre[lang]')) {
           const lang = pre.getAttribute('lang').toLowerCase();
           if (!hljs.getLanguage(lang) || pre.textContent.length > 100000) continue;
@@ -393,7 +401,7 @@ async function render(options) {
     result = renderMarkdown(options.markdown ?? '', { mode: options.mode, language, deferMath: qiita, deferGithubEmoji: !qiita });
     const template = document.createElement('template');
     template.innerHTML = result.html;
-    prepareImages(template.content, options.allowRemoteImages, qiita ? options.savedQiitaImages : undefined);
+    prepareImages(template.content, options.allowRemoteImages, qiita ? options.savedQiitaImages : options.savedGithubImages);
     article.replaceChildren(template.content);
     if (qiita) {
       applyQiitaHighlighting(options.original);
@@ -511,7 +519,7 @@ async function enqueue(message) {
 }
 window.mdv = { edition, render, find, scrollToAnchor, captureView,
   getCardSources: () => [...new Set([...article.querySelectorAll('.link-card a[href]')].map(n=>n.href).filter(s=>/^https?:\/\//i.test(s)))],
-  getImageSources: () => [...new Set([...article.querySelectorAll('img')].map(n => n.dataset.originalSrc || '').filter(s => /^https?:\/\//i.test(s)))],
+  getImageSources: () => [...new Set([...article.querySelectorAll('img')].map(n => n.dataset.originalSrc || '').filter(s => s && !/^(?:data:|#)/i.test(s)))],
   get requestId() { return currentRequestId; }, get outline() { return currentOutline; } };
 document.addEventListener('keydown', event => {
   let key;

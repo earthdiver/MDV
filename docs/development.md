@@ -17,7 +17,7 @@ Windows x64、.NET 10 SDK、Node.js 22以降、PowerShell 7を使用します。
 .\scripts\build.ps1 -Edition all -OriginalEngineDirectory artifacts/OriginalEngines -CompressionCodec zstd -CompressionQuality 22
 ```
 
-出力は `artifacts/MDV-<版>-win-x64/MDV-v0.3.0-<版>-win-x64.exe` とSHA-256ファイルです。各出力フォルダは再作成するため、使用中のEXEや個人設定を置かないでください。dual・upstreamを配布し、customは他の2版より厳密に小さい場合に配布します。サイズと判定は `artifacts/edition-sizes-win-x64.json` に記録されます。スクリプトはアップロードを行いません。
+出力は `artifacts/MDV-<版>-win-x64/MDV-v0.3.1-<版>-win-x64.exe` とSHA-256ファイルです。各出力フォルダは再作成するため、使用中のEXEや個人設定を置かないでください。dual・upstreamを配布し、customは他の2版より厳密に小さい場合に配布します。サイズと判定は `artifacts/edition-sizes-win-x64.json` に記録されます。スクリプトはアップロードを行いません。
 
 開発時の既定値はZstandardレベル3です。リリース時は必ず `-CompressionQuality 22` を指定します。圧縮後に全資材のSHA-256を元ファイルと照合します。.NETの単一EXE化も使用します。
 

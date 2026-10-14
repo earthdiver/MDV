@@ -7,7 +7,7 @@
     <RootNamespace>Mdv.App</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <RendererDirectory Condition="'$(RendererDirectory)' == ''">Renderer</RendererDirectory>
-    <Version>0.3.0</Version>
+    <Version>0.3.1</Version>
     <Description>GitHub / Qiita Markdown Viewer for Windows</Description>
     <PublishTrimmed>false</PublishTrimmed>
   </PropertyGroup>

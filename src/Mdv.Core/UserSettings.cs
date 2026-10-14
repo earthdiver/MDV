@@ -14,6 +14,7 @@ public sealed class UserSettings
     public bool ShowOutline { get; set; } = true;
     public bool AllowRemoteImages { get; set; }
     public bool UseSavedQiitaImages { get; set; }
+    public bool UseSavedGithubImages { get; set; }
     public bool UseSavedQiitaCards { get; set; }
     public List<string> RecentFiles { get; set; } = [];
 
@@ -66,6 +67,7 @@ public sealed class UserSettings
         settings.ShowOutline = ReadBool("ShowOutline", settings.ShowOutline);
         settings.AllowRemoteImages = ReadBool("AllowRemoteImages", settings.AllowRemoteImages);
         settings.UseSavedQiitaCards = ReadBool("UseSavedQiitaCards", settings.UseSavedQiitaCards);
+        settings.UseSavedGithubImages = ReadBool("UseSavedGithubImages", settings.UseSavedGithubImages);
         settings.UseSavedQiitaImages = ReadBool("UseSavedQiitaImages", settings.UseSavedQiitaImages);
         for (var i = 1; i <= 12; i++)
             if (values.TryGetValue($"RecentFiles.File{i}", out var file) && !string.IsNullOrWhiteSpace(file)) settings.RecentFiles.Add(file);
@@ -92,6 +94,7 @@ public sealed class UserSettings
             "ShowOutline=" + ShowOutline.ToString().ToLowerInvariant(),
             "AllowRemoteImages=" + AllowRemoteImages.ToString().ToLowerInvariant(),
             "UseSavedQiitaCards=" + UseSavedQiitaCards.ToString().ToLowerInvariant(),
+            "UseSavedGithubImages=" + UseSavedGithubImages.ToString().ToLowerInvariant(),
             "UseSavedQiitaImages=" + UseSavedQiitaImages.ToString().ToLowerInvariant(), "", "[RecentFiles]",
         };
         for (var i = 0; i < RecentFiles.Count; i++)

@@ -43,7 +43,7 @@ test('both modes display the sample, math, diagrams, notes and filenames offline
   await expect(page.locator('.markdown-alert-note')).toBeVisible();
   await expect(page.locator('.katex')).toHaveCount(2);
   await expect(page.locator('.diagram svg:visible')).toHaveCount(1);
-  await expect(page.locator('.diagram svg text').first()).toBeVisible();
+  await expect(page.locator('.diagram svg:visible .nodeLabel').first()).toBeVisible();
   await expect(page.locator('img')).toHaveJSProperty('naturalWidth', 880);
   const qiita = await page.evaluate(markdown => window.mdv.render({ markdown, mode: 'qiita', theme: 'dark' }), source);
   expect(qiita.diagnostics).toEqual([]);
@@ -172,7 +172,6 @@ test('Mermaid mindmap labels are centered inside their nodes', async ({ page }) 
       expect(node.left, node.text).toBeGreaterThanOrEqual(-1);
       expect(node.right, node.text).toBeGreaterThanOrEqual(-1);
     }
-    await expect(page.locator('.diagram foreignObject')).toHaveCount(0);
   }
 });
 
