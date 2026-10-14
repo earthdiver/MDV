@@ -1,0 +1,237 @@
+{
+  "schemaVersion": 1,
+  "scope": "Captured public-page contracts; not complete service equivalence",
+  "observations": [
+    {
+      "mode": "qiita",
+      "url": "https://qiita.com/Qiita/items/c686397e4a0f4f11683d",
+      "capturedAt": "2026-10-11T11:24:21.024Z",
+      "markdownHash": "f6a69e98e19df74973ed211be74322c2ae985ffe3ea558a5a3b32b15111588ab",
+      "htmlHash": "eee6156bd7dc1a56a8f9505a231dd72f651a2e0bd0e157b50080bff1b694febb",
+      "typography": {
+        "fontSize": "17px",
+        "lineHeight": "28.9px",
+        "fontFamily": "YakuHanJPs, -apple-system, BlinkMacSystemFont, \"Segoe UI\", \"Hiragino Kaku Gothic ProN\", \"Hiragino Sans\", \"Noto Sans JP\", \"BIZ UDPGothic\", Meiryo, sans-serif"
+      },
+      "blockedHosts": [
+        "fonts.googleapis.com",
+        "www.googletagservices.com",
+        "fam.adingo.jp",
+        "cdnjs.cloudflare.com",
+        "relay-dsp.ad-m.asia",
+        "d-cache.microad.jp",
+        "qiita-organization-images.imgix.net",
+        "www.googletagmanager.com",
+        "connect.facebook.net",
+        "qiita-user-profile-images.imgix.net",
+        "qiita-user-contents.imgix.net",
+        "img.ak.impact-ad.jp",
+        "cdn.webpush.jp",
+        "b.st-hatena.com",
+        "l.logly.co.jp"
+      ],
+      "scope": "public article/repository HTML contracts; third-party assets blocked; not complete visual equivalence"
+    },
+    {
+      "mode": "github",
+      "url": "https://github.com/github/markup/blob/84e47f9a64c993f8f3f91be639231f02aa4df730/README.md",
+      "capturedAt": "2026-10-11T11:24:23.213Z",
+      "markdownHash": "72cc179fe566e62aa18114513eb38e7b6188a7c76806289cdec97138f75b5b11",
+      "htmlHash": "8a1780cddba2c1a55eb52a86b820d60a4f073b4821e5c20c264fa3a01d4ab26b",
+      "typography": {
+        "fontSize": "16px",
+        "lineHeight": "24px",
+        "fontFamily": "\"Mona Sans VF\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", \"Noto Sans Backtick Fix\", \"Noto Sans\", Helvetica, Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\""
+      },
+      "blockedHosts": [
+        "collector.github.com",
+        "api.github.com",
+        "avatars.githubusercontent.com"
+      ],
+      "scope": "public article/repository HTML contracts; third-party assets blocked; not complete visual equivalence"
+    }
+  ],
+  "results": [
+    {
+      "id": "qiita-headings-original",
+      "mode": "qiita",
+      "stage": "original",
+      "status": "match",
+      "referenceKind": "captured-service-contract",
+      "serviceStatus": "partial",
+      "source": "https://qiita.com/Qiita/items/c686397e4a0f4f11683d",
+      "capturedAt": "2026-10-11T11:24:21.024Z"
+    },
+    {
+      "id": "qiita-headings-display",
+      "mode": "qiita",
+      "stage": "display",
+      "status": "match",
+      "referenceKind": "captured-service-contract",
+      "serviceStatus": "partial",
+      "source": "https://qiita.com/Qiita/items/c686397e4a0f4f11683d",
+      "capturedAt": "2026-10-11T11:24:21.024Z"
+    },
+    {
+      "id": "qiita-anchors-original",
+      "mode": "qiita",
+      "stage": "original",
+      "status": "match",
+      "referenceKind": "captured-service-contract",
+      "serviceStatus": "partial",
+      "source": "https://qiita.com/Qiita/items/c686397e4a0f4f11683d",
+      "capturedAt": "2026-10-11T11:24:21.024Z"
+    },
+    {
+      "id": "qiita-anchors-display",
+      "mode": "qiita",
+      "stage": "display",
+      "status": "match",
+      "referenceKind": "captured-service-contract",
+      "serviceStatus": "partial",
+      "source": "https://qiita.com/Qiita/items/c686397e4a0f4f11683d",
+      "capturedAt": "2026-10-11T11:24:21.024Z"
+    },
+    {
+      "id": "qiita-footnotes-original",
+      "mode": "qiita",
+      "stage": "original",
+      "status": "match",
+      "referenceKind": "captured-service-contract",
+      "serviceStatus": "partial",
+      "source": "https://qiita.com/Qiita/items/c686397e4a0f4f11683d",
+      "capturedAt": "2026-10-11T11:24:21.024Z"
+    },
+    {
+      "id": "qiita-footnotes-display",
+      "mode": "qiita",
+      "stage": "display",
+      "status": "match",
+      "referenceKind": "captured-service-contract",
+      "serviceStatus": "partial",
+      "source": "https://qiita.com/Qiita/items/c686397e4a0f4f11683d",
+      "capturedAt": "2026-10-11T11:24:21.024Z"
+    },
+    {
+      "id": "qiita-notes-original",
+      "mode": "qiita",
+      "stage": "original",
+      "status": "match",
+      "referenceKind": "captured-service-contract",
+      "serviceStatus": "partial",
+      "source": "https://qiita.com/Qiita/items/c686397e4a0f4f11683d",
+      "capturedAt": "2026-10-11T11:24:21.024Z"
+    },
+    {
+      "id": "qiita-notes-display",
+      "mode": "qiita",
+      "stage": "display",
+      "status": "match",
+      "referenceKind": "captured-service-contract",
+      "serviceStatus": "partial",
+      "source": "https://qiita.com/Qiita/items/c686397e4a0f4f11683d",
+      "capturedAt": "2026-10-11T11:24:21.024Z"
+    },
+    {
+      "id": "qiita-tableAlignment-original",
+      "mode": "qiita",
+      "stage": "original",
+      "status": "match",
+      "referenceKind": "captured-service-contract",
+      "serviceStatus": "partial",
+      "source": "https://qiita.com/Qiita/items/c686397e4a0f4f11683d",
+      "capturedAt": "2026-10-11T11:24:21.024Z"
+    },
+    {
+      "id": "qiita-tableAlignment-display",
+      "mode": "qiita",
+      "stage": "display",
+      "status": "match",
+      "referenceKind": "captured-service-contract",
+      "serviceStatus": "partial",
+      "source": "https://qiita.com/Qiita/items/c686397e4a0f4f11683d",
+      "capturedAt": "2026-10-11T11:24:21.024Z"
+    },
+    {
+      "id": "qiita-codeFilenames-original",
+      "mode": "qiita",
+      "stage": "original",
+      "status": "match",
+      "referenceKind": "captured-service-contract",
+      "serviceStatus": "partial",
+      "source": "https://qiita.com/Qiita/items/c686397e4a0f4f11683d",
+      "capturedAt": "2026-10-11T11:24:21.024Z"
+    },
+    {
+      "id": "qiita-codeFilenames-display",
+      "mode": "qiita",
+      "stage": "display",
+      "status": "match",
+      "referenceKind": "captured-service-contract",
+      "serviceStatus": "partial",
+      "source": "https://qiita.com/Qiita/items/c686397e4a0f4f11683d",
+      "capturedAt": "2026-10-11T11:24:21.024Z"
+    },
+    {
+      "id": "qiita-footnote-targets",
+      "mode": "qiita",
+      "status": "match",
+      "referenceKind": "captured-service-contract",
+      "serviceStatus": "partial"
+    },
+    {
+      "id": "qiita-typography",
+      "mode": "qiita",
+      "status": "match",
+      "referenceKind": "captured-service-style",
+      "serviceStatus": "partial"
+    },
+    {
+      "id": "github-headings-original",
+      "mode": "github",
+      "stage": "original",
+      "status": "match",
+      "referenceKind": "captured-service-contract",
+      "serviceStatus": "partial",
+      "source": "https://github.com/github/markup/blob/84e47f9a64c993f8f3f91be639231f02aa4df730/README.md",
+      "capturedAt": "2026-10-11T11:24:23.213Z"
+    },
+    {
+      "id": "github-headings-display",
+      "mode": "github",
+      "stage": "display",
+      "status": "match",
+      "referenceKind": "captured-service-contract",
+      "serviceStatus": "partial",
+      "source": "https://github.com/github/markup/blob/84e47f9a64c993f8f3f91be639231f02aa4df730/README.md",
+      "capturedAt": "2026-10-11T11:24:23.213Z"
+    },
+    {
+      "id": "github-anchors-original",
+      "mode": "github",
+      "stage": "original",
+      "status": "different",
+      "referenceKind": "captured-service-contract",
+      "serviceStatus": "partial",
+      "source": "https://github.com/github/markup/blob/84e47f9a64c993f8f3f91be639231f02aa4df730/README.md",
+      "capturedAt": "2026-10-11T11:24:23.213Z"
+    },
+    {
+      "id": "github-anchors-display",
+      "mode": "github",
+      "stage": "display",
+      "status": "match",
+      "referenceKind": "captured-service-contract",
+      "serviceStatus": "partial",
+      "source": "https://github.com/github/markup/blob/84e47f9a64c993f8f3f91be639231f02aa4df730/README.md",
+      "capturedAt": "2026-10-11T11:24:23.213Z"
+    },
+    {
+      "id": "github-typography",
+      "mode": "github",
+      "status": "match",
+      "referenceKind": "captured-service-style",
+      "serviceStatus": "partial"
+    }
+  ]
+}

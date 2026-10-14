@@ -1,0 +1,210 @@
+:root { color-scheme: light; --bg:#fff; --fg:#1f2328; --muted:#656d76; --border:#d1d9e0; --subtle:#f6f8fa; --link:#0969da; --accent:#0969da; }
+@media screen { :root[data-theme=dark] { color-scheme:dark; --bg:#0d1117; --fg:#e6edf3; --muted:#9198a1; --border:#3d444d; --subtle:#151b23; --link:#58a6ff; --accent:#58a6ff; } }
+* { box-sizing:border-box; }
+html { background:var(--bg); color:var(--fg); scroll-padding-top:28px; }
+body { margin:0; }
+.markdown-body { max-width:980px; padding:40px 56px 100px; margin:auto; font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,"Yu Gothic UI",Meiryo,sans-serif; overflow-wrap:break-word; }
+.markdown-body.qiita { --accent:#55a500; line-height:1.85; }
+h1,h2,h3,h4,h5,h6 { margin:24px 0 16px; font-weight:600; line-height:1.25; }
+h1 { font-size:2em; padding-bottom:.3em; border-bottom:1px solid var(--border); }
+h2 { font-size:1.5em; padding-bottom:.3em; border-bottom:1px solid var(--border); }
+h3 { font-size:1.25em; } h4 { font-size:1em; } h5 { font-size:.875em; } h6 { font-size:.85em; color:var(--muted); }
+.markdown-body > :first-child { margin-top:0; }
+p,blockquote,ul,ol,dl,table,pre,details,figure { margin:0 0 16px; }
+li > p { margin-top:16px; } li + li { margin-top:.25em; } li > ul,li > ol { margin-bottom:0; }
+a { color:var(--link); text-decoration:none; } a:hover { text-decoration:underline; }
+strong { font-weight:600; } hr { height:4px; border:0; background:var(--border); margin:24px 0; }
+blockquote { color:var(--muted); border-left:.25em solid var(--border); padding:0 1em; }
+blockquote > :last-child { margin-bottom:0; } ul,ol { padding-left:2em; }
+table { border-spacing:0; border-collapse:collapse; display:block; width:max-content; max-width:100%; overflow:auto; }
+th,td { padding:6px 13px; border:1px solid var(--border); } th { font-weight:600; }
+tr:nth-child(2n) { background:var(--subtle); } th[align=left],td[align=left] { text-align:left; } th[align=right],td[align=right] { text-align:right; } th[align=center],td[align=center] { text-align:center; }
+code,pre,kbd,samp { font-family:Consolas,"Cascadia Code","SFMono-Regular",monospace; }
+code { font-size:85%; padding:.2em .4em; margin:0; background:var(--subtle); border-radius:6px; }
+pre { position:relative; background:var(--subtle); border-radius:6px; padding:16px; line-height:1.5; overflow:auto; tab-size:4; }
+pre code { padding:0; background:transparent; white-space:pre; overflow-wrap:normal; font-size:13px; }
+kbd { display:inline-block; padding:3px 5px; font-size:11px; background:var(--subtle); border:1px solid var(--border); border-radius:4px; box-shadow:inset 0 -1px 0 var(--border); }
+img { max-width:100%; height:auto; vertical-align:middle; } .blocked-image { color:var(--muted); font-size:13px; }
+details { padding:10px 14px; border:1px solid var(--border); border-radius:6px; } summary { cursor:pointer; } details[open] > summary { margin-bottom:16px; }
+.contains-task-list { list-style:none; } .task-list-item input { margin:0 .5em 0 -1.25em; vertical-align:middle; accent-color:var(--accent); }
+.markdown-alert { padding:12px 16px; margin:16px 0; border-left:4px solid var(--tone); background:color-mix(in srgb,var(--tone) 5%,var(--bg)); }
+.markdown-alert > p:first-child { color:var(--tone); } .markdown-alert > :last-child { margin-bottom:0; }
+.markdown-alert-note { --tone:#0969da; } .markdown-alert-tip { --tone:#1a7f37; } .markdown-alert-important { --tone:#8250df; } .markdown-alert-warning { --tone:#9a6700; } .markdown-alert-caution { --tone:#cf222e; }
+@media screen { [data-theme=dark] .markdown-alert-note { --tone:#58a6ff; } [data-theme=dark] .markdown-alert-tip { --tone:#3fb950; } [data-theme=dark] .markdown-alert-warning { --tone:#d29922; } [data-theme=dark] .markdown-alert-important { --tone:#a371f7; } [data-theme=dark] .markdown-alert-caution { --tone:#f85149; } }
+.qiita-note { margin:16px 0; border-radius:4px; padding:16px 20px; border-left:4px solid var(--tone); background:color-mix(in srgb,var(--tone) 9%,var(--bg)); }
+.qiita-note-info { --tone:#55a500; } .qiita-note-warn { --tone:#d59a00; } .qiita-note-alert { --tone:#df3742; } .qiita-note > :last-child { margin-bottom:0; }
+figure.code-frame { margin-left:0; margin-right:0; } figcaption { background:var(--border); color:var(--fg); display:table; padding:3px 12px; font:12px/1.7 Consolas,monospace; border-radius:4px 4px 0 0; }
+figure pre { border-top-left-radius:0; }
+.diff-line { display:inline-block; min-width:100%; } .diff-add { background:#2da44e26; } .diff-remove { background:#ff818226; }
+.copy-code { position:absolute; right:7px; top:7px; padding:4px 9px; font:11px "Segoe UI",sans-serif; border:1px solid var(--border); background:var(--bg); color:var(--muted); border-radius:5px; opacity:0; cursor:pointer; }
+pre:hover .copy-code,.copy-code:focus { opacity:1; }
+.math-container { overflow-x:auto; } .math-block { display:block; } .math-error { color:#d1242f; }
+.diagram { margin:20px 0; overflow:auto; text-align:center; } .diagram svg { max-width:100%; height:auto; } .diagram-error { border-left:4px solid #cf222e; }
+.diagram-print { display:none; }
+.color-swatch { display:inline-block; width:.85em; height:.85em; border:1px solid var(--border); border-radius:2px; margin-left:6px; }
+.link-card { border:1px solid var(--border); border-radius:6px; padding:14px 18px; } .link-card a { display:flex; flex-direction:column; font-size:13px; } .link-card-host { font-size:15px; font-weight:600; color:var(--fg); }
+.footnotes { font-size:12px; color:var(--muted); border-top:1px solid var(--border); padding-top:20px; margin-top:36px; }
+.sr-only { position:absolute; width:1px; height:1px; padding:0; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+.hljs-comment,.hljs-quote { color:#6a737d; } .hljs-keyword,.hljs-selector-tag,.hljs-deletion { color:#cf222e; }
+.hljs-string,.hljs-regexp,.hljs-addition { color:#0a3069; } .hljs-number,.hljs-literal,.hljs-built_in,.hljs-attr { color:#0550ae; }
+.hljs-title,.hljs-section,.hljs-function { color:#8250df; } .hljs-name,.hljs-selector-class { color:#116329; } .hljs-variable,.hljs-template-variable { color:#953800; }
+@media screen {
+[data-theme=dark] .hljs-keyword,[data-theme=dark] .hljs-selector-tag { color:#ff7b72; } [data-theme=dark] .hljs-string,[data-theme=dark] .hljs-regexp { color:#a5d6ff; }
+[data-theme=dark] .hljs-number,[data-theme=dark] .hljs-literal,[data-theme=dark] .hljs-built_in,[data-theme=dark] .hljs-attr { color:#79c0ff; }
+[data-theme=dark] .hljs-title,[data-theme=dark] .hljs-section { color:#d2a8ff; } [data-theme=dark] .hljs-name { color:#7ee787; } [data-theme=dark] .hljs-variable { color:#ffa657; }
+}
+::highlight(mdv-search) { background:#ffde7080; color:inherit; } ::highlight(mdv-current) { background:#ffac33; color:#111; }
+@media(max-width:700px) { .markdown-body { padding:24px; } }
+@media print { :root,[data-theme=dark] { color-scheme:light; --bg:white; --fg:#1f2328; --muted:#656d76; --border:#d1d9e0; --subtle:#f6f8fa; --link:#0969da; } .markdown-body { padding:0; max-width:none; } .copy-code,.diagram-screen { display:none; } .diagram-print { display:block; } pre,blockquote,.diagram { break-inside:avoid; } pre { white-space:pre-wrap; } pre code { white-space:pre-wrap; } a { color:inherit; } }
+
+/* MDV Qiita presentation; observed values: tests/compatibility/qiita-presentation.json.
+   Shared by the app's two engines and the original-engine comparison preview. */
+.qiita:is(.markdown-body,.original-body) {
+  --qiita-fg:rgba(0,0,0,.87); --qiita-muted:rgba(0,0,0,.6); --qiita-border:rgba(0,0,0,.12);
+  --qiita-inline:rgba(0,0,0,.08); --qiita-link:#357a00; --qiita-table:#fff; --qiita-table-alt:#edeeee;
+  --qiita-info:#dff4cf; --qiita-warn:#fff0b3; --qiita-alert:#ffdbdb;
+  color:var(--qiita-fg); font:17px/1.7 YakuHanJPs,-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP","BIZ UDPGothic",Meiryo,sans-serif;
+  overflow-wrap:anywhere; text-autospace:normal;
+}
+.qiita:is(.markdown-body,.original-body) :is(h1,h2,h3,h4,h5,h6):not(.sr-only) { position:relative; font-weight:700; font-feature-settings:"palt"; color:inherit; padding:0; border:0; }
+.qiita:is(.markdown-body,.original-body) h1:not(.sr-only) { font-size:1.65em; line-height:1.4; margin:64px 0 16px; padding-bottom:4px; border-bottom:1px solid var(--qiita-border); }
+.qiita:is(.markdown-body,.original-body) h2:not(.sr-only) { font-size:1.53em; line-height:1.4; margin:56px 0 16px; padding-bottom:4px; border-bottom:1px solid var(--qiita-border); }
+.qiita:is(.markdown-body,.original-body) h3 { font-size:1.29em; line-height:1.6; margin:40px 0 16px; }
+.qiita:is(.markdown-body,.original-body) h4 { font-size:1.06em; line-height:1.6; margin:40px 0 16px; }
+.qiita:is(.markdown-body,.original-body) :is(h5,h6) { font-size:.94em; line-height:1.8; margin:32px 0 16px; }
+.qiita:is(.markdown-body,.original-body) :is(h1,h2,h3,h4,h5,h6):not(.sr-only) + :is(h1,h2,h3,h4,h5,h6):not(.sr-only),
+.qiita:is(.markdown-body,.original-body) > :first-child:not(.sr-only) { margin-top:0; }
+.qiita:is(.markdown-body,.original-body) a { color:var(--qiita-link); text-decoration:underline; text-underline-offset:5px; word-break:break-all; }
+.qiita:is(.markdown-body,.original-body) p { margin:16px 0; }
+.qiita:is(.markdown-body,.original-body) hr { height:1px; margin:48px 0; background:var(--qiita-border); }
+.qiita:is(.markdown-body,.original-body) strong { font-weight:700; }
+.qiita:is(.markdown-body,.original-body) :is(ul,ol) { margin:16px 0; padding-left:1.5em; }
+.qiita:is(.markdown-body,.original-body) li { margin:0; }
+.qiita:is(.markdown-body,.original-body) li > p { margin-top:0; }
+.qiita:is(.markdown-body,.original-body) blockquote { color:var(--qiita-muted); border:0; padding:8px 16px; margin:24px 0; }
+.qiita:is(.markdown-body,.original-body) table { margin:16px 0; border:0; }
+.qiita:is(.markdown-body,.original-body) :is(th,td) { padding:4px 12px; border:0; border-bottom:1px solid var(--qiita-border); border-right:1px solid var(--qiita-border); }
+.qiita:is(.markdown-body,.original-body) :is(th,td):not([align]) { text-align:left; }
+.qiita:is(.markdown-body,.original-body) :is(thead,tbody) { border-left:1px solid var(--qiita-border); }
+.qiita:is(.markdown-body,.original-body) th { border-top:1px solid var(--qiita-border); }
+.qiita:is(.markdown-body,.original-body) th { font-weight:700; background:var(--qiita-table); }
+.qiita:is(.markdown-body,.original-body) tbody tr:nth-child(2n+1) { background:var(--qiita-table-alt); }
+.qiita:is(.markdown-body,.original-body) tr:nth-child(2n) { background:var(--qiita-table); }
+.qiita:is(.markdown-body,.original-body) details { border:0; padding:0; margin:16px 0; border-radius:0; }
+.qiita:is(.markdown-body,.original-body) details[open] > summary { margin-bottom:0; }
+.qiita:is(.markdown-body,.original-body) :is(.note,.qiita-note) { padding:16px; margin:24px 0; border:0; border-radius:8px; color:var(--qiita-fg); }
+.qiita:is(.markdown-body,.original-body) :is(.note.info,.qiita-note-info) { background:var(--qiita-info); }
+.qiita:is(.markdown-body,.original-body) :is(.note.warn,.qiita-note-warn) { background:var(--qiita-warn); }
+.qiita:is(.markdown-body,.original-body) :is(.note.alert,.qiita-note-alert) { background:var(--qiita-alert); }
+.qiita:is(.markdown-body,.original-body) :is(pre,code) { font-family:Consolas,"Liberation Mono",Menlo,Courier,"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP","BIZ UDGothic",Meiryo,monospace; }
+.qiita:is(.markdown-body,.original-body) code { font-size:.88em; background:var(--qiita-inline); padding:1px 4px; border-radius:4px; text-autospace:no-autospace; }
+.qiita:is(.markdown-body,.original-body) .code-frame { position:relative; color:#fff; background:#1d2020; padding:8px 16px; margin:24px 0; border-radius:8px; }
+.qiita:is(.markdown-body,.original-body) .code-frame :is(.code-lang,figcaption) { position:static; transform:translateY(-8px); display:inline-block; background:#5e6060; color:#fff; padding:2px 8px; margin:0; border-radius:0 0 4px 4px; font-family:inherit; font-size:.88em; line-height:1.7; }
+.qiita:is(.markdown-body,.original-body) .code-frame .highlight { color:#fff; background:#1d2020; border-radius:0; padding:8px 0; margin:0; }
+.qiita:is(.markdown-body,.original-body) .code-frame pre { color:inherit; background:transparent; padding:0; margin:0; border-radius:0; font-size:1em; line-height:1.7; }
+.qiita:is(.markdown-body,.original-body) .code-frame > pre { padding:8px 0; }
+.qiita:is(.markdown-body,.original-body) .code-frame code { display:block; color:inherit; background:transparent; padding:0; font-size:.82em; line-height:1.5; }
+.qiita:is(.markdown-body,.original-body) .code-frame .copy-code { color:#fff; background:#1d2020; border-color:#5e6060; }
+.qiita:is(.markdown-body,.original-body) .code-frame:hover .copy-code { opacity:1; }
+.qiita:is(.markdown-body,.original-body) .mdv-heading-link { display:flex; align-items:center; justify-content:center; position:absolute; left:-33px; top:0; width:auto; height:100%; padding:8px; color:var(--qiita-muted); text-decoration:none; opacity:0; pointer-events:none; }
+.qiita:is(.markdown-body,.original-body) :is(h1,h2,h3,h4,h5,h6):hover > .mdv-heading-link,
+.qiita:is(.markdown-body,.original-body) .mdv-heading-link:focus-visible { opacity:1; pointer-events:auto; }
+.qiita:is(.markdown-body,.original-body) .mdv-heading-link .fa-link { font-size:18px; z-index:0; }
+.qiita:is(.markdown-body,.original-body) .mdv-heading-link .fa-link:hover::after { content:""; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:34px; height:34px; border-radius:50%; background:var(--color-surfaceVariant,#edeeee); z-index:-1; }
+.qiita:is(.markdown-body,.original-body) sup { position:relative; top:-.5em; font-size:75%; line-height:0; vertical-align:baseline; }
+.qiita:is(.markdown-body,.original-body) .qiita-footnote-ref { padding:0 .2em; }
+.qiita:is(.markdown-body,.original-body) .qiita-footnote-ref::before { content:"["; }
+.qiita:is(.markdown-body,.original-body) .qiita-footnote-ref::after { content:"]"; }
+.qiita:is(.markdown-body,.original-body) .footnotes { color:inherit; font-size:.9em; border:0; margin:40px 0 0; padding:0; }
+/* The public light page does not switch with prefers-color-scheme. These dark
+   surface colors are MDV's adaptation, not a verified Qiita dark theme. */
+@media screen {
+  [data-theme=dark] .qiita:is(.markdown-body,.original-body) { --qiita-fg:#e6edf3; --qiita-muted:#a8b3bd; --qiita-border:#3d444d; --qiita-inline:#30363d; --qiita-link:#8bdf4c; --qiita-table:#151b23; --qiita-table-alt:#30363d; --qiita-info:#20391b; --qiita-warn:#413815; --qiita-alert:#482425; }
+}
+@media print {
+  .qiita:is(.markdown-body,.original-body) .mdv-heading-link { display:none; }
+  .qiita:is(.markdown-body,.original-body) .code-frame { print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+}
+/* Token colors measured on Qiita; Rouge and highlight.js tokenize differently. */
+.qiita:is(.markdown-body,.original-body) .code-frame .highlight .n, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .p, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .w, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .nb, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .nn, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .bp, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .py, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .nv, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .vc, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .vg, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .vi, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .vm, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .ni { color:rgb(227, 227, 227); background:rgba(0, 0, 0, 0); font-weight:400; font-style:normal; }
+.qiita:is(.markdown-body,.original-body) .code-frame .highlight .k, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .kd, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .kp, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .kr, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .kt, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .no, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .kc { color:rgb(235, 210, 71); background:rgba(0, 0, 0, 0); font-weight:400; font-style:normal; }
+.qiita:is(.markdown-body,.original-body) .code-frame .highlight .kn, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .gd, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .nt, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .o, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .ow { color:rgb(255, 128, 149); background:rgba(0, 0, 0, 0); font-weight:400; font-style:normal; }
+.qiita:is(.markdown-body,.original-body) .code-frame .highlight .kv, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .gr, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .ges, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .mx, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .nl, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .gh, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .cd, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .gl, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .gt, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .gs { color:rgb(255, 255, 255); background:rgba(0, 0, 0, 0); font-weight:400; font-style:normal; }
+.qiita:is(.markdown-body,.original-body) .code-frame .highlight .nx, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .nc, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .na, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .gi, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .ne, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .nd, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .nf, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .fm { color:rgb(139, 223, 76); background:rgba(0, 0, 0, 0); font-weight:400; font-style:normal; }
+.qiita:is(.markdown-body,.original-body) .code-frame .highlight .gp, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .sr, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .ld, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .sb, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .s, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .sa, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .sc, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .dl, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .sd, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .s2, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .sh, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .sx, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .s1, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .ss, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .si { color:rgb(59, 191, 191); background:rgba(0, 0, 0, 0); font-weight:400; font-style:normal; }
+.qiita:is(.markdown-body,.original-body) .code-frame .highlight .l, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .m, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .mb, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .mf, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .mh, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .mi, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .il, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .mo, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .se { color:rgb(169, 128, 245); background:rgba(0, 0, 0, 0); font-weight:400; font-style:normal; }
+.qiita:is(.markdown-body,.original-body) .code-frame .highlight .gu, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .c, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .ch, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .cm, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .cp, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .cpf, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .c1, .qiita:is(.markdown-body,.original-body) .code-frame .highlight .cs { color:rgb(151, 151, 151); background:rgba(0, 0, 0, 0); font-weight:400; font-style:normal; }
+.qiita:is(.markdown-body,.original-body) .code-frame .highlight .err { color:rgb(221, 221, 221); background:rgba(0, 0, 0, 0); font-weight:400; font-style:normal; }
+.qiita:is(.markdown-body,.original-body) .code-frame .highlight .ge { color:rgb(255, 255, 255); background:rgba(0, 0, 0, 0); font-weight:400; font-style:italic; }
+.qiita:is(.markdown-body,.original-body) .code-frame .hljs-keyword { color:rgb(235, 210, 71); }
+.qiita:is(.markdown-body,.original-body) .code-frame .hljs-selector-tag { color:rgb(255, 128, 149); }
+.qiita:is(.markdown-body,.original-body) .code-frame .hljs-deletion { color:rgb(255, 128, 149); }
+.qiita:is(.markdown-body,.original-body) .code-frame .hljs-comment { color:rgb(151, 151, 151); }
+.qiita:is(.markdown-body,.original-body) .code-frame .hljs-quote { color:rgb(151, 151, 151); }
+.qiita:is(.markdown-body,.original-body) .code-frame .hljs-string { color:rgb(59, 191, 191); }
+.qiita:is(.markdown-body,.original-body) .code-frame .hljs-regexp { color:rgb(59, 191, 191); }
+.qiita:is(.markdown-body,.original-body) .code-frame .hljs-addition { color:rgb(139, 223, 76); }
+.qiita:is(.markdown-body,.original-body) .code-frame .hljs-number { color:rgb(169, 128, 245); }
+.qiita:is(.markdown-body,.original-body) .code-frame .hljs-literal { color:rgb(235, 210, 71); }
+.qiita:is(.markdown-body,.original-body) .code-frame .hljs-built_in { color:rgb(227, 227, 227); }
+.qiita:is(.markdown-body,.original-body) .code-frame .hljs-attr { color:rgb(139, 223, 76); }
+.qiita:is(.markdown-body,.original-body) .code-frame .hljs-title { color:rgb(139, 223, 76); }
+.qiita:is(.markdown-body,.original-body) .code-frame .hljs-section { color:rgb(255, 255, 255); }
+.qiita:is(.markdown-body,.original-body) .code-frame .hljs-name { color:rgb(255, 128, 149); }
+.qiita:is(.markdown-body,.original-body) .code-frame .hljs-variable { color:rgb(227, 227, 227); }
+.qiita:is(.markdown-body,.original-body) .code-frame .hljs-template-variable { color:rgb(227, 227, 227); }
+
+/* Layout and interaction rules for MDV's generated article HTML. */
+.qiita { color-scheme:light; }
+.qiita img { max-width:100%; height:auto; vertical-align:baseline; background-color:#fff; }
+.qiita img.emoji { background:transparent; vertical-align:middle; }
+.qiita img:not(.emoji) { box-shadow:0 0 0 1px var(--qiita-border); }
+.qiita .note { display:flex; gap:0; align-items:flex-start; white-space:pre-wrap; }
+.qiita .note > .fa { font-size:1.25em; margin-right:8px; padding-top:4px; }
+.qiita .note.info > .fa { color:var(--qiita-link); }
+.qiita .note.warn > .fa { color:#ae8803; }
+.qiita .note.alert > .fa { color:#bd0505; }
+.qiita .note > div { min-width:0; flex-grow:1; white-space:normal; }
+.qiita:is(.markdown-body,.original-body) .note > div > :first-child { margin-top:0; }
+.qiita .note > div > :last-child { margin-bottom:0; }
+.qiita:is(.markdown-body,.original-body) :is(.qiita-footnote-ref,a[href*="fnref"]) { text-decoration:none; }
+.qiita blockquote { position:relative; }
+.qiita:is(.markdown-body,.original-body) blockquote > :first-child { margin-top:0; }
+.qiita:is(.markdown-body,.original-body) blockquote > :last-child { margin-bottom:0; }
+.qiita blockquote::before { content:""; position:absolute; inset:0 auto 0 0; width:4px; border-radius:4px; background:var(--qiita-border); }
+.qiita table { border-collapse:collapse; display:inline-block; width:auto; overflow:auto; max-width:100%; }
+.qiita td { max-width:600px; }
+.qiita summary { padding:0; cursor:pointer; }
+.qiita .highlight { overflow:auto; }
+.qiita .highlight::-webkit-scrollbar { width:8px; height:8px; }
+.qiita .highlight::-webkit-scrollbar-thumb { background:#5e6060; border-radius:4px; }
+.qiita .highlight::-webkit-scrollbar-track { background:#1d2020; }
+.qiita .highlight pre { overflow:visible; }
+.qiita .highlight code { white-space:pre; overflow-wrap:normal; word-break:normal; }
+.qiita:is(.markdown-body,.original-body) .footnotes { border-top:1px solid var(--qiita-border); }
+.qiita .footnotes p { margin:0; }
+.qiita .footnotes li + li { margin-top:0; }
+/* Qiita's CHTML math keeps small paint gutters and owns its overflow. */
+.qiita .MathJax { overflow-x:auto; overflow-y:hidden; padding-block:1px; vertical-align:middle; scrollbar-width:thin; scrollbar-color:var(--qiita-table-alt) transparent; }
+.qiita mjx-container[display="true"][width="full"] { min-width:100% !important; }
+.qiita :is(mjx-math,mjx-assistive-mml) { line-height:.2; max-width:100%; overflow-x:auto; overflow-y:hidden; padding-inline:2px; scrollbar-width:thin; scrollbar-color:var(--qiita-table-alt) transparent; }
+.qiita mjx-container[jax="CHTML"][display="true"] mjx-math { padding-inline:2px; }
+.qiita :is(.MathJax,mjx-math,mjx-assistive-mml)::-webkit-scrollbar { height:8px; }
+.qiita :is(.MathJax,mjx-math,mjx-assistive-mml)::-webkit-scrollbar-track { background:transparent; }
+.qiita :is(.MathJax,mjx-math,mjx-assistive-mml)::-webkit-scrollbar-thumb { background:var(--qiita-table-alt); border-radius:4px; }
+.qiita .code-frame .copy-code { z-index:1; }
+@media screen { [data-theme=dark] .qiita { color-scheme:dark; } }
+
+/* Saved Qiita link cards mirror the service iframe typography and inline baseline. */
+.qiita:is(.markdown-body,.original-body) p.saved-link-card { border:0; padding:0; border-radius:0; }
+.qiita .saved-link-card a { display:flex; width:100%; align-items:center; justify-content:space-between; flex-direction:row; background:#fff; border:1px solid rgba(0,0,0,.12); border-radius:8px; overflow:hidden; text-decoration:none; word-break:break-all; color:rgba(0,0,0,.87); font-family:YakuHanJPs,-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP","BIZ UDPGothic",Meiryo,sans-serif; font-feature-settings:normal; text-autospace:no-autospace; line-height:normal; vertical-align:baseline; }
+.qiita .saved-link-card a:hover { text-decoration:none; }
+.qiita .saved-card-content { padding:16px; min-width:0; }
+.qiita .saved-card-title { display:-webkit-box; font-size:16px; font-weight:600; line-height:1.5; overflow:hidden; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
+.qiita .saved-card-origin { display:-webkit-box; font-size:12px; font-weight:400; line-height:1.8; overflow:hidden; -webkit-box-orient:vertical; -webkit-line-clamp:1; }
+.qiita .saved-link-card img { flex-shrink:0; width:220px; height:110px; object-fit:cover; border:0; border-left:1px solid rgba(0,0,0,.12); box-shadow:none; margin:0; }
+@container (max-width:479px) { .qiita .saved-link-card img { width:110px; } }
+
+.qiita .saved-card-frame { contain:paint; container-type:inline-size; display:inline-block; width:100%; overflow:hidden; vertical-align:baseline; }
+
+.qiita:is(.markdown-body,.original-body) :is(ul,ol) :is(ul,ol) { margin-block:0; }

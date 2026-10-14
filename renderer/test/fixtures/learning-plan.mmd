@@ -1,0 +1,40 @@
+flowchart LR
+  A[AIスキル学習プラン]:::root
+
+  A --> B([目標設定]):::main
+  B --> B1[期間: 3か月]:::note
+  B --> B2[成果物: ポートフォリオ1件]:::note
+
+  A --> C[[学習トピック]]:::main
+  C --> C1[基礎理論]:::topic
+  C1 --> C1a[線形代数]:::leaf
+  C1 --> C1b[統計と確率]:::leaf
+  C --> C2(((プログラミング))):::topic
+  C2 --> C2a[Python基礎]:::leaf
+  C2 --> C2b[可視化]:::leaf
+
+  A --> D{{実践タスク}}:::task
+  D --> D1[Kaggleミニ課題]:::leaf
+  D --> D2[個人アプリ作成]:::leaf
+
+  A --> E([学び方]):::main
+  E --> E1[毎日の学習リズム]:::topic
+  E1 --> E1a[平日: 60分]:::note
+  E1 --> E1b[週末: 2?3時間の集中学習]:::note
+  E --> E2[記録と振り返り]:::topic
+  E2 --> E2a[Notionで要点メモ]:::note
+  E2 --> E2b[週次レビューで改善]:::note
+
+  %% スタイル定義
+  classDef root fill:#BCE2E8,stroke:#7FB8BF,color:#0B0F10,font-weight:bold,stroke-width:2px;
+  classDef main fill:#F9E3C0,stroke:#E2B877,color:#0B0F10;
+  classDef topic fill:#EFD9E6,stroke:#C9A8C4,color:#0B0F10;
+  classDef leaf fill:#FFFFFF,stroke:#D0D0D0,color:#0B0F10;
+  classDef note fill:#E6F5F9,stroke:#B8DDE6,color:#0B0F10,font-style:italic;
+  classDef task fill:#DDF5D0,stroke:#A6CF8C,color:#0B0F10,font-weight:bold;
+
+  class A root;
+  class B,C,E main;
+  class C1,C2,E1,E2 topic;
+  class D task;
+  class B1,B2,C1a,C1b,C2a,C2b,D1,D2,E1a,E1b,E2a,E2b leaf,note;

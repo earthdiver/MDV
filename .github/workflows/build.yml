@@ -1,0 +1,71 @@
+name: Build and verify Windows editions
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4.11'
+          bundler: '2.6.9'
+      - name: Build all editions with Zstandard
+        shell: pwsh
+        run: |
+          $rubyDirectory = ruby -rrbconfig -e 'print RbConfig::CONFIG["prefix"]'
+          ./scripts/prepare-original-engines.ps1 -RubyDirectory $rubyDirectory
+          ./scripts/build.ps1 -Edition all -OriginalEngineDirectory artifacts/OriginalEngines -CompressionCodec zstd -CompressionQuality 22
+      - run: npm run compat:check
+      - run: npm run upstream:setup
+      - run: npm run upstream:test
+      - run: npm run build
+      - run: npx playwright install chromium
+      - name: Verify both renderers in browser
+        shell: pwsh
+        run: |
+          $env:MDV_RUBY = (Get-Command ruby).Source
+          npm run test:browser
+          if ($LASTEXITCODE -ne 0) { throw 'Browser tests failed.' }
+          npm run test:editions
+          if ($LASTEXITCODE -ne 0) { throw 'Edition tests failed.' }
+      - name: Verify each portable EXE
+        shell: pwsh
+        run: |
+          foreach ($edition in @('dual', 'custom', 'upstream')) {
+            ./scripts/smoke-windows.ps1 -BuildDirectory "artifacts/MDV-$edition-win-x64" -Report "artifacts/verification/$edition/native-smoke.json"
+          }
+      - name: Select distribution assets
+        shell: pwsh
+        run: |
+          $sizes = Get-Content artifacts/edition-sizes-win-x64.json -Raw | ConvertFrom-Json
+          New-Item -ItemType Directory artifacts/distribution | Out-Null
+          foreach ($file in $sizes.files) {
+            if ($file.edition -eq 'custom' -and -not $sizes.publishCustom) { continue }
+            Copy-Item -LiteralPath $file.file -Destination artifacts/distribution
+            Copy-Item "artifacts/MDV-$($file.edition)-win-x64.sha256" -Destination artifacts/distribution
+          }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MDV-v0.3.0-win-x64
+          compression-level: 0
+          path: artifacts/distribution/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verification
+          path: |
+            artifacts/verification/
+            artifacts/edition-sizes-win-x64.json
+            artifacts/compatibility/
+            artifacts/qiita-style/
+            test-results/

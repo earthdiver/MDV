@@ -1,0 +1,20 @@
+{
+  "github": {
+    "fontSize": "16px",
+    "lineHeight": "24px",
+    "fontFamily": "\"Mona Sans VF\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", \"Noto Sans Backtick Fix\", \"Noto Sans\", Helvetica, Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\"",
+    "source": "https://github.com/github/markup/blob/84e47f9a64c993f8f3f91be639231f02aa4df730/README.md",
+    "capturedAt": "2026-10-11T11:24:23.213Z",
+    "htmlHash": "8a1780cddba2c1a55eb52a86b820d60a4f073b4821e5c20c264fa3a01d4ab26b",
+    "note": "Computed CSS declaration only; font binaries and full visual equivalence are unverified."
+  },
+  "qiita": {
+    "fontSize": "17px",
+    "lineHeight": "28.9px",
+    "fontFamily": "YakuHanJPs, -apple-system, BlinkMacSystemFont, \"Segoe UI\", \"Hiragino Kaku Gothic ProN\", \"Hiragino Sans\", \"Noto Sans JP\", \"BIZ UDPGothic\", Meiryo, sans-serif",
+    "source": "https://qiita.com/Qiita/items/c686397e4a0f4f11683d",
+    "capturedAt": "2026-10-11T11:24:21.024Z",
+    "htmlHash": "eee6156bd7dc1a56a8f9505a231dd72f651a2e0bd0e157b50080bff1b694febb",
+    "note": "Computed CSS declaration only; font binaries and full visual equivalence are unverified."
+  }
+}

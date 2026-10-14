@@ -1,0 +1,38 @@
+[
+  {
+    "id": "qiita-markdown",
+    "mode": "qiita",
+    "url": "https://qiita.com/Qiita/items/c686397e4a0f4f11683d",
+    "markdownUrl": "https://qiita.com/Qiita/items/c686397e4a0f4f11683d.md"
+  },
+  {
+    "id": "qiita-math",
+    "mode": "qiita",
+    "url": "https://qiita.com/PlanetMeron/items/63ac58898541cbe81ada",
+    "markdownUrl": "https://qiita.com/PlanetMeron/items/63ac58898541cbe81ada.md"
+  },
+  {
+    "id": "qiita-statistics",
+    "mode": "qiita",
+    "url": "https://qiita.com/DeepTama/items/85470a66972432e14224",
+    "markdownUrl": "https://qiita.com/DeepTama/items/85470a66972432e14224.md"
+  },
+  {
+    "id": "qiita-beginner",
+    "mode": "qiita",
+    "url": "https://qiita.com/FlatBone/items/a7159a28a47cc9ece4cc",
+    "markdownUrl": "https://qiita.com/FlatBone/items/a7159a28a47cc9ece4cc.md"
+  },
+  {
+    "id": "github-readme",
+    "mode": "github",
+    "url": "https://github.com/github/markup/blob/84e47f9a64c993f8f3f91be639231f02aa4df730/README.md",
+    "markdownUrl": "https://raw.githubusercontent.com/github/markup/84e47f9a64c993f8f3f91be639231f02aa4df730/README.md"
+  },
+  {
+    "id": "github-contributing",
+    "mode": "github",
+    "url": "https://github.com/github/markup/blob/84e47f9a64c993f8f3f91be639231f02aa4df730/CONTRIBUTING.md",
+    "markdownUrl": "https://raw.githubusercontent.com/github/markup/84e47f9a64c993f8f3f91be639231f02aa4df730/CONTRIBUTING.md"
+  }
+]

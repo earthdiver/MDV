@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "verifiedOn": "2026-10-11",
+  "files": [
+    {
+      "path": "upstream/gfm/test/spec.txt",
+      "repository": "github/cmark-gfm",
+      "commit": "27d942c8b0a62d192f616e5bf3578f4b6a89e180",
+      "upstreamPath": "test/spec.txt",
+      "url": "https://github.com/github/cmark-gfm/blob/27d942c8b0a62d192f616e5bf3578f4b6a89e180/test/spec.txt",
+      "sha256": "7d8e5814befec287ac116786d81ff14e0adc9b13295b4494649e995408fd871c"
+    },
+    {
+      "path": "upstream/gfm/COPYING",
+      "repository": "github/cmark-gfm",
+      "commit": "27d942c8b0a62d192f616e5bf3578f4b6a89e180",
+      "upstreamPath": "COPYING",
+      "url": "https://github.com/github/cmark-gfm/blob/27d942c8b0a62d192f616e5bf3578f4b6a89e180/COPYING",
+      "sha256": "c22e885f33b821bddb24cf007145e5540655b6c0f403e49e6c76a93c28e6d9a9"
+    },
+    {
+      "path": "upstream/qiita/spec/qiita/markdown/processor_spec.rb",
+      "repository": "increments/qiita-markdown",
+      "commit": "e41466a43608c001f2b8be1a5cbe752d76698a7c",
+      "upstreamPath": "spec/qiita/markdown/processor_spec.rb",
+      "url": "https://github.com/increments/qiita-markdown/blob/e41466a43608c001f2b8be1a5cbe752d76698a7c/spec/qiita/markdown/processor_spec.rb",
+      "sha256": "e42d9698d2b9a8f994e0e03cb73e12560892d21a6fc4bdcbcb44c1832f461e36"
+    },
+    {
+      "path": "upstream/qiita/lib/qiita/markdown/processor.rb",
+      "repository": "increments/qiita-markdown",
+      "commit": "e41466a43608c001f2b8be1a5cbe752d76698a7c",
+      "upstreamPath": "lib/qiita/markdown/processor.rb",
+      "url": "https://github.com/increments/qiita-markdown/blob/e41466a43608c001f2b8be1a5cbe752d76698a7c/lib/qiita/markdown/processor.rb",
+      "sha256": "6811954f7ddf7b569346c031f78c174ad1232f9ad3a39b406a441ea8ec1a36a6"
+    },
+    {
+      "path": "upstream/qiita/lib/qiita/markdown/filters/qiita_marker.rb",
+      "repository": "increments/qiita-markdown",
+      "commit": "e41466a43608c001f2b8be1a5cbe752d76698a7c",
+      "upstreamPath": "lib/qiita/markdown/filters/qiita_marker.rb",
+      "url": "https://github.com/increments/qiita-markdown/blob/e41466a43608c001f2b8be1a5cbe752d76698a7c/lib/qiita/markdown/filters/qiita_marker.rb",
+      "sha256": "5b24ec6a699c41fe98305700c0f17cf732186ab5432388284a1c9b08ce7172c1"
+    },
+    {
+      "path": "upstream/qiita/qiita-markdown.gemspec",
+      "repository": "increments/qiita-markdown",
+      "commit": "e41466a43608c001f2b8be1a5cbe752d76698a7c",
+      "upstreamPath": "qiita-markdown.gemspec",
+      "url": "https://github.com/increments/qiita-markdown/blob/e41466a43608c001f2b8be1a5cbe752d76698a7c/qiita-markdown.gemspec",
+      "sha256": "19401332d99d2c53fc77e7587bf78592c5d3679f266ce9ec3b5db6edf03b0d8f"
+    },
+    {
+      "path": "upstream/qiita/LICENSE.txt",
+      "repository": "increments/qiita-markdown",
+      "commit": "e41466a43608c001f2b8be1a5cbe752d76698a7c",
+      "upstreamPath": "LICENSE.txt",
+      "url": "https://github.com/increments/qiita-markdown/blob/e41466a43608c001f2b8be1a5cbe752d76698a7c/LICENSE.txt",
+      "sha256": "224a783cc55e61a0a45040d32aba1b85d50b42abfacf3360eb1958b412d7af48"
+    },
+    {
+      "path": "upstream/github/test/markups/README.markdown",
+      "repository": "github/markup",
+      "commit": "84e47f9a64c993f8f3f91be639231f02aa4df730",
+      "upstreamPath": "test/markups/README.markdown",
+      "url": "https://github.com/github/markup/blob/84e47f9a64c993f8f3f91be639231f02aa4df730/test/markups/README.markdown",
+      "sha256": "e2d2238df1277958682f3d11c2e60ee4abce8001478370e6ff561a3753f5ca90"
+    },
+    {
+      "path": "upstream/github/test/markups/README.markdown.html",
+      "repository": "github/markup",
+      "commit": "84e47f9a64c993f8f3f91be639231f02aa4df730",
+      "upstreamPath": "test/markups/README.markdown.html",
+      "url": "https://github.com/github/markup/blob/84e47f9a64c993f8f3f91be639231f02aa4df730/test/markups/README.markdown.html",
+      "sha256": "c3e96ef36d7fe54fcc9a278181899fb6545e3d0dafbe5a85d48a0ae7ebb67152"
+    },
+    {
+      "path": "upstream/github/lib/github/markup/markdown.rb",
+      "repository": "github/markup",
+      "commit": "84e47f9a64c993f8f3f91be639231f02aa4df730",
+      "upstreamPath": "lib/github/markup/markdown.rb",
+      "url": "https://github.com/github/markup/blob/84e47f9a64c993f8f3f91be639231f02aa4df730/lib/github/markup/markdown.rb",
+      "sha256": "70c31d3f3df0c178245b6abcaad60bf04373b758ab9a9a47b57a0caa6d5f57b9"
+    },
+    {
+      "path": "upstream/github/Gemfile.lock",
+      "repository": "github/markup",
+      "commit": "84e47f9a64c993f8f3f91be639231f02aa4df730",
+      "upstreamPath": "Gemfile.lock",
+      "url": "https://github.com/github/markup/blob/84e47f9a64c993f8f3f91be639231f02aa4df730/Gemfile.lock",
+      "sha256": "82c598955883c290c3f93725efa74490399dbe56d5acea58d951f733ff266479"
+    },
+    {
+      "path": "upstream/github/LICENSE",
+      "repository": "github/markup",
+      "commit": "84e47f9a64c993f8f3f91be639231f02aa4df730",
+      "upstreamPath": "LICENSE",
+      "url": "https://github.com/github/markup/blob/84e47f9a64c993f8f3f91be639231f02aa4df730/LICENSE",
+      "sha256": "b095d695a80dc80ee414d57493694be87f5d5041288941f6305e9c05f0fabfda"
+    }
+  ]
+}

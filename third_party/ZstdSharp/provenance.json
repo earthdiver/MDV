@@ -1,0 +1,11 @@
+{
+  "package": "ZstdSharp.Port",
+  "version": "0.8.8",
+  "repository": "https://github.com/oleg-st/ZstdSharp",
+  "commit": "2cd0c019693bc786a5fe5c3be94e107b24e7267e",
+  "license": "MIT",
+  "licenseSource": "https://raw.githubusercontent.com/oleg-st/ZstdSharp/2cd0c019693bc786a5fe5c3be94e107b24e7267e/LICENSE",
+  "upstream": "https://github.com/facebook/zstd/tree/v1.5.7",
+  "upstreamLicense": "BSD-3-Clause",
+  "upstreamLicenseSource": "https://raw.githubusercontent.com/facebook/zstd/v1.5.7/LICENSE"
+}

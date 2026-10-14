@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "goal": "GitHub / Qiita の本文・Mermaid等の図・数式・装飾・操作を含む互換性。未取得の比較基準は対象外にせず未検証とする。",
+  "github": {
+    "surface": "repository Markdown file",
+    "publicImplementation": "github/markup@84e47f9a64c993f8f3f91be639231f02aa4df730",
+    "commonmarker": "2.8.2 (upstream Gemfile.lock)",
+    "settingsSource": "upstream/github/lib/github/markup/markdown.rb",
+    "serviceDeployment": null,
+    "serviceMermaidVersion": null,
+    "serviceMathSettings": null,
+    "status": "unverified-service",
+    "note": "公開実装・GFM仕様・実サイトは別基準。Issue/PRの改行・参照は将来の別プロファイル。"
+  },
+  "qiita": {
+    "surface": "article body",
+    "publicImplementation": "increments/qiita-markdown@e41466a43608c001f2b8be1a5cbe752d76698a7c",
+    "qiitaMarker": "increments/qiita_marker@cb88c6062b43973c4508f568d1bce86de4a6acdb",
+    "context": { "hostname": "example.com", "script": false, "strict": false },
+    "oracle": "commit-pinned upstream assertions; Ruby runtime not executed",
+    "resolvedGemLock": null,
+    "serviceDeployment": null,
+    "serviceMermaidVersion": null,
+    "serviceMathSettings": null,
+    "status": "unverified-service",
+    "note": "上流specの静的な完全一致アサーションを採取。部分一致・動的contextは未収録一覧に残す。"
+  },
+  "browserReference": {
+    "kind": "upstream-library",
+    "mermaid": "12.1.0",
+    "mathjax": "3.2.2",
+    "mermaidOptions": { "startOnLoad": false, "securityLevel": "strict", "htmlLabels": true, "deterministicIds": true, "handDrawnSeed": 1 },
+    "mathjaxOptions": { "loader": "tex-svg-full", "svg": { "fontCache": "none" } },
+    "viewport": { "width": 1080, "height": 900 },
+    "deviceScaleFactor": 1,
+    "pixelChannelTolerance": 16,
+    "maxDiffPixelRatio": 0.01,
+    "note": "サービス使用版・設定とは未照合。候補ライブラリの無加工描画との比較であり、実サイトのスクリーンショットではない。"
+  }
+}

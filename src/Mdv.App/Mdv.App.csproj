@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>MDV</AssemblyName>
+    <RootNamespace>Mdv.App</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <RendererDirectory Condition="'$(RendererDirectory)' == ''">Renderer</RendererDirectory>
+    <Version>0.3.0</Version>
+    <Description>GitHub / Qiita Markdown Viewer for Windows</Description>
+    <PublishTrimmed>false</PublishTrimmed>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(PortableBuild)' == 'true'">
+    <PayloadCompression Condition="'$(PayloadCompression)' == ''">zstd</PayloadCompression>
+    <PayloadExtension Condition="'$(PayloadCompression)' == 'brotli'">br</PayloadExtension>
+    <PayloadExtension Condition="'$(PayloadCompression)' == 'zstd'">zst</PayloadExtension>
+    <PayloadDirectory Condition="'$(PayloadDirectory)' == ''">PortablePayload/$(MdvEdition)</PayloadDirectory>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Mdv.Core/Mdv.Core.csproj" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4258.31" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(PortableBuild)' != 'true'">
+    <Content Include="OriginalEngines/**/*" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Renderer/**/*" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../samples/**/*" Link="Samples/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(PortableBuild)' == 'true'">
+    <EmbeddedResource Include="$(PayloadDirectory)/payload.$(PayloadExtension)" LogicalName="Mdv.PortablePayload.$(PayloadExtension)" />
+    <EmbeddedResource Include="$(PayloadDirectory)/payload.$(PayloadExtension).sha256" LogicalName="Mdv.PortablePayload.sha256" />
+  </ItemGroup>
+  <Target Name="VerifyRenderer" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$(MdvEdition)' != 'dual' And '$(MdvEdition)' != 'custom' And '$(MdvEdition)' != 'upstream'" Text="MdvEdition must be dual, custom or upstream." />
+    <Error Condition="!Exists('$(RendererDirectory)/index.html')" Text="Renderer assets are missing. Run npm ci and npm run build from the repository root." />
+    <Error Condition="'$(PortableBuild)' == 'true' And '$(PayloadExtension)' == ''" Text="PayloadCompression must be brotli or zstd." />
+    <Error Condition="'$(PortableBuild)' == 'true' And !Exists('$(PayloadDirectory)/payload.$(PayloadExtension)')" Text="Portable payload is missing. Run scripts/build.ps1 to prepare the runtime and assets." />
+  </Target>
+</Project>

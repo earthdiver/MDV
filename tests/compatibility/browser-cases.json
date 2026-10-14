@@ -1,0 +1,385 @@
+{
+  "schemaVersion": 1,
+  "variants": [
+    {
+      "id": "light",
+      "theme": "light",
+      "media": "screen"
+    },
+    {
+      "id": "dark",
+      "theme": "dark",
+      "media": "screen"
+    },
+    {
+      "id": "print",
+      "theme": "dark",
+      "media": "print"
+    }
+  ],
+  "cases": [
+    {
+      "id": "mermaid-flowchart",
+      "kind": "mermaid",
+      "modes": [
+        "github",
+        "qiita"
+      ],
+      "code": "flowchart LR\n A[Start] --> B{Ready?}\n B -->|yes| C[Finish]\n B -->|no| A",
+      "markdown": "```mermaid\nflowchart LR\n A[Start] --> B{Ready?}\n B -->|yes| C[Finish]\n B -->|no| A\n```",
+      "source": "https://mermaid.js.org/intro/ (MDV-authored synthetic input)"
+    },
+    {
+      "id": "mermaid-japanese-label",
+      "kind": "mermaid",
+      "modes": [
+        "github",
+        "qiita"
+      ],
+      "code": "flowchart TD\n A[日本語の開始] --> B[二行目<br/>Third line]",
+      "markdown": "```mermaid\nflowchart TD\n A[日本語の開始] --> B[二行目<br/>Third line]\n```",
+      "source": "https://mermaid.js.org/intro/ (MDV-authored synthetic input)"
+    },
+    {
+      "id": "mermaid-sequence",
+      "kind": "mermaid",
+      "modes": [
+        "github",
+        "qiita"
+      ],
+      "code": "sequenceDiagram\n Alice->>Bob: Hello\n Note over Alice,Bob: A note\n Bob-->>Alice: Reply",
+      "markdown": "```mermaid\nsequenceDiagram\n Alice->>Bob: Hello\n Note over Alice,Bob: A note\n Bob-->>Alice: Reply\n```",
+      "source": "https://mermaid.js.org/intro/ (MDV-authored synthetic input)"
+    },
+    {
+      "id": "mermaid-class",
+      "kind": "mermaid",
+      "modes": [
+        "github",
+        "qiita"
+      ],
+      "code": "classDiagram\n class Animal {\n +String name\n +eat()\n }\n Animal <|-- Cat",
+      "markdown": "```mermaid\nclassDiagram\n class Animal {\n +String name\n +eat()\n }\n Animal <|-- Cat\n```",
+      "source": "https://mermaid.js.org/intro/ (MDV-authored synthetic input)"
+    },
+    {
+      "id": "mermaid-state",
+      "kind": "mermaid",
+      "modes": [
+        "github",
+        "qiita"
+      ],
+      "code": "stateDiagram-v2\n [*] --> Idle\n Idle --> Running: start\n Running --> [*]",
+      "markdown": "```mermaid\nstateDiagram-v2\n [*] --> Idle\n Idle --> Running: start\n Running --> [*]\n```",
+      "source": "https://mermaid.js.org/intro/ (MDV-authored synthetic input)"
+    },
+    {
+      "id": "mermaid-er",
+      "kind": "mermaid",
+      "modes": [
+        "github",
+        "qiita"
+      ],
+      "code": "erDiagram\n CUSTOMER ||--o{ ORDER : places\n CUSTOMER {\n int id PK\n string name\n }",
+      "markdown": "```mermaid\nerDiagram\n CUSTOMER ||--o{ ORDER : places\n CUSTOMER {\n int id PK\n string name\n }\n```",
+      "source": "https://mermaid.js.org/intro/ (MDV-authored synthetic input)"
+    },
+    {
+      "id": "mermaid-gantt",
+      "kind": "mermaid",
+      "modes": [
+        "github",
+        "qiita"
+      ],
+      "code": "gantt\n title Schedule\n dateFormat YYYY-MM-DD\n section Work\n Design :a, 2026-01-01, 3d\n Build :after a, 4d",
+      "markdown": "```mermaid\ngantt\n title Schedule\n dateFormat YYYY-MM-DD\n section Work\n Design :a, 2026-01-01, 3d\n Build :after a, 4d\n```",
+      "source": "https://mermaid.js.org/intro/ (MDV-authored synthetic input)"
+    },
+    {
+      "id": "mermaid-pie",
+      "kind": "mermaid",
+      "modes": [
+        "github",
+        "qiita"
+      ],
+      "code": "pie title Distribution\n \"A\" : 30\n \"B\" : 70",
+      "markdown": "```mermaid\npie title Distribution\n \"A\" : 30\n \"B\" : 70\n```",
+      "source": "https://mermaid.js.org/intro/ (MDV-authored synthetic input)"
+    },
+    {
+      "id": "mermaid-journey",
+      "kind": "mermaid",
+      "modes": [
+        "github",
+        "qiita"
+      ],
+      "code": "journey\n title Morning\n section Start\n Make tea: 5: Me\n Travel: 3: Me",
+      "markdown": "```mermaid\njourney\n title Morning\n section Start\n Make tea: 5: Me\n Travel: 3: Me\n```",
+      "source": "https://mermaid.js.org/intro/ (MDV-authored synthetic input)"
+    },
+    {
+      "id": "mermaid-mindmap",
+      "kind": "mermaid",
+      "modes": [
+        "github",
+        "qiita"
+      ],
+      "code": "mindmap\n root((Root label))\n  First[日本語]\n  Second(Other label)",
+      "markdown": "```mermaid\nmindmap\n root((Root label))\n  First[日本語]\n  Second(Other label)\n```",
+      "source": "https://mermaid.js.org/intro/ (MDV-authored synthetic input)"
+    },
+    {
+      "id": "mermaid-gitgraph",
+      "kind": "mermaid",
+      "modes": [
+        "github",
+        "qiita"
+      ],
+      "code": "gitGraph\n commit\n branch feature\n checkout feature\n commit\n checkout main\n merge feature",
+      "markdown": "```mermaid\ngitGraph\n commit\n branch feature\n checkout feature\n commit\n checkout main\n merge feature\n```",
+      "source": "https://mermaid.js.org/intro/ (MDV-authored synthetic input)"
+    },
+    {
+      "id": "mermaid-gitgraph-fixed",
+      "kind": "mermaid",
+      "modes": [
+        "github",
+        "qiita"
+      ],
+      "code": "gitGraph\n commit id: \"start\"\n branch feature\n checkout feature\n commit id: \"feature-change\"\n checkout main\n merge feature id: \"merge\"",
+      "markdown": "```mermaid\ngitGraph\n commit id: \"start\"\n branch feature\n checkout feature\n commit id: \"feature-change\"\n checkout main\n merge feature id: \"merge\"\n```",
+      "source": "https://mermaid.js.org/intro/ (MDV-authored synthetic input)"
+    },
+    {
+      "id": "mermaid-timeline",
+      "kind": "mermaid",
+      "modes": [
+        "github",
+        "qiita"
+      ],
+      "code": "timeline\n title History\n 2024 : Start\n 2025 : Next",
+      "markdown": "```mermaid\ntimeline\n title History\n 2024 : Start\n 2025 : Next\n```",
+      "source": "https://mermaid.js.org/intro/ (MDV-authored synthetic input)"
+    },
+    {
+      "id": "mermaid-quadrant",
+      "kind": "mermaid",
+      "modes": [
+        "github",
+        "qiita"
+      ],
+      "code": "quadrantChart\n title Priorities\n x-axis Low effort --> High effort\n y-axis Low value --> High value\n quadrant-1 Plan\n quadrant-2 Do\n quadrant-3 Skip\n quadrant-4 Review\n Task: [0.3, 0.7]",
+      "markdown": "```mermaid\nquadrantChart\n title Priorities\n x-axis Low effort --> High effort\n y-axis Low value --> High value\n quadrant-1 Plan\n quadrant-2 Do\n quadrant-3 Skip\n quadrant-4 Review\n Task: [0.3, 0.7]\n```",
+      "source": "https://mermaid.js.org/intro/ (MDV-authored synthetic input)"
+    },
+    {
+      "id": "mermaid-xychart",
+      "kind": "mermaid",
+      "modes": [
+        "github",
+        "qiita"
+      ],
+      "code": "xychart-beta\n x-axis [Jan, Feb, Mar]\n y-axis \"Count\" 0 --> 10\n bar [3, 6, 8]",
+      "markdown": "```mermaid\nxychart-beta\n x-axis [Jan, Feb, Mar]\n y-axis \"Count\" 0 --> 10\n bar [3, 6, 8]\n```",
+      "source": "https://mermaid.js.org/intro/ (MDV-authored synthetic input)"
+    },
+    {
+      "id": "mermaid-block",
+      "kind": "mermaid",
+      "modes": [
+        "github",
+        "qiita"
+      ],
+      "code": "block-beta\n columns 2\n A[\"One\"] B[\"Two\"]\n A --> B",
+      "markdown": "```mermaid\nblock-beta\n columns 2\n A[\"One\"] B[\"Two\"]\n A --> B\n```",
+      "source": "https://mermaid.js.org/intro/ (MDV-authored synthetic input)"
+    },
+    {
+      "id": "mermaid-html-label",
+      "kind": "mermaid",
+      "modes": [
+        "github",
+        "qiita"
+      ],
+      "code": "flowchart LR\n A[\"<b>Bold</b> and plain\"] --> B[\"Line 1<br/>Line 2\"]",
+      "markdown": "```mermaid\nflowchart LR\n A[\"<b>Bold</b> and plain\"] --> B[\"Line 1<br/>Line 2\"]\n```",
+      "source": "https://mermaid.js.org/intro/ (MDV-authored synthetic input)"
+    },
+    {
+      "id": "mermaid-math-label",
+      "kind": "mermaid",
+      "modes": [
+        "github",
+        "qiita"
+      ],
+      "code": "flowchart LR\n A[\"$$x^2$$\"] --> B[\"$$\\frac{1}{2}$$\"]",
+      "markdown": "```mermaid\nflowchart LR\n A[\"$$x^2$$\"] --> B[\"$$\\frac{1}{2}$$\"]\n```",
+      "source": "https://mermaid.js.org/intro/ (MDV-authored synthetic input)"
+    },
+    {
+      "id": "mermaid-style",
+      "kind": "mermaid",
+      "modes": [
+        "github",
+        "qiita"
+      ],
+      "code": "flowchart LR\n A[Styled] --> B[Default]\n classDef important fill:#ffcccc,stroke:#990000\n class A important",
+      "markdown": "```mermaid\nflowchart LR\n A[Styled] --> B[Default]\n classDef important fill:#ffcccc,stroke:#990000\n class A important\n```",
+      "source": "https://mermaid.js.org/intro/ (MDV-authored synthetic input)"
+    },
+    {
+      "id": "mermaid-invalid",
+      "kind": "mermaid",
+      "modes": [
+        "github",
+        "qiita"
+      ],
+      "code": "not-a-valid-diagram !@!@",
+      "markdown": "```mermaid\nnot-a-valid-diagram !@!@\n```",
+      "source": "https://mermaid.js.org/intro/ (MDV-authored synthetic input)",
+      "expectError": true
+    },
+    {
+      "id": "math-inline",
+      "kind": "math",
+      "modes": [
+        "github",
+        "qiita"
+      ],
+      "code": "x^2 + y_1",
+      "markdown": "$x^2 + y_1$",
+      "display": false,
+      "source": "https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/writing-mathematical-expressions (MDV-authored synthetic input)"
+    },
+    {
+      "id": "math-display",
+      "kind": "math",
+      "modes": [
+        "github",
+        "qiita"
+      ],
+      "code": "\\frac{1}{2} + \\sqrt{x}",
+      "markdown": "```math\n\\frac{1}{2} + \\sqrt{x}\n```",
+      "display": true,
+      "source": "https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/writing-mathematical-expressions (MDV-authored synthetic input)"
+    },
+    {
+      "id": "math-backtick",
+      "kind": "math",
+      "modes": [
+        "github",
+        "qiita"
+      ],
+      "code": "\\text{a\\_b} + x",
+      "markdown": "$`\\text{a\\_b} + x`$",
+      "display": false,
+      "source": "https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/writing-mathematical-expressions (MDV-authored synthetic input)"
+    },
+    {
+      "id": "math-matrix",
+      "kind": "math",
+      "modes": [
+        "github",
+        "qiita"
+      ],
+      "code": "\\begin{pmatrix}a&b\\\\c&d\\end{pmatrix}",
+      "markdown": "```math\n\\begin{pmatrix}a&b\\\\c&d\\end{pmatrix}\n```",
+      "display": true,
+      "source": "https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/writing-mathematical-expressions (MDV-authored synthetic input)"
+    },
+    {
+      "id": "math-tag",
+      "kind": "math",
+      "modes": [
+        "github",
+        "qiita"
+      ],
+      "code": "x=1\\tag{A}",
+      "markdown": "```math\nx=1\\tag{A}\n```",
+      "display": true,
+      "source": "https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/writing-mathematical-expressions (MDV-authored synthetic input)"
+    },
+    {
+      "id": "html-css",
+      "kind": "pending",
+      "modes": [
+        "github",
+        "qiita"
+      ],
+      "markdown": "# 日本語 Heading\n\nParagraph **bold** *italic* ~~strike~~ :rocket:\n\n| Left | Right |\n|:---|---:|\n| a | b |\n\n<details open><summary>Details</summary>\n\nBody\n\n</details>\n\n```js\nconst x = 1;\n```",
+      "reason": "本文全体のCSS・フォント・絵文字・色分けは実サイトの版付きDOM/画像が未取得。",
+      "source": "MDV-authored coverage probe; no expected service output yet"
+    },
+    {
+      "id": "anchors",
+      "kind": "pending",
+      "modes": [
+        "github",
+        "qiita"
+      ],
+      "markdown": "[Jump](#custom)\n\n<a name=\"custom\"></a>\n\n## 見出し\n\nFootnote[^x]\n\n[^x]: Note",
+      "reason": "アンカー/脚注の実サイト出力と操作記録が未取得。",
+      "source": "MDV-authored coverage probe; no expected service output yet"
+    },
+    {
+      "id": "geojson",
+      "kind": "pending",
+      "modes": [
+        "github"
+      ],
+      "markdown": "```geojson\n{\"type\":\"Point\",\"coordinates\":[139,35]}\n```",
+      "reason": "GeoJSONのサービス描画・地図資材の基準が未取得。",
+      "source": "MDV-authored coverage probe; no expected service output yet"
+    },
+    {
+      "id": "topojson",
+      "kind": "pending",
+      "modes": [
+        "github"
+      ],
+      "markdown": "```topojson\n{\"type\":\"Topology\",\"objects\":{},\"arcs\":[]}\n```",
+      "reason": "TopoJSONのサービス描画基準が未取得。",
+      "source": "MDV-authored coverage probe; no expected service output yet"
+    },
+    {
+      "id": "stl",
+      "kind": "pending",
+      "modes": [
+        "github"
+      ],
+      "markdown": "```stl\nsolid test\nendsolid test\n```",
+      "reason": "STLのサービス描画基準が未取得。",
+      "source": "MDV-authored coverage probe; no expected service output yet"
+    },
+    {
+      "id": "plantuml",
+      "kind": "pending",
+      "modes": [
+        "qiita"
+      ],
+      "markdown": "```plantuml\n@startuml\nAlice -> Bob: Hello\n@enduml\n```",
+      "reason": "PlantUMLのサービス描画・バージョンの基準が未取得。",
+      "source": "MDV-authored coverage probe; no expected service output yet"
+    },
+    {
+      "id": "embed",
+      "kind": "pending",
+      "modes": [
+        "qiita"
+      ],
+      "markdown": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "reason": "リンクカード/外部埋め込みの固定応答・実サイト基準が未取得。",
+      "source": "MDV-authored coverage probe; no expected service output yet"
+    },
+    {
+      "id": "references",
+      "kind": "pending",
+      "modes": [
+        "github"
+      ],
+      "markdown": "#123 @octocat\n\n![local](../image.png)",
+      "reason": "リポジトリ文脈・画像プロキシ・相対リンクの実サイト基準が未取得。",
+      "source": "MDV-authored coverage probe; no expected service output yet"
+    }
+  ]
+}

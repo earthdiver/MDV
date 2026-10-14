@@ -1,0 +1,12 @@
+source "https://rubygems.org"
+
+ruby ">= 3.3", "< 4.0"
+
+# Use the exact public implementations used by the compatibility corpus.
+gem "github-markup", git: "https://github.com/github/markup.git",
+    ref: "84e47f9a64c993f8f3f91be639231f02aa4df730"
+gem "commonmarker", "2.8.2"
+gem "qiita-markdown", git: "https://github.com/increments/qiita-markdown.git",
+    ref: "e41466a43608c001f2b8be1a5cbe752d76698a7c"
+gem "qiita_marker", git: "https://github.com/increments/qiita_marker.git",
+    ref: "cb88c6062b43973c4508f568d1bce86de4a6acdb"

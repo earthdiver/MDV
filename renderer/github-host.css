@@ -1,0 +1,77 @@
+/* Application integration. Typography and controls use Primer; colors use its tokens. */
+html { scroll-padding-top:28px; }
+body { margin:0; }
+/* GitHub's article links add underlines to Primer's base link styling. */
+.markdown-body a[href]:not(.anchor):not(.mdv-heading-link) { text-decoration:underline; text-underline-offset:.2rem; }
+#document { box-sizing:border-box; max-width:980px; padding:40px 56px 100px; margin:auto; }
+.octicon { display:inline-block; overflow:visible; vertical-align:text-bottom; fill:currentColor; }
+.markdown-body :is(h1,h2,h3,h4,h5,h6):has(> .mdv-heading-link) { position:relative; }
+/* Match the service's 28px anchor, centered on its heading wrapper. Our
+   anchor lives inside the heading; h1/h2's bottom border is outside its
+   positioning box, so include that pixel before applying the service offset. */
+.markdown-body .mdv-heading-link { display:flex; align-items:center; justify-content:center; position:absolute; top:50%; left:-28px; width:28px; height:28px; margin:0; padding-right:4px; transform:translateY(-50%); border-radius:6px; font-size:16px; font-weight:400; line-height:1; opacity:0; pointer-events:auto; }
+.markdown-body :is(h1,h2) > .mdv-heading-link { top:calc(50% + .5px); transform:translateY(calc(-50% - .3rem)); }
+.markdown-body .mdv-heading-link .octicon-link { visibility:visible; vertical-align:text-bottom; }
+.markdown-body :is(h1,h2,h3,h4,h5,h6):hover > .mdv-heading-link,
+.markdown-body .mdv-heading-link:focus-visible { opacity:1; pointer-events:auto; }
+.markdown-body .mdv-heading-link:focus-visible .octicon-link { visibility:visible; }
+.markdown-body .mdv-heading-link:focus-visible { outline:2px solid var(--focus-outlineColor); outline-offset:-2px; }
+pre { position:relative; tab-size:4; }
+.copy-code { position:absolute; right:8px; top:8px; opacity:0; cursor:pointer; }
+pre:hover .copy-code,.copy-code:focus-visible { opacity:1; }
+.markdown-body .task-list-item { list-style-type:none; }
+.markdown-body .task-list-item-checkbox { margin:0 .2em .25em -1.4em; vertical-align:middle; }
+/* Published Primer markdown.css does not include GitHub's alert wrapper. */
+.markdown-alert { padding:8px 16px; margin-bottom:16px; border-left:4px solid var(--tone); }
+.markdown-alert > :last-child { margin-bottom:0; }
+.markdown-alert .markdown-alert-title { display:flex; align-items:center; gap:8px; color:var(--tone); font-weight:500; line-height:1; }
+.markdown-alert-note { --tone:var(--fgColor-accent); }
+.markdown-alert-tip { --tone:var(--fgColor-success); }
+.markdown-alert-important { --tone:var(--fgColor-done); }
+.markdown-alert-warning { --tone:var(--fgColor-attention); }
+.markdown-alert-caution { --tone:var(--fgColor-danger); }
+/* Retain the existing tokenizer; obtain its colors from official theme tokens. */
+.hljs-comment,.hljs-quote { color:var(--prettylights-syntax-comment); }
+.hljs-keyword,.hljs-selector-tag { color:var(--prettylights-syntax-keyword); }
+.hljs-string,.hljs-regexp { color:var(--prettylights-syntax-string); }
+.hljs-number,.hljs-literal,.hljs-built_in,.hljs-attr { color:var(--prettylights-syntax-constant); }
+.hljs-title,.hljs-section { color:var(--prettylights-syntax-entity); }
+.hljs-name,.hljs-selector-class { color:var(--prettylights-syntax-entityTag); }
+.hljs-variable,.hljs-template-variable { color:var(--prettylights-syntax-variable); }
+.hljs-deletion { color:var(--prettylights-syntax-markup-deleted-text); background:var(--prettylights-syntax-markup-deleted-bg); }
+.hljs-addition { color:var(--prettylights-syntax-markup-inserted-text); background:var(--prettylights-syntax-markup-inserted-bg); }
+.sr-only { position:absolute; width:1px; height:1px; padding:0; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+.blocked-image { color:var(--fgColor-muted); font-size:13px; }
+.math-container,.math-display { overflow-x:auto; }
+.math-block { display:block; }
+.math-error { color:var(--fgColor-danger); }
+.diagram { margin:16px 0; overflow:auto; text-align:center; }
+.diagram:has(svg) { min-height:180px; }
+.diagram svg { display:block; margin:0 auto; max-width:100%; height:auto; }
+.diagram-print { display:none; }
+.diagram-error,.render-error { border-left:4px solid var(--fgColor-danger); }
+.color-swatch,.inline-code-color { display:inline-block; width:.85em; height:.85em; border:1px solid var(--borderColor-default); border-radius:2px; margin-left:6px; }
+::highlight(mdv-search) { background:#ffde7080; color:inherit; }
+::highlight(mdv-current) { background:#ffac33; color:#111; }
+@media(max-width:700px) { #document { padding:24px; } }
+@media print {
+  :root[data-color-mode] { color-scheme:light; }
+  #document { padding:0; max-width:none; }
+  .markdown-body .mdv-heading-link,.copy-code,.diagram-screen { display:none !important; }
+  .diagram-print { display:block; }
+  pre,blockquote,.diagram { break-inside:avoid; }
+  .markdown-body pre,.markdown-body pre code { white-space:pre-wrap; }
+}
+
+/* Live GitHub reserves at least 52px for highlighted code blocks. */
+.markdown-body pre:has(> code[data-mdv-highlighter]),.markdown-body pre:has(> code.language-diff),.markdown-body pre[data-mdv-highlighter] { min-height:52px; }
+.markdown-body g-emoji { display:inline-block; font-family:"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol"; font-size:1.25em; font-style:normal; font-weight:400; line-height:1; vertical-align:-.075em; }
+/* The service wraps headings, so its first quoted heading keeps this margin. */
+.markdown-body blockquote > :is(h1,h2,h3,h4,h5,h6):first-child { margin-top:24px; }
+
+/* Native alerts retain the code margin inside their clipboard wrapper. */
+.markdown-alert > pre:last-child { margin-bottom:16px; }
+
+/* The native table accessibility wrapper keeps its inner table bottom margin. */
+.markdown-body > table:last-child { margin-bottom:16px !important; }
+.markdown-body > :is(h1,h2,h3,h4,h5,h6):last-child { margin-bottom:16px !important; }

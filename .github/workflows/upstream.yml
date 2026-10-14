@@ -1,0 +1,44 @@
+name: Verify public implementation engines
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  upstream:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4.11'
+          bundler: '2.6.9'
+      - run: npm ci
+      - run: npm run upstream:setup
+      - run: npm run upstream:test
+      - run: npm run upstream:check
+      - run: npx playwright install --with-deps chromium
+      - run: dotnet run --project tools/Mdv.EngineProbe -- engines/original "$(ruby -rrbconfig -e 'print RbConfig.ruby')" artifacts/original-engines/gems
+        shell: bash
+      - run: npm run build
+      - run: MDV_RUBY="$(ruby -rrbconfig -e 'print RbConfig.ruby')" npm run test:browser -- renderer/test/browser/original.spec.mjs
+        shell: bash
+      - run: npm run upstream:test:browser
+      - run: npm run upstream:stages
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: original-engines-${{ matrix.os }}
+          path: |
+            artifacts/compatibility/original-engines/
+            artifacts/compatibility/stages/

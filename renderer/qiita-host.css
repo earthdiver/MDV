@@ -1,0 +1,40 @@
+/* MDV viewer layout and controls for its independently implemented Qiita style. */
+html { scroll-padding-top:28px; background:var(--color-surface); }
+body { margin:0; background:var(--color-surface); }
+#document { box-sizing:border-box; max-width:980px; padding:40px 56px 100px; margin:auto; }
+.sr-only { position:absolute; width:1px; height:1px; padding:0; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+/* Input IDs are namespaced. Retain the original footnote-reference decoration. */
+.it-MdContent sup a.qiita-footnote-ref { padding-inline:.2em; scroll-margin-top:41px; }
+.it-MdContent sup a.qiita-footnote-ref::before { content:"["; }
+.it-MdContent sup a.qiita-footnote-ref::after { content:"]"; }
+/* Keep hidden links keyboard-reachable while retaining the upstream icon. */
+.it-MdContent :is(h1,h2,h3,h4,h5,h6) > a.mdv-heading-link { display:flex; opacity:0; pointer-events:none; }
+.it-MdContent :is(h1,h2,h3,h4,h5,h6):hover > a.mdv-heading-link,
+.it-MdContent a.mdv-heading-link:focus-visible { opacity:1; pointer-events:auto; }
+.copy-code { position:absolute; right:7px; top:7px; padding:4px 9px; font:11px "Segoe UI",sans-serif; border:1px solid #5e6060; background:#1d2020; color:#fff; border-radius:5px; opacity:0; cursor:pointer; }
+.code-frame:hover .copy-code,.copy-code:focus { opacity:1; }
+.diagram { margin:20px 0; overflow:auto; text-align:center; font:16px Arial,sans-serif; }
+.diagram svg { max-width:100%; height:auto; }
+.diagram-print { display:none; }
+.diagram-error,.render-error { border-left:4px solid #cf222e; }
+.math-container,.math-display { overflow-x:auto; }
+.math-block { display:block; }
+.math-error { color:#d1242f; }
+.blocked-image { color:var(--color-mediumEmphasis); font-size:13px; }
+.inline-code-color,.color-swatch { display:inline-block; width:.85em; height:.85em; border:1px solid var(--color-divider); border-radius:2px; margin-left:6px; }
+.diff-line { display:inline-block; min-width:100%; }
+.diff-add { background:#2da44e26; } .diff-remove { background:#ff818226; }
+::highlight(mdv-search) { background:#ffde7080; color:inherit; }
+::highlight(mdv-current) { background:#ffac33; color:#111; }
+/* MDV dark mode: site account-controlled dark theme is not verified. */
+@media screen {
+  [data-theme=dark] { color-scheme:dark; --color-surface:#0d1117; --color-background:#0d1117; --color-highEmphasis:#e6edf3; --color-mediumEmphasis:#a8b3bd; --color-divider:#3d444d; --color-surfaceVariant:#30363d; --color-greenText:#8bdf4c; --color-greenContainerVariant:#20391b; --color-yellowContainer:#413815; --color-redContainer:#482425; }
+}
+@media(max-width:700px) { #document { padding:24px; } }
+@media print {
+  #document { padding:0; max-width:none; }
+  .it-MdContent :is(h1,h2,h3,h4,h5,h6) > a.mdv-heading-link,.copy-code,.diagram-screen { display:none !important; }
+  .diagram-print { display:block; }
+  .code-frame,.diagram { break-inside:avoid; }
+  .code-frame { print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+}
