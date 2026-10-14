@@ -2,7 +2,7 @@
 
 [日本語](compatibility.md) | [English README](../README.en.md)
 
-MDV primarily targets Markdown documents in GitHub repositories and Qiita article content. GitHub comments can handle line breaks and links differently from repository documents. Identical output to the live websites is not guaranteed.
+MDV primarily targets Markdown documents in GitHub repositories and Qiita article content. GitHub comments can handle line breaks and links differently from repository documents. Development aims to reproduce the appearance and behavior of the live websites, but some differences in syntax support and rendering remain.
 
 ## Rendering engines
 
@@ -79,7 +79,11 @@ E = mc^2
 ```
 ````
 
-Use a `mermaid` code fence for diagrams. Versions and settings differ from the sites, so diagram types, text placement, and line shapes may differ. PlantUML, GeoJSON/TopoJSON maps, and STL 3D models are not rendered.
+Use a `mermaid` code fence for diagrams. Both engines use Mermaid 12.1.0 in GitHub mode and 11.12.1 in Qiita mode, matching the live service versions observed on October 14, 2026. Mindmaps are supported. Settings, fonts, zoom levels, and subsequent service updates can still affect text placement and line shapes.
+
+MDV preserves indentation in diagram code. In an observed Qiita article, the service embedding process collapsed consecutive spaces, causing a mindmap that renders from the original source to fail. MDV does not reproduce errors caused by this service-side input transformation.
+
+PlantUML, GeoJSON/TopoJSON maps, and STL 3D models are not rendered.
 
 ### Differences from the sites
 
@@ -88,7 +92,8 @@ Use a `mermaid` code fence for diagrams. Versions and settings differ from the s
 | Appearance | Fonts, spacing, colors, and emoji shapes may differ |
 | Link cards and embeds | Qiita cards show URLs by default; titles and thumbnails can be explicitly downloaded and saved for offline use. Videos, posts, and slide embeds are not reproduced |
 | GitHub-specific references | Issue/PR references such as `#123`, commit links, and repository-specific destinations are not resolved |
-| Document HTML | Scripts, custom styling, forms, embedded external pages, and similar content are removed |
+| Document HTML | Scripts, forms, and embedded external pages are removed; only allowed elements and attributes are displayed. GitHub mode removes `<font>` colors and authored text colors in `style` attributes. Qiita mode permits some styling, including `<font color="…">` |
+| Saved external images | Images from public GitHub repositories and Qiita can be explicitly downloaded and saved for offline display. GitHub relative paths are resolved against the supplied document URL. Fetching private repositories requiring authentication is not supported |
 | Local images and links | Restricted to the document folder. See [Usage and settings](portable.en.md#images-and-links) |
 
 ### Encodings and limits
@@ -101,6 +106,7 @@ Supported encodings are UTF-8, UTF-16/32 with a byte order mark (BOM), and Shift
 | --- | --- |
 | Document | 16 MiB and approximately 4.19 million characters; emoji and similar characters may count as multiple units |
 | Image | 32 MiB per file |
+| GitHub/Qiita image snapshots | 128 images and 256 MiB total per document |
 | Mermaid | 40 diagrams per document; 50,000 characters and 500 edges per diagram |
 
 Complex diagrams or math can be slow even within these limits.
