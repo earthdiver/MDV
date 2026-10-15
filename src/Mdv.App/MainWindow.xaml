@@ -36,6 +36,7 @@
      <MenuItem Header="{DynamicResource TextImportQiitaImages}" Click="ImportQiitaImages_Click" />
      <MenuItem x:Name="SavedQiitaImagesMenu" Header="{DynamicResource TextUseSavedQiitaImages}" IsCheckable="True" Click="SavedQiitaImages_Click" />
      <MenuItem Header="{DynamicResource TextDeleteQiitaImages}" Click="DeleteQiitaImages_Click" />
+     <MenuItem x:Name="QiitaCdnImagesMenu" Header="{DynamicResource TextQiitaCdnImages}" IsCheckable="True" Click="QiitaCdnImages_Click" />
     </MenuItem>
     <MenuItem x:Name="GithubImagesMenu" Header="{DynamicResource TextGithubImagesMenu}">
      <MenuItem Header="{DynamicResource TextImportGithubImages}" Click="ImportGithubImages_Click" />

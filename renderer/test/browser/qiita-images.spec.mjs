@@ -46,6 +46,31 @@ for(const engine of ['legacy','original'])test.describe(`${engine}: saved Qiita 
     await page.waitForFunction(()=>document.querySelector('#document img').naturalWidth===1);
     expect(remote).toEqual([]);
   });
+  test('CDN selection preserves signatures, dimensions and original sources and can be disabled',async({page})=>{
+    const cdn='https://qiita-user-contents.imgix.net/'+encodeURIComponent(source)+'?w=1400&s=published-signature';
+    const requests=[];
+    await page.route('https://**/*',r=>{
+      requests.push(r.request().url());
+      return r.request().url()===cdn?r.fulfill({body:pixels,contentType:'image/png'}):r.abort();
+    });
+    await page.goto('/');await page.waitForFunction(()=>window.mdv);
+    const markdown=`<picture><source srcset="https://example.com/other.png"><img src="${source}" width="80"></picture>\n\n![Other](https://example.com/unmatched.png)`;
+    const options={engine,mode:'qiita',markdown,allowRemoteImages:false,original:original?{...await original.render(markdown),metadata:original.metadata}:undefined};
+    await page.evaluate(o=>window.mdv.render(o),{...options,qiitaCdnImages:{[source]:cdn},savedQiitaImages:{[source]:saved}});
+    await expect(page.locator('img').first()).toHaveAttribute('src',cdn);
+    await expect(page.locator('img').first()).toHaveAttribute('width','80');
+    await page.waitForFunction(()=>document.querySelector('#document img').naturalWidth===1);
+    await expect(page.locator('picture source')).toHaveCount(0);
+    await expect(page.locator('img.blocked-image')).toHaveCount(1);
+    expect(requests).toEqual([cdn]);
+    expect(await page.evaluate(()=>window.mdv.getImageSources())).toContain(source);
+    await page.evaluate(o=>window.mdv.render(o),options);
+    await expect(page.locator('img.blocked-image')).toHaveCount(2);
+    for(const replacement of ['https://example.com/tracker.png',cdn.replace('image.png','wrong.png'),cdn.replace('imgix.net/','imgix.net.evil.test/')]) {
+      await page.evaluate(o=>window.mdv.render(o),{...options,qiitaCdnImages:{[source]:replacement}});
+      await expect(page.locator('img.blocked-image')).toHaveCount(2);
+    }
+  });
   test('untrusted replacement URLs are rejected and archive errors remain visible',async({page})=>{
     await page.goto('/');await page.waitForFunction(()=>window.mdv);
     const markdown=`![Image](${source})`;
@@ -61,6 +86,6 @@ for(const engine of ['legacy','original'])test.describe(`${engine}: saved Qiita 
 
 test('saved Qiita images do not affect GitHub mode',async({page})=>{
   await page.goto('/');await page.waitForFunction(()=>window.mdv);
-  await page.evaluate(o=>window.mdv.render(o),{engine:'legacy',mode:'github',markdown:`![Image](${source})`,allowRemoteImages:false,savedQiitaImages:{[source]:saved}});
+  await page.evaluate(o=>window.mdv.render(o),{engine:'legacy',mode:'github',markdown:`![Image](${source})`,allowRemoteImages:false,savedQiitaImages:{[source]:saved},qiitaCdnImages:{[source]:'https://qiita-user-contents.imgix.net/'+encodeURIComponent(source)}});
   await expect(page.locator('img.blocked-image')).toHaveCount(1);
 });

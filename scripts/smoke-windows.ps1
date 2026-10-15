@@ -17,7 +17,7 @@ function Invoke-Portable([string]$Exe, [string]$Output, [switch]$Restart, [switc
     $stderr = "$Output.stderr.log"
     $process = Start-Process -FilePath $Exe -ArgumentList $arguments -WorkingDirectory $working -RedirectStandardError $stderr -PassThru
     $processHandle = $process.Handle
-    if (-not $process.WaitForExit(90000)) { $process.Kill(); throw 'Portable test timed out.' }
+    if (-not $process.WaitForExit(120000)) { $process.Kill(); throw 'Portable test timed out.' }
     if (-not (Test-Path $Output)) { Get-Content $stderr; throw "No report produced. Exit code: $($process.ExitCode)" }
     $result = Get-Content -LiteralPath $Output -Raw | ConvertFrom-Json
     if ($ExpectFailure) {

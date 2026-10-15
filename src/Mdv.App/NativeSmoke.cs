@@ -263,7 +263,11 @@ internal static class NativeSmoke
 
             }
 
+            await CheckPerDocumentImageSelection(window, checks, Path.GetDirectoryName(reportPath)!);
+            await CheckDocumentImageImport(window, checks, Path.GetDirectoryName(reportPath)!);
+            await CheckSavedGithubImages(window, checks, Path.GetDirectoryName(reportPath)!);
             await CheckSavedQiitaImages(window, checks, Path.GetDirectoryName(reportPath)!);
+            await CheckQiitaCdnImages(window, checks, Path.GetDirectoryName(reportPath)!);
             await CheckSavedQiitaCards(window, checks, Path.GetDirectoryName(reportPath)!);
 
             // The tab checks end on an empty tab, where printing is disabled.
@@ -510,10 +514,11 @@ internal static class NativeSmoke
             await stream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 200 OK\r\nContent-Type: image/gif\r\nContent-Length: {bytes.Length}\r\nConnection: close\r\n\r\n"), deadline.Token);
             await stream.WriteAsync(bytes, deadline.Token);
         }, deadline.Token);
-        var previous = window.Settings.AllowRemoteImages;
+        var previous = window.CurrentImageSelection;
         try
         {
-            window.Settings.AllowRemoteImages = true;
+            window.SetRemoteImages(true);
+            await WaitForNavigation(window);
             var url = $"https://document.mdv.invalid/remote-image/{Uri.EscapeDataString($"http://127.0.0.1:{port}/image.gif")}";
             await window.Preview.CoreWebView2.ExecuteScriptAsync("{ const image = document.createElement('img'); image.id = 'mdv-http-smoke'; image.src = " +
                 JsonSerializer.Serialize(url) + "; document.querySelector('#document').prepend(image); }");
@@ -523,7 +528,8 @@ internal static class NativeSmoke
         }
         finally
         {
-            window.Settings.AllowRemoteImages = previous;
+            window.SetImageSelection(previous);
+            await WaitForNavigation(window);
             deadline.Cancel();
             await window.Preview.CoreWebView2.ExecuteScriptAsync("document.getElementById('mdv-http-smoke')?.remove()");
         }
@@ -551,6 +557,225 @@ internal static class NativeSmoke
             await Task.Delay(50);
         }
         throw new InvalidOperationException("Navigation did not finish.");
+    }
+
+    private static async Task CheckPerDocumentImageSelection(MainWindow window, List<string> checks, string folder)
+    {
+        const string source = "https://example.com/per-document.png";
+        var cdn = "https://qiita-user-contents.imgix.net/" + Uri.EscapeDataString(source) + "?w=1400&s=document-fixture";
+        var previousEngine = window.Settings.Engine;
+        void ServeFixture(object? sender, CoreWebView2WebResourceRequestedEventArgs e)
+        {
+            if (e.Request.Uri != source && e.Request.Uri != cdn) return;
+            if (e.Response != null) return; // A request from a tab being left may already be blocked.
+            var pixels = Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l9sAAAAASUVORK5CYII=");
+            e.Response = window.Preview.CoreWebView2.Environment.CreateWebResourceResponse(new MemoryStream(pixels), 200, "OK", "Content-Type: image/png");
+        }
+        window.Preview.CoreWebView2.WebResourceRequested += ServeFixture;
+        try
+        {
+            foreach (var engine in BuildEdition.CanSwitch ? new[] { "legacy", "original" } : new[] { BuildEdition.DefaultEngine })
+            {
+                var first = Path.Combine(folder, "image-preferences-first-" + engine + ".md");
+                var second = Path.Combine(folder, "image-preferences-second-" + engine + ".md");
+                var third = Path.Combine(folder, "image-preferences-third-" + engine + ".md");
+                foreach (var path in new[] { first, second, third }) await File.WriteAllTextAsync(path, "![Image](" + source + ")");
+                using (var importer = new DocumentImageImporter(remoteHandler: new SavedImageTestHandler("")))
+                    await importer.ImportAsync(first, true, [source]);
+                await window.OpenDocumentAsync(first, remember: false, newTab: true);
+                window.SetEngine(engine); window.SetMode("qiita");
+                window.SetQiitaCdnImages(first, new() { [source] = cdn });
+                await WaitForNavigation(window);
+                var firstTab = window.Workspace.Active;
+                await window.OpenDocumentAsync(second, remember: false, newTab: true);
+                window.SetMode("qiita"); window.SetRemoteImages(true);
+                await WaitForNavigation(window);
+                var secondTab = window.Workspace.Active;
+                await window.SelectTabAsync(firstTab);
+                await WaitFor(window, "document.querySelector('#document img').naturalWidth === 1");
+                if (window.CurrentImageSelection != ImageSourceSelection.Cdn || !window.QiitaCdnImagesMenu.IsChecked || window.RemoteImagesMenu.IsChecked)
+                    throw new IOException("Qiita CDN choice did not survive switching documents.");
+                window.SetMode("github"); window.SetSavedGithubImages(true);
+                await WaitForNavigation(window);
+                await WaitFor(window, "document.querySelector('#document img').src.includes('/github-image/') && document.querySelector('#document img').naturalWidth === 1");
+                await window.SelectTabAsync(secondTab);
+                if (window.CurrentImageSelection != ImageSourceSelection.Remote || !window.RemoteImagesMenu.IsChecked)
+                    throw new IOException("The second document lost its remote-image choice.");
+                window.SetMode("github"); window.SetRemoteImages(true);
+                await WaitForNavigation(window);
+                await window.OpenDocumentAsync(third, remember: false);
+                window.SetImageSelection(ImageSourceSelection.Off);
+                await WaitForNavigation(window);
+                await window.NavigateHistoryAsync(-1);
+                await WaitForNavigation(window);
+                if (window.Workspace.Active.Document?.FilePath != second || window.CurrentImageSelection != ImageSourceSelection.Remote)
+                    throw new IOException("History navigation did not restore the document's image choice.");
+                await window.SelectTabAsync(firstTab);
+                if (window.CurrentImageSelection != ImageSourceSelection.Saved || !window.SavedGithubImagesMenu.IsChecked || window.RemoteImagesMenu.IsChecked)
+                    throw new IOException("GitHub saved-image choice did not survive switching documents.");
+                window.SetMode("qiita"); await WaitForNavigation(window);
+                await window.OpenDocumentAsync(first, remember: false);
+                if (window.CurrentImageSelection != ImageSourceSelection.Cdn || !window.QiitaCdnImagesMenu.IsChecked)
+                    throw new IOException("Reload or syntax changes lost the document's Qiita image choice.");
+                checks.Add(engine + " image choices follow each document and syntax mode across tabs, history and reload");
+                window.SetImageSelection(ImageSourceSelection.Off);
+                await WaitForNavigation(window);
+            }
+        }
+        finally
+        {
+            window.Preview.CoreWebView2.WebResourceRequested -= ServeFixture;
+            window.SetEngine(previousEngine);
+        }
+    }
+
+    private static async Task CheckDocumentImageImport(MainWindow window, List<string> checks, string folder)
+    {
+        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        var pixels = Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l9sAAAAASUVORK5CYII=");
+        await File.WriteAllBytesAsync(Path.Combine(folder, "local-import.png"), pixels);
+        var expected = BuildEdition.CanSwitch ? 4 : 2;
+        var serve = Task.Run(async () =>
+        {
+            for (var request = 0; request < expected; request++)
+            {
+                using var client = await listener.AcceptTcpClientAsync(deadline.Token);
+                await using var stream = client.GetStream();
+                using var reader = new StreamReader(stream, Encoding.ASCII, leaveOpen: true);
+                while (await reader.ReadLineAsync(deadline.Token) is { Length: > 0 }) { }
+                await stream.WriteAsync(Encoding.ASCII.GetBytes($"HTTP/1.1 200 OK\r\nContent-Type: image/png\r\nContent-Length: {pixels.Length}\r\nConnection: close\r\n\r\n"), deadline.Token);
+                await stream.WriteAsync(pixels, deadline.Token);
+            }
+        }, deadline.Token);
+        var remote = window.Settings.AllowRemoteImages;
+        var savedGithub = window.Settings.UseSavedGithubImages;
+        var savedQiita = window.Settings.UseSavedQiitaImages;
+        var previousEngine = window.Settings.Engine;
+        try
+        {
+            foreach (var github in new[] { true, false })
+            foreach (var engine in BuildEdition.CanSwitch ? new[] { "legacy", "original" } : new[] { BuildEdition.DefaultEngine })
+            {
+                window.Settings.AllowRemoteImages = false;
+                var path = Path.Combine(folder, $"no article URL-{github}-{engine}.md");
+                await File.WriteAllTextAsync(path, $"![Remote](http://127.0.0.1:{port}/image.png)\n\n![Local](local-import.png)\n\n![Missing](missing-import.png)");
+                await window.OpenDocumentAsync(path, remember: false);
+                window.SetMode(github ? "github" : "qiita"); window.SetEngine(engine);
+                await WaitForNavigation(window);
+                var completion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                var stage = 0;
+                var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(50) };
+                timer.Tick += (_, _) =>
+                {
+                    var dialog = window.OwnedWindows.Cast<Window>().FirstOrDefault(w => w.IsVisible);
+                    if (dialog == null) return;
+                    try
+                    {
+                        var fields = Descendants(dialog).OfType<TextBox>().ToArray();
+                        if (stage == 0)
+                        {
+                            var option = Descendants(dialog).OfType<CheckBox>().SingleOrDefault();
+                            if (option == null || fields.Length == 0) return;
+                            if (option.IsChecked == true || fields[0].IsEnabled || fields[0].Text.Length != 0)
+                                throw new IOException("Saving images unexpectedly requires a service URL by default.");
+                            option.IsChecked = true;
+                            if (!fields[0].IsEnabled) throw new IOException("Optional service URL field was not enabled.");
+                            option.IsChecked = false;
+                            stage = 1;
+                            Descendants(dialog).OfType<Button>().Single(b => b.IsDefault).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                        }
+                        else if (stage == 1 && fields.Any(f => f.IsReadOnly))
+                        {
+                            var text = fields.Single(f => f.IsReadOnly).Text;
+                            if (!text.Contains("missing-import.png")) throw new IOException("Download results did not list the unresolved image.");
+                            timer.Stop(); dialog.Close(); completion.TrySetResult(true);
+                        }
+                    }
+                    catch (Exception error) { timer.Stop(); dialog.Close(); completion.TrySetException(error); }
+                };
+                timer.Start();
+                try
+                {
+                    ((MenuItem)(github ? window.GithubImagesMenu : window.QiitaImagesMenu).Items[0]).RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+                    await completion.Task.WaitAsync(TimeSpan.FromSeconds(15));
+                }
+                finally { timer.Stop(); }
+                await WaitForNavigation(window);
+                await WaitFor(window, "document.querySelector('#document img').naturalWidth === 1 && document.querySelector('#document img').src.includes('-image/')");
+                var manifest = QiitaImageArchive.Load(path, github)!;
+                if (manifest.ArticleUrl.Length != 0 || manifest.Images.Length != 1 || !manifest.Images[0].Direct || window.RemoteImagesMenu.IsChecked)
+                    throw new IOException("URL-free image snapshot or offline selection was incorrect.");
+                checks.Add(engine + " " + (github ? "GitHub" : "Qiita") + " save dialog needs no article URL, reports missing images and displays the direct snapshot offline");
+            }
+            await serve;
+        }
+        finally
+        {
+            deadline.Cancel();
+            window.Settings.UseSavedGithubImages = savedGithub;
+            window.Settings.UseSavedQiitaImages = savedQiita;
+            window.Settings.AllowRemoteImages = remote;
+            window.SetEngine(previousEngine);
+        }
+    }
+
+    private static async Task CheckSavedGithubImages(MainWindow window, List<string> checks, string folder)
+    {
+        const string source = "https://raw.githubusercontent.com/example/repo/main/image.png";
+        var path = Path.Combine(folder, "saved GitHub images.md");
+        await File.WriteAllTextAsync(path, "![Saved](" + source + ")");
+        using (var importer = new GithubImageImporter(new SavedImageTestHandler("")))
+            await importer.ImportAsync(path, "https://github.com/example/repo/blob/main/readme.md", [source]);
+        var remote = window.Settings.AllowRemoteImages;
+        var saved = window.Settings.UseSavedGithubImages;
+        var previousEngine = window.Settings.Engine;
+        var originalRequests = 0;
+        void ServeFixture(object? sender, CoreWebView2WebResourceRequestedEventArgs e)
+        {
+            if (e.Request.Uri != source) return;
+            if (e.Response != null) throw new IOException("Selected GitHub original image was blocked.");
+            originalRequests++;
+            var bytes = Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l9sAAAAASUVORK5CYII=");
+            e.Response = window.Preview.CoreWebView2.Environment.CreateWebResourceResponse(
+                new MemoryStream(bytes), 200, "OK", "Content-Type: image/png\r\nCache-Control: no-store");
+        }
+        window.Preview.CoreWebView2.WebResourceRequested += ServeFixture;
+        try
+        {
+            window.Settings.AllowRemoteImages = false;
+            await window.OpenDocumentAsync(path, remember: false);
+            foreach (var engine in BuildEdition.CanSwitch ? new[] { "legacy", "original" } : new[] { BuildEdition.DefaultEngine })
+            {
+                window.SetEngine(engine); window.SetMode("github");
+                window.SetRemoteImages(true);
+                await WaitForNavigation(window);
+                await WaitFor(window, "document.querySelector('#document img').naturalWidth === 1 && document.querySelector('#document img').src.startsWith('https://raw.githubusercontent.com/')");
+                if (!window.RemoteImagesMenu.IsChecked || window.SavedGithubImagesMenu.IsChecked)
+                    throw new IOException("Selecting GitHub original images did not disable saved images.");
+                var before = originalRequests;
+                window.SetSavedGithubImages(true);
+                await WaitForNavigation(window);
+                await WaitFor(window, "document.querySelector('#document img').naturalWidth === 1 && document.querySelector('#document img').src.includes('/github-image/')");
+                if (!window.SavedGithubImagesMenu.IsChecked || window.RemoteImagesMenu.IsChecked || originalRequests != before)
+                    throw new IOException("Selecting saved GitHub images did not disable remote image requests.");
+                window.SetSavedGithubImages(false);
+                await WaitForNavigation(window);
+                await WaitFor(window, "document.querySelector('#document img.blocked-image') !== null");
+                if (window.SavedGithubImagesMenu.IsChecked || window.RemoteImagesMenu.IsChecked)
+                    throw new IOException("Both GitHub image options should be off.");
+                checks.Add(engine + " GitHub saved and remote image menus are mutually exclusive and both can be disabled");
+            }
+        }
+        finally
+        {
+            window.Preview.CoreWebView2.WebResourceRequested -= ServeFixture;
+            window.Settings.UseSavedGithubImages = saved;
+            window.Settings.AllowRemoteImages = remote;
+            window.SetEngine(previousEngine);
+        }
     }
 
     private static async Task CheckSavedQiitaImages(MainWindow window, List<string> checks, string folder)
@@ -588,6 +813,80 @@ internal static class NativeSmoke
             checks.Add("Delete saved Qiita images removes only the document snapshot and restores original image handling");
         }
         finally { window.Settings.AllowRemoteImages = remote; window.SetSavedQiitaImages(saved); window.SetEngine(previousEngine); }
+    }
+
+    private static async Task CheckQiitaCdnImages(MainWindow window, List<string> checks, string folder)
+    {
+        const string original = "https://example.com/cdn-fixture.png";
+        var service = "https://qiita-user-contents.imgix.net/" + Uri.EscapeDataString(original) + "?w=1400&s=fixture";
+        var path = Path.Combine(folder, "Qiita CDN images.md");
+        await File.WriteAllTextAsync(path, "<img src=\"" + original + "\" width=\"80\"> ");
+        var remote = window.Settings.AllowRemoteImages;
+        var previousEngine = window.Settings.Engine;
+        var allowed = 0;
+        var blocked = 0;
+        void ServeFixture(object? sender, CoreWebView2WebResourceRequestedEventArgs e)
+        {
+            if (e.Request.Uri != service && e.Request.Uri != original) return;
+            if (e.Request.Uri == service)
+            {
+                if (e.Response == null) allowed++; else blocked++;
+            }
+            var bytes = Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l9sAAAAASUVORK5CYII=");
+            e.Response = window.Preview.CoreWebView2.Environment.CreateWebResourceResponse(
+                new MemoryStream(bytes), 200, "OK", "Content-Type: image/png\r\nCache-Control: no-store");
+        }
+        window.Preview.CoreWebView2.WebResourceRequested += ServeFixture;
+        try
+        {
+            window.Settings.AllowRemoteImages = false;
+            await window.OpenDocumentAsync(path, remember: false);
+            foreach (var engine in BuildEdition.CanSwitch ? new[] { "legacy", "original" } : new[] { BuildEdition.DefaultEngine })
+            {
+                window.SetEngine(engine); window.SetMode("qiita");
+                // Use a distinct signed fixture per engine so WebView2's in-memory
+                // image reuse cannot hide the native authorization request.
+                service = "https://qiita-user-contents.imgix.net/" + Uri.EscapeDataString(original) + "?w=1400&s=fixture-" + engine;
+                var before = allowed;
+                window.SetQiitaCdnImages(path, new() { [original] = service });
+                await WaitForNavigation(window);
+                await WaitFor(window, "document.querySelector('#document img').naturalWidth === 1 && document.querySelector('#document img').src.includes('qiita-user-contents.imgix.net')");
+                await WaitFor(window, "document.querySelector('#document img').getAttribute('width') === '80'");
+                if (blocked != 0 || allowed <= before || !window.QiitaCdnImagesMenu.IsChecked || window.RemoteImagesMenu.IsChecked || window.SavedQiitaImagesMenu.IsChecked)
+                    throw new IOException($"CDN authorization check failed: engine={engine}, allowed={allowed}, before={before}, blocked={blocked}, checked={window.QiitaCdnImagesMenu.IsChecked}.");
+                window.SetMode("github"); await WaitForNavigation(window);
+                await WaitFor(window, "document.querySelector('#document img.blocked-image') !== null");
+                window.SetMode("qiita"); await WaitForNavigation(window);
+                window.QiitaCdnImagesMenu.IsChecked = false;
+                window.QiitaCdnImagesMenu.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+                await WaitForNavigation(window);
+                await WaitFor(window, "document.querySelector('#document img.blocked-image') !== null");
+                window.SetQiitaCdnImages(path, new() { [original] = service });
+                window.SetSavedQiitaImages(true);
+                await WaitForNavigation(window);
+                if (!window.SavedQiitaImagesMenu.IsChecked || window.RemoteImagesMenu.IsChecked || window.QiitaCdnImagesMenu.IsChecked)
+                    throw new IOException("Selecting saved images did not disable the other image sources.");
+                window.SetQiitaCdnImages(path, new() { [original] = service });
+                await WaitForNavigation(window);
+                window.SetRemoteImages(true);
+                await WaitForNavigation(window);
+                await WaitFor(window, "document.querySelector('#document img').naturalWidth === 1 && document.querySelector('#document img').src === 'https://example.com/cdn-fixture.png'");
+                if (!window.RemoteImagesMenu.IsChecked || window.SavedQiitaImagesMenu.IsChecked || window.QiitaCdnImagesMenu.IsChecked)
+                    throw new IOException("Selecting original images did not disable the other image sources.");
+                window.SetRemoteImages(false);
+                await WaitForNavigation(window);
+                await WaitFor(window, "document.querySelector('#document img.blocked-image') !== null");
+                checks.Add(engine + " Qiita image source menus are mutually exclusive for CDN, saved and original images");
+                checks.Add(engine + " Qiita CDN image loads through native authorization, preserves width, ignores GitHub mode and can be disabled");
+            }
+        }
+        finally
+        {
+            window.Preview.CoreWebView2.WebResourceRequested -= ServeFixture;
+            window.SetQiitaCdnImages(path, null);
+            window.Settings.AllowRemoteImages = remote;
+            window.SetEngine(previousEngine);
+        }
     }
 
     private static async Task CheckSavedQiitaCards(MainWindow window, List<string> checks, string folder)

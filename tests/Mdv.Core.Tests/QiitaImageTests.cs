@@ -36,6 +36,15 @@ static class QiitaImageTests
             Assert(found.Count == 1 && found[Original] == Service);
             Assert(QiitaImageImporter.FindImages($"<img src='{Service}'>", ["https://example.com/other.png"]).Count == 0);
         });
+        check("Qiita CDN lookup fetches only the article and preserves signed URLs", () => {
+            var requests = new List<string>();
+            using var importer = new QiitaImageImporter(new ImageTestHandler(r => {
+                requests.Add(r.RequestUri!.AbsoluteUri); return Html();
+            }));
+            var images = importer.ResolveCdnImagesAsync(Article, [Original]).GetAwaiter().GetResult();
+            Assert(images[Original] == Service && requests.SequenceEqual(new[] { Article }));
+            Throws<InvalidDataException>(() => importer.ResolveCdnImagesAsync(Article, ["https://example.com/other.png"]).GetAwaiter().GetResult());
+        });
         check("Qiita import saves matching images once and reads them offline after moving", () => {
             var requests = new List<string>();
             using var importer = new QiitaImageImporter(new ImageTestHandler(r => {

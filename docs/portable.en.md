@@ -50,15 +50,30 @@ GitHub mode removes authored HTML text colors (`font color` and `style="color:�
 
 Remote images are disabled by default. Enabling **View → Load remote images** connects to the image hosts. Document text is never sent to an external conversion service. Web and email links open in the default application when clicked.
 
-Normally, images use their authored sources. To use Qiita's resized/converted service images, select Qiita mode, then **View → Qiita service images → Download and save from article**, and enter the document's public article URL. Only images whose source URLs match the open document are saved, and saved-image use is enabled. This operation contacts the Qiita article page and image CDN. You can cancel it; failure or cancellation preserves the previous snapshot.
+In either mode, choose **View → GitHub images / Qiita images → Download and save images…** to save authored HTTP/HTTPS images for offline viewing. No article or document URL is required by default. Existing local images keep their files; move those files together with the document.
 
-Saved images work offline in both engines, including when remote images are disabled. Uncheck **Use saved service images** to restore authored images. This application-wide setting only affects documents with saved snapshots. Unsaved remote images still follow the remote-image setting. Opening, reloading and switching modes never download a new snapshot. Use the download command again to update it, or **Delete saved images for this document** to remove it.
+The save dialog has an optional service setting, off by default:
 
-Images for `example.md` are stored beside it in `example.md.mdv-qiita-images.zip`. Move both files together. If you rename the document, rename the corresponding part of the snapshot filename too. The folder must be writable. Limits are 128 images and 256 MiB per document, with 32 MiB per image. Snapshots preserve the images at download time and do not automatically follow service changes.
+| Mode | Optional setting | When a document URL is required |
+| --- | --- | --- |
+| GitHub | Also resolve repository images from GitHub | Resolve relative paths that are not available locally against a public GitHub document |
+| Qiita | Use Qiita's published CDN images | Match authored sources to signed CDN URLs in a public article |
 
-In GitHub mode, use **View → GitHub images → Download and save from GitHub** and enter the public document's GitHub blob URL or raw URL. Relative paths resolve from that document; leading `/` paths resolve from the repository root. Parent paths such as `../images/a.png` work within the repository. Downloads are restricted to GitHub raw images; private repositories requiring authentication are unsupported. For branch names containing `/`, use a commit SHA in the URL.
+For GitHub resolution, enter the public document's blob or raw URL. Relative paths resolve from the document, leading `/` paths from the repository root, and `../images/a.png` is supported within the repository. These additional downloads use GitHub raw images. Private repositories requiring authentication are unsupported. For branch names containing `/`, use a commit SHA. Absolute remote-image URLs can be saved without this setting.
 
-GitHub snapshots are saved beside the Markdown as `example.md.mdv-github-images.zip`. **Use saved images** enables offline display in both engines without changing the Markdown. Moving, renaming, refreshing, deleting, size limits and failure preservation work as for Qiita images. The GitHub and Qiita settings are independent.
+The Qiita setting requires a public article URL. Matching images use the published standard-density CDN variant (`1x` in `srcset`, otherwise `src`); unmatched remote images use their authored URLs. Default saving downloads the original S3 or other source image without CDN resizing or conversion. Display size also depends on content width, zoom and authored dimensions, so it is not guaranteed to match Qiita exactly.
+
+Results show saved images, existing local images and unsaved images, listing every unsaved source and reason. Partial success updates the snapshot with the images downloaded this time, replacing the previous snapshot. If no image can be saved, or the overall operation fails or is cancelled, previous snapshots and display settings are preserved. Successful saving enables **Use saved images**.
+
+Saved images work offline in both engines. In GitHub mode, **Use saved images** and **Load remote images** are mutually exclusive. In Qiita mode, enabling **Use saved images**, **Load remote images** or **Display directly from CDN** turns off the other two options. All options can be off. Local images remain visible. With saved images selected, remote images without a matching snapshot are not displayed. Enable **Load remote images** to display authored sources online. Image loading failures do not automatically switch to another source.
+
+Qiita's **Display directly from CDN…** displays matching article images online without creating a snapshot. This feature requires an article URL. Selection changes only after article lookup succeeds; failure or cancellation preserves the previous selection. Unmatched remote images are not displayed. Uncheck to disable.
+
+Image source selections are retained per document and syntax mode until exit, including across tab changes, back/forward navigation and reload.
+
+Snapshots for `example.md` are stored beside it as `example.md.mdv-github-images.zip` or `example.md.mdv-qiita-images.zip`. Markdown is unchanged. Move the ZIP with the document and rename its document-name portion when renaming the Markdown. Limits are 128 images and 256 MiB per document, with 32 MiB per image.
+
+Snapshots preserve the images at download time. Opening, reloading and switching modes do not refresh them. Run **Download and save images…** again to update, or **Delete saved images for this document** to remove the snapshot. GitHub and Qiita snapshots and saved-image settings are independent.
 
 Local images and linked Markdown must be in the open document's folder or its subfolders. Parent-folder references and files or folders accessed through junctions or symbolic links are unsupported.
 
@@ -74,7 +89,7 @@ Cards are stored beside the document in `example.md.mdv-qiita-cards.zip`. Move o
 
 ## Save and move settings
 
-Settings are stored in an `.ini` beside the executable with the same base name. The examples below use `MDV.exe` and `MDV.ini`. Settings include language, engine, syntax mode, theme, zoom, outline, source pane, remote images, and recent files. Normally, change them using the menus.
+Settings are stored in an `.ini` beside the executable with the same base name. The examples below use `MDV.exe` and `MDV.ini`. Settings include language, engine, syntax mode, theme, zoom, outline, source pane, and recent files. Normally, change them using the menus.
 
 - **Move**: close MDV and move `MDV.exe` and `MDV.ini` together.
 - **Rename**: if you rename the executable to `Reader.exe`, rename its settings to `Reader.ini`.

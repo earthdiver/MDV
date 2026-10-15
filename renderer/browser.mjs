@@ -181,7 +181,17 @@ function resolveImageCandidates(srcset, allowRemoteImages, savedImages) {
   return candidates.join(', ');
 }
 
-function prepareImages(root, allowRemoteImages, savedImages) {
+function qiitaCdnSource(src, images) {
+  try {
+    const canonical = new URL(src).href;
+    if (!images || !Object.hasOwn(images, canonical)) return '';
+    const url = new URL(images[canonical]);
+    if (url.origin !== 'https://qiita-user-contents.imgix.net' || url.username || url.password) return '';
+    return new URL(decodeURIComponent(url.pathname.slice(1))).href === canonical && /^https?:/.test(canonical) ? url.href : '';
+  } catch { return ''; }
+}
+
+function prepareImages(root, allowRemoteImages, savedImages, cdnImages) {
   for (const source of root.querySelectorAll('picture source')) {
     const resolved = resolveImageCandidates(source.dataset.originalSrcset || source.getAttribute('srcset') || '', allowRemoteImages, savedImages);
     if (resolved) source.setAttribute('srcset', resolved);
@@ -195,8 +205,10 @@ function prepareImages(root, allowRemoteImages, savedImages) {
     img.removeAttribute('src');
     img.referrerPolicy = 'no-referrer';
     img.loading = 'lazy';
-    const resolved = resolveImageSource(src, allowRemoteImages, savedImages);
-    if (/^https:\/\/document\.mdv\.invalid\/(?:qiita|github)-image\//.test(resolved))
+    const cdn = qiitaCdnSource(src, cdnImages);
+    const resolved = cdn || resolveImageSource(src, allowRemoteImages, savedImages);
+    if (cdn) img.removeAttribute('srcset');
+    if (cdn || /^https:\/\/document\.mdv\.invalid\/(?:qiita|github)-image\//.test(resolved))
       img.closest('picture')?.querySelectorAll('source').forEach(n => n.remove());
     if (resolved) img.src = resolved;
     else {
@@ -384,7 +396,7 @@ async function render(options) {
     const { renderOriginalDocument } = await import('./upstream-display.mjs');
     result = await renderOriginalDocument(article, options.original, { theme, articleClass: qiita ? 'markdown-body it-MdContent' : 'markdown-body',
       prepareResources: root => {
-        prepareImages(root, options.allowRemoteImages, qiita ? options.savedQiitaImages : options.savedGithubImages);
+        prepareImages(root, options.allowRemoteImages, qiita ? options.savedQiitaImages : options.savedGithubImages, qiita ? options.qiitaCdnImages : null);
         if (options.mode === 'github') for (const pre of root.querySelectorAll('pre[lang]')) {
           const lang = pre.getAttribute('lang').toLowerCase();
           if (!hljs.getLanguage(lang) || pre.textContent.length > 100000) continue;
@@ -401,7 +413,7 @@ async function render(options) {
     result = renderMarkdown(options.markdown ?? '', { mode: options.mode, language, deferMath: qiita, deferGithubEmoji: !qiita });
     const template = document.createElement('template');
     template.innerHTML = result.html;
-    prepareImages(template.content, options.allowRemoteImages, qiita ? options.savedQiitaImages : options.savedGithubImages);
+    prepareImages(template.content, options.allowRemoteImages, qiita ? options.savedQiitaImages : options.savedGithubImages, qiita ? options.qiitaCdnImages : null);
     article.replaceChildren(template.content);
     if (qiita) {
       applyQiitaHighlighting(options.original);

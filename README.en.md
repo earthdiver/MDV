@@ -9,7 +9,7 @@ MDV is a Windows app for reading Markdown documents from GitHub repositories and
 - GitHub/Qiita syntax and two rendering engines.
 - Tabs, outline, text search, source view, and automatic reload.
 - Tables, highlighted code, math, Mermaid, dark theme, printing, and PDF export.
-- Explicit online downloads of GitHub repository images, Qiita images and link cards, saved for subsequent offline use.
+- Save authored remote images for offline viewing, with optional GitHub path resolution, Qiita CDN images and link-card snapshots.
 - Japanese/English interface and portable settings beside the EXE.
 
 ## Choose an edition

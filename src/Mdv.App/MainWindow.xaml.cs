@@ -79,10 +79,10 @@ public partial class MainWindow : Window
         OutlineMenu.IsChecked = _settings.ShowOutline;
         SourceMenu.IsChecked = _settings.ShowSource;
         DarkMenu.IsChecked = _settings.Theme == "dark";
-        RemoteImagesMenu.IsChecked = _settings.AllowRemoteImages;
+        RemoteImagesMenu.IsChecked = AllowRemoteImages;
         SavedQiitaCardsMenu.IsChecked = _settings.UseSavedQiitaCards;
-        SavedQiitaImagesMenu.IsChecked = _settings.UseSavedQiitaImages;
-        SavedGithubImagesMenu.IsChecked = _settings.UseSavedGithubImages;
+        SavedQiitaImagesMenu.IsChecked = ImageSelection("qiita") == ImageSourceSelection.Saved;
+        SavedGithubImagesMenu.IsChecked = ImageSelection("github") == ImageSourceSelection.Saved;
         OriginalEngineMenu.IsChecked = _settings.Engine == "original";
         OriginalEngineMenu.Visibility = BuildEdition.CanSwitch ? Visibility.Visible : Visibility.Collapsed;
         Title = "MDV — " + BuildEdition.DisplayName;
@@ -251,6 +251,11 @@ public partial class MainWindow : Window
         DocumentTabs.IsEnabled = NewTabButton.IsEnabled = NewTabMenu.IsEnabled = available;
         CloseTabMenu.IsEnabled = available && (_workspace.Tabs.Count > 1 || _document != null);
         QiitaCardsMenu.IsEnabled = available && !_importingQiitaCards && _document != null && _settings.Mode == "qiita";
+        RemoteImagesMenu.IsChecked = AllowRemoteImages;
+        SavedQiitaImagesMenu.IsChecked = ImageSelection("qiita") == ImageSourceSelection.Saved;
+        SavedGithubImagesMenu.IsChecked = ImageSelection("github") == ImageSourceSelection.Saved;
+        QiitaCdnImagesMenu.IsChecked = ImageSelection("qiita") == ImageSourceSelection.Cdn;
+        RemoteImagesMenu.IsEnabled = available && _document != null;
         QiitaImagesMenu.IsEnabled = available && !_importingQiitaImages && _document != null && _settings.Mode == "qiita";
         GithubImagesMenu.IsEnabled = available && !_importingGithubImages && _document != null && _settings.Mode == "github";
     }
@@ -343,11 +348,12 @@ public partial class MainWindow : Window
         var theme = _settings.Theme;
         var engine = _settings.Engine;
         var language = UiLanguage.Current;
-        var allowRemoteImages = _settings.AllowRemoteImages;
+        var allowRemoteImages = AllowRemoteImages;
         var useSavedQiitaCards = _settings.UseSavedQiitaCards && mode == "qiita";
-        var useSavedGithubImages = _settings.UseSavedGithubImages && mode == "github";
-        var useSavedQiitaImages = _settings.UseSavedQiitaImages && mode == "qiita";
+        var useSavedGithubImages = UseSavedGithubImages;
+        var useSavedQiitaImages = UseSavedQiitaImages;
         var documentPath = _document?.FilePath;
+        var qiitaCdnImages = mode == "qiita" && CurrentImageSelection == ImageSourceSelection.Cdn && documentPath != null ? _qiitaCdnImages.GetValueOrDefault(documentPath) : null;
         _savedQiitaCardManifest = null;
         _savedQiitaCardDocument = null;
         _savedQiitaManifest = null;
@@ -412,7 +418,7 @@ public partial class MainWindow : Window
                     _savedGithubManifest = savedGithubManifest;
                     _savedGithubDocument = documentPath;
                     Send(new { type = "render", requestId, markdown, original, highlightFailure, savedImageFailure, engine, mode, theme, language,
-                        allowRemoteImages, savedGithubImages, savedQiitaImages, savedQiitaCards, savedCardFailure, resetScroll, view, anchor });
+                        allowRemoteImages, savedGithubImages, savedQiitaImages, qiitaCdnImages, savedQiitaCards, savedCardFailure, resetScroll, view, anchor });
                 }
             }
             catch (OperationCanceledException) { }
@@ -554,7 +560,7 @@ public partial class MainWindow : Window
             return;
         }
         else if (uri.Host == "document.mdv.invalid" && uri.Scheme == "https" && uri.AbsolutePath.StartsWith("/remote-image/") &&
-                 e.ResourceContext == CoreWebView2WebResourceContext.Image && _settings.AllowRemoteImages)
+                 e.ResourceContext == CoreWebView2WebResourceContext.Image && AllowRemoteImages)
         {
             var deferral = e.GetDeferral();
             try
@@ -563,7 +569,7 @@ public partial class MainWindow : Window
                 if (Uri.TryCreate(url, UriKind.Absolute, out var remote) && remote.Scheme == "http")
                 {
                     var image = await _remoteImages.LoadAsync(remote, _lifetime.Token);
-                    if (!_closed && _settings.AllowRemoteImages)
+                    if (!_closed && AllowRemoteImages)
                         e.Response = core.Environment.CreateWebResourceResponse(new MemoryStream(image.Bytes), 200, "OK",
                             $"Content-Type: {image.ContentType}\r\nCache-Control: no-store\r\nX-Content-Type-Options: nosniff\r\nContent-Security-Policy: default-src 'none'; style-src 'unsafe-inline'");
                 }
@@ -580,7 +586,11 @@ public partial class MainWindow : Window
             }
             return;
         }
-        else if (_settings.AllowRemoteImages && uri.Scheme is "https" or "http" &&
+        else if (_settings.Mode == "qiita" && CurrentImageSelection == ImageSourceSelection.Cdn && _document != null &&
+                 e.ResourceContext == CoreWebView2WebResourceContext.Image &&
+                 _qiitaCdnImages.TryGetValue(_document.FilePath, out var cdnImages) &&
+                 cdnImages.Values.Contains(uri.AbsoluteUri, StringComparer.Ordinal)) return;
+        else if (AllowRemoteImages && uri.Scheme is "https" or "http" &&
                  e.ResourceContext == CoreWebView2WebResourceContext.Image && !uri.Host.EndsWith(".mdv.invalid")) return;
         e.Response = core.Environment.CreateWebResourceResponse(new MemoryStream(), 403, "Blocked", "Content-Type: text/plain");
     }
@@ -676,7 +686,7 @@ public partial class MainWindow : Window
         Render();
     }
     private void Theme_Click(object sender, RoutedEventArgs e) { _settings.Theme = DarkMenu.IsChecked ? "dark" : "light"; ApplyTheme(); Render(); }
-    private void RemoteImages_Click(object sender, RoutedEventArgs e) { _settings.AllowRemoteImages = RemoteImagesMenu.IsChecked; Render(); }
+    private void RemoteImages_Click(object sender, RoutedEventArgs e) => SetRemoteImages(RemoteImagesMenu.IsChecked);
     private void ApplyTheme()
     {
         var dark = _settings.Theme == "dark";

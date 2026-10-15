@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 
 namespace Mdv.Core;
 
-public sealed record QiitaSavedImage(string OriginalUrl, string ServiceUrl, string Hash, string ContentType, int Bytes);
+public sealed record QiitaSavedImage(string OriginalUrl, string ServiceUrl, string Hash, string ContentType, int Bytes, bool Direct = false);
 public sealed record QiitaImageManifest(int Version, string ArticleUrl, DateTimeOffset SavedAt, QiitaSavedImage[] Images);
 
 /// <summary>Explicit, per-document snapshots. Opening an archive never accesses the network.</summary>
@@ -38,17 +38,22 @@ public static class QiitaImageArchive
         if (entry is null || entry.Length > 512 * 1024) throw new InvalidDataException("Invalid Qiita image manifest.");
         using var stream = entry.Open();
         var manifest = JsonSerializer.Deserialize<QiitaImageManifest>(stream, Json) ?? throw new InvalidDataException("Missing Qiita image manifest.");
-        if (manifest.Version != 1 || manifest.Images is not { Length: > 0 and <= MaxImages } || manifest.Images.Any(i => i is null) ||
+        if (manifest.Version is not (1 or 2) || manifest.Images is not { Length: > 0 and <= MaxImages } || manifest.Images.Any(i => i is null) ||
             manifest.Images.Select(i => i.OriginalUrl).Distinct().Count() != manifest.Images.Length)
             throw new InvalidDataException("Invalid Qiita image manifest.");
-        if (github) GithubImageImporter.DocumentUri(manifest.ArticleUrl);
-        else QiitaImageImporter.ArticleUri(manifest.ArticleUrl);
+        if (manifest.Version == 1 || manifest.Images.Any(i => !i.Direct) || !string.IsNullOrEmpty(manifest.ArticleUrl))
+        {
+            if (github) GithubImageImporter.DocumentUri(manifest.ArticleUrl);
+            else QiitaImageImporter.ArticleUri(manifest.ArticleUrl);
+        }
         long total = 0;
         foreach (var image in manifest.Images)
         {
             if (image.Hash is null || !HashPattern.IsMatch(image.Hash) || !IsImageType(image.ContentType) ||
                 image.Bytes is <= 0 or > RemoteImageLoader.MaxBytes ||
-                (github ? GithubImageImporter.ResolveImage(manifest.ArticleUrl, image.OriginalUrl)?.AbsoluteUri != image.ServiceUrl :
+                (image.Direct ? manifest.Version != 2 || image.OriginalUrl != image.ServiceUrl ||
+                    !Uri.TryCreate(image.OriginalUrl, UriKind.Absolute, out var direct) || !RemoteImageLoader.IsAllowedUri(direct) || direct.AbsoluteUri != image.OriginalUrl :
+                    github ? GithubImageImporter.ResolveImage(manifest.ArticleUrl, image.OriginalUrl)?.AbsoluteUri != image.ServiceUrl :
                     QiitaImageImporter.OriginalUrl(image.ServiceUrl) is not { } original || original != image.OriginalUrl) ||
                 zip.GetEntry("images/" + image.Hash)?.Length != image.Bytes)
                 throw new InvalidDataException("Invalid saved Qiita image.");
@@ -130,7 +135,7 @@ public sealed class QiitaImageImporter : IDisposable
         return result;
     }
 
-    private async Task<(byte[] Bytes, string Type)> FetchAsync(Uri uri, bool image, CancellationToken token)
+    internal async Task<(byte[] Bytes, string Type)> FetchAsync(Uri uri, bool image, CancellationToken token)
     {
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(token);
         deadline.CancelAfter(TimeSpan.FromSeconds(30));
@@ -164,6 +169,14 @@ public sealed class QiitaImageImporter : IDisposable
             }
             return (output.ToArray(), type);
         }
+    }
+
+    public async Task<Dictionary<string, string>> ResolveCdnImagesAsync(string articleUrl, IEnumerable<string> documentSources, CancellationToken cancellationToken = default, bool requireMatch = true)
+    {
+        var (html, _) = await FetchAsync(ArticleUri(articleUrl), false, cancellationToken);
+        var sources = FindImages(System.Text.Encoding.UTF8.GetString(html), documentSources);
+        if (requireMatch && sources.Count == 0) throw new InvalidDataException(UiLanguage.Text("記事内に一致する画像がありません。", "No matching images in the article."));
+        return sources;
     }
 
     public async Task<QiitaImageManifest> ImportAsync(string documentPath, string articleUrl, IEnumerable<string> documentSources, CancellationToken cancellationToken = default)

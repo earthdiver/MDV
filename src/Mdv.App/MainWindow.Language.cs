@@ -30,12 +30,13 @@ public partial class MainWindow
         Resources["TextDarkMenu"] = UiLanguage.Text("ダークテーマ(_D)", "_Dark theme");
         Resources["TextRemoteImagesMenu"] = UiLanguage.Text("外部画像を読み込む(_I)", "Load remote _images");
         Resources["TextGithubImagesMenu"] = UiLanguage.Text("GitHubの画像", "GitHub images");
-        Resources["TextImportGithubImages"] = UiLanguage.Text("GitHubから取得・保存…", "Download and save from GitHub…");
+        Resources["TextImportGithubImages"] = UiLanguage.Text("画像を取得・保存…", "Download and save images…");
         Resources["TextUseSavedGithubImages"] = UiLanguage.Text("保存した画像を使用", "Use saved images");
         Resources["TextDeleteGithubImages"] = UiLanguage.Text("この文書の保存画像を削除", "Delete saved images for this document");
-        Resources["TextQiitaImagesMenu"] = UiLanguage.Text("Qiita本家の画像", "Qiita service images");
-        Resources["TextImportQiitaImages"] = UiLanguage.Text("記事から取得・保存…", "Download and save from article…");
-        Resources["TextUseSavedQiitaImages"] = UiLanguage.Text("保存した本家の画像を使用", "Use saved service images");
+        Resources["TextQiitaCdnImages"] = UiLanguage.Text("CDNから直接表示…", "Display directly from CDN…");
+        Resources["TextQiitaImagesMenu"] = UiLanguage.Text("Qiitaの画像", "Qiita images");
+        Resources["TextImportQiitaImages"] = UiLanguage.Text("画像を取得・保存…", "Download and save images…");
+        Resources["TextUseSavedQiitaImages"] = UiLanguage.Text("保存した画像を使用", "Use saved images");
         Resources["TextDeleteQiitaImages"] = UiLanguage.Text("この文書の保存画像を削除", "Delete saved images for this document");
         Resources["TextQiitaCardsMenu"] = UiLanguage.Text("Qiitaリンクカード", "Qiita link cards");
         Resources["TextImportQiitaCards"] = UiLanguage.Text("オンラインで取得・保存…", "Download and save online…");

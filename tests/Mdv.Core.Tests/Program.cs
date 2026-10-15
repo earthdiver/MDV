@@ -132,6 +132,24 @@ var temp = Path.Combine(Path.GetTempPath(), "mdv-tests-" + Guid.NewGuid().ToStri
 Directory.CreateDirectory(temp);
 try
 {
+    Check("Image selections are isolated by document and syntax mode throughout navigation", () => {
+        var images = new DocumentImagePreferences();
+        var first = Path.Combine(temp, "first.md");
+        var second = Path.Combine(temp, "second.md");
+        Equal(ImageSourceSelection.Off, images.Get(first, "github"));
+        images.Set(first, "github", ImageSourceSelection.Saved);
+        images.Set(first, "qiita", ImageSourceSelection.Cdn);
+        images.Set(second, "github", ImageSourceSelection.Remote);
+        images.Set(second, "qiita", ImageSourceSelection.Off);
+        Equal(ImageSourceSelection.Saved, images.Get(first, "github"));
+        Equal(ImageSourceSelection.Cdn, images.Get(first, "qiita"));
+        Equal(ImageSourceSelection.Remote, images.Get(second, "github"));
+        Equal(ImageSourceSelection.Off, images.Get(second, "qiita"));
+        Equal(ImageSourceSelection.Saved, images.Get(Path.Combine(temp, ".", "first.md"), "github", ImageSourceSelection.Remote));
+        Equal(ImageSourceSelection.Off, images.Get(Path.Combine(temp, "other", "first.md"), "github"));
+        Throws<ArgumentException>(() => images.Set(first, "github", ImageSourceSelection.Cdn));
+    });
+    DocumentImageTests.Run(Check, temp);
     QiitaImageTests.Run(Check, temp);
     GithubImageTests.Run(Check, temp);
     QiitaCardTests.Run(Check, temp);

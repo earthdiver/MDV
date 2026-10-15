@@ -10,12 +10,46 @@ namespace Mdv.App;
 
 public partial class MainWindow
 {
+    private readonly Dictionary<string, Dictionary<string, string>> _qiitaCdnImages = new(StringComparer.OrdinalIgnoreCase);
+
+    internal void SetQiitaCdnImages(string documentPath, Dictionary<string, string>? images)
+    {
+        if (images == null)
+        {
+            _qiitaCdnImages.Remove(documentPath);
+            if (_imagePreferences.Get(documentPath, "qiita") == ImageSourceSelection.Cdn)
+                _imagePreferences.Set(documentPath, "qiita", ImageSourceSelection.Off);
+        }
+        else
+        {
+            _qiitaCdnImages[documentPath] = images;
+            _imagePreferences.Set(documentPath, "qiita", ImageSourceSelection.Cdn);
+        }
+        Render();
+    }
+
+    private void QiitaCdnImages_Click(object sender, RoutedEventArgs e)
+    {
+        if (_document is not { } document) return;
+        if (!QiitaCdnImagesMenu.IsChecked)
+        {
+            SetQiitaCdnImages(document.FilePath, null);
+            return;
+        }
+        ImportQiitaImages_Click(sender, e);
+    }
+
     private bool _importingQiitaImages;
     private QiitaImageManifest? _savedQiitaManifest;
     private string? _savedQiitaDocument;
 
     private async void ImportQiitaImages_Click(object sender, RoutedEventArgs e)
     {
+        if (!ReferenceEquals(sender, QiitaCdnImagesMenu))
+        {
+            await ImportDocumentImagesAsync(github: false);
+            return;
+        }
         if (_document is not { } document || !NavigationReady || _settings.Mode != "qiita") return;
         try
         {
@@ -27,10 +61,10 @@ public partial class MainWindow
             }
             using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(_lifetime.Token);
             var token = cancellation.Token;
-            var dialog = new Window { Owner = this, Title = UiLanguage.Text("Qiita本家の画像を保存", "Save Qiita service images"), Width = 620,
+            var dialog = new Window { Owner = this, Title = UiLanguage.Text("Qiita CDN画像を使用", "Use Qiita CDN images"), Width = 620,
                 SizeToContent = SizeToContent.Height, ResizeMode = ResizeMode.NoResize, WindowStartupLocation = WindowStartupLocation.CenterOwner };
             var panel = new StackPanel { Margin = new Thickness(20) };
-            panel.Children.Add(new TextBlock { Text = UiLanguage.Text("この文書の公開Qiita記事URLを入力してください。記事内で一致する画像を取得し、Markdownと同じフォルダに保存します。", "Enter this document's public Qiita article URL. Matching images will be downloaded and saved beside the Markdown file."), TextWrapping = TextWrapping.Wrap });
+            panel.Children.Add(new TextBlock { Text = UiLanguage.Text("公開Qiita記事URLを入力してください。一致する画像をCDNから直接表示します。この選択は文書ごとに終了まで有効です。", "Enter the public Qiita article URL. Matching images are displayed directly from the CDN for this document until exit."), TextWrapping = TextWrapping.Wrap });
             var url = new TextBox { Margin = new Thickness(0, 12, 0, 12), MinWidth = 540 };
             System.Windows.Automation.AutomationProperties.SetName(url, UiLanguage.Text("Qiita記事URL", "Qiita article URL"));
             try { url.Text = QiitaImageArchive.Load(document.FilePath)?.ArticleUrl ?? ""; }
@@ -39,33 +73,33 @@ public partial class MainWindow
             var status = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 12) };
             panel.Children.Add(status);
             var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
-            var start = new Button { Content = UiLanguage.Text("取得して保存", "Download and save"), IsDefault = true, Padding = new Thickness(12, 5, 12, 5) };
+            var start = new Button { Content = UiLanguage.Text("CDNから表示", "Display from CDN"), IsDefault = true, Padding = new Thickness(12, 5, 12, 5) };
             var cancel = new Button { Content = UiLanguage.Text("キャンセル", "Cancel"), IsCancel = true, Margin = new Thickness(8, 0, 0, 0), Padding = new Thickness(12, 5, 12, 5) };
             buttons.Children.Add(start); buttons.Children.Add(cancel); panel.Children.Add(buttons); dialog.Content = panel;
-            QiitaImageManifest? imported = null;
+            Dictionary<string, string>? cdnImages = null;
             var dismissed = false;
             dialog.Closed += (_, _) => { dismissed = true; cancellation.Cancel(); };
             start.Click += async (_, _) =>
             {
                 start.IsEnabled = url.IsEnabled = false;
-                status.Text = UiLanguage.Text("記事と画像を取得しています…", "Downloading article and images…");
+                status.Text = UiLanguage.Text("記事からCDN画像URLを取得しています…", "Reading CDN image URLs from the article…");
                 try
                 {
                     using var importer = new QiitaImageImporter(userAgent: Preview.CoreWebView2.Settings.UserAgent);
-                    imported = await importer.ImportAsync(document.FilePath, url.Text.Trim(), sources, token);
+                    cdnImages = await importer.ResolveCdnImagesAsync(url.Text.Trim(), sources, token);
                     if (!dismissed) dialog.DialogResult = true;
                 }
                 catch (OperationCanceledException) when (token.IsCancellationRequested) { }
                 catch (Exception error) when (error is HttpRequestException or IOException or UnauthorizedAccessException or ArgumentException or JsonException or OperationCanceledException)
-                { if (!dismissed) status.Text = UiLanguage.Text("保存できませんでした: ", "Unable to save: ") + error.Message; }
+                { if (!dismissed) status.Text = UiLanguage.Text("CDN画像URLを取得できませんでした: ", "Unable to read CDN image URLs: ") + error.Message; }
                 finally { if (!dismissed) start.IsEnabled = url.IsEnabled = true; }
             };
             _importingQiitaImages = true; UpdateNavigationControls();
             dialog.Loaded += (_, _) => url.Focus();
-            if (dialog.ShowDialog() == true && imported != null)
+            var accepted = dialog.ShowDialog() == true;
+            if (accepted && cdnImages != null)
             {
-                SetSavedQiitaImages(true);
-                MessageBox.Show(this, UiLanguage.Text($"{imported.Images.Length} 枚を保存しました。\n保存済み画像はオフラインでも表示できます。一致しない画像は原画像のままです。\n\n", $"Saved {imported.Images.Length} images for offline use. Unmatched images retain their original source.\n\n") + QiitaImageArchive.PathFor(document.FilePath), "MDV");
+                SetQiitaCdnImages(document.FilePath, cdnImages);
             }
         }
         catch (Exception error) when (error is IOException or JsonException or InvalidOperationException)
@@ -73,11 +107,7 @@ public partial class MainWindow
         finally { _importingQiitaImages = false; UpdateNavigationControls(); }
     }
 
-    internal void SetSavedQiitaImages(bool enabled)
-    {
-        _settings.UseSavedQiitaImages = SavedQiitaImagesMenu.IsChecked = enabled;
-        Render();
-    }
+    internal void SetSavedQiitaImages(bool enabled) => SetSavedImages("qiita", enabled);
 
     private void SavedQiitaImages_Click(object sender, RoutedEventArgs e) => SetSavedQiitaImages(SavedQiitaImagesMenu.IsChecked);
 
@@ -98,11 +128,11 @@ public partial class MainWindow
         var deferral = e.GetDeferral();
         try
         {
-            if (e.ResourceContext == CoreWebView2WebResourceContext.Image && _settings.Mode == "qiita" && _settings.UseSavedQiitaImages &&
+            if (e.ResourceContext == CoreWebView2WebResourceContext.Image && _settings.Mode == "qiita" && UseSavedQiitaImages &&
                 image != null && document != null && document == _document?.FilePath)
             {
                 var saved = await Task.Run(() => QiitaImageArchive.Read(document, image), _lifetime.Token);
-                if (!_closed && _settings.UseSavedQiitaImages && _settings.Mode == "qiita" && document == _document?.FilePath)
+                if (!_closed && UseSavedQiitaImages && _settings.Mode == "qiita" && document == _document?.FilePath)
                     e.Response = core.Environment.CreateWebResourceResponse(new MemoryStream(saved.Bytes), 200, "OK",
                         $"Content-Type: {saved.ContentType}\r\nCache-Control: no-store\r\nX-Content-Type-Options: nosniff\r\nContent-Security-Policy: default-src 'none'; style-src 'unsafe-inline'");
             }

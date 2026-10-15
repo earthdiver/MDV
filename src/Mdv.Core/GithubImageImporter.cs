@@ -47,7 +47,7 @@ public sealed class GithubImageImporter : IDisposable
         return resolved.AbsoluteUri.StartsWith(root, StringComparison.Ordinal) ? new Uri(resolved.GetLeftPart(UriPartial.Path)) : null;
     }
 
-    private async Task<(byte[] Bytes, string Type)> FetchAsync(Uri uri, CancellationToken token)
+    internal async Task<(byte[] Bytes, string Type)> FetchAsync(Uri uri, CancellationToken token)
     {
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(token);
         deadline.CancelAfter(TimeSpan.FromSeconds(30));
