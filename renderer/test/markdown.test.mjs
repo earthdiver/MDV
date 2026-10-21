@@ -49,9 +49,9 @@ for (const mode of ['github', 'qiita']) {
   });
   test(`${mode}: inline dollars, backtick math, fenced math and code isolation`, () => {
     const { html } = render('$x^2$ and $`y_1`$\n\n```math\n\\frac{1}{2}\n```\n\n`$not_math$`', mode);
-    assert.equal((html.match(/class="katex"/g) || []).length, 3);
-    assert.match(html, /application\/x-tex">y_1</);
-    assert.doesNotMatch(html, /application\/x-tex">`/);
+    assert.equal((html.match(/data-mdv-tex=/g) || []).length, 3);
+    assert.match(html, /data-mdv-tex="y_1"/);
+    assert.doesNotMatch(html, /data-mdv-tex="`/);
     assert.match(html, /<code>\$not_math\$<\/code>/);
   });
   test(`${mode}: Mermaid is preserved for the offline diagram renderer`, () => {
@@ -69,7 +69,7 @@ for (const mode of ['github', 'qiita']) {
   });
   test(`${mode}: invalid math and unsupported diagrams retain readable source`, () => {
     const result = render('```math\n\\notacommand{x}\n```\n\n```plantuml\nAlice -> Bob\n```', mode);
-    assert.equal(result.diagnostics.length, 2);
+    assert.equal(result.diagnostics.length, 1);
     assert.match(result.html, /notacommand/);
     assert.match(result.html, /Alice/);
   });
@@ -176,14 +176,14 @@ test('authored HTML IDs cannot collide with generated heading IDs', () => {
   }
 });
 
-test('Qiita AMS environments omit automatic numbers but preserve explicit tags', () => {
-  for (const [env,body] of [['equation','x=1'],['align',String.raw`x&=1 \\ y&=2`],['alignat',String.raw`{1} x&=1`],['gather',String.raw`x=1 \\ y=2`]]) {
-    const source = '```math\n'+String.raw`\begin{${env}} ${body} \end{${env}}`+'\n```';
-    assert.doesNotMatch(render(source,'qiita').html,/class="eqn-num"|math-error/);
-    assert.match(render(source,'github').html,/eqn-num/);
-    const tagged = source.replace(body,body+String.raw` \tag{A}`);
-    assert.match(render(tagged,'qiita').html,/katex-tag/);
-    assert.doesNotMatch(render(tagged,'qiita').html,/class="eqn-num"|math-error/);
+test('math preserves AMS environments and explicit tags for MathJax', () => {
+  const tex = String.raw`\begin{align} x&=1 \tag{A} \end{align}`;
+  for (const mode of ['github', 'qiita']) {
+    const result = render('```math\n'+tex+'\n```', mode);
+    assert.match(result.html, /data-mdv-tex=/);
+    assert.match(result.html, /\\begin\{align\}/);
+    assert.match(result.html, /\\tag\{A\}/);
+    assert.deepEqual(result.diagnostics, []);
   }
 });
 

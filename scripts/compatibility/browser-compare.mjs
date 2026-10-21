@@ -79,3 +79,23 @@ export async function verifyBrowserComparator(page) {
   const c = await page.locator('svg').evaluate(diagramSnapshot);
   if (a !== b || a === c) throw new Error('SVG comparator failed its ID/geometry controls');
 }
+
+
+// Context-menu counters are runtime identities, not mathematical output.
+// Keep glyphs, layout, explicit tags, styles and assistive MathML intact.
+export function mathSnapshot(element) {
+  const copy = element.cloneNode(true);
+  for (const node of [copy, ...copy.querySelectorAll('*')]) {
+    node.removeAttribute('ctxtmenu_counter');
+    for (const name of [...node.classList]) if (/^CtxtMenu_Attached_\d+$/.test(name)) node.classList.remove(name);
+  }
+  return copy.outerHTML;
+}
+
+// Screenshot clipping rounds CSS positions to pixels. Give both captures the
+// same pixel phase without resizing glyphs or changing their internal layout.
+export function alignMathCapture(element) {
+  const host = element.closest('#document, #reference');
+  const rect = element.getBoundingClientRect();
+  host.style.transform = `translate(${Math.ceil(rect.x)-rect.x}px, ${Math.ceil(rect.y)-rect.y}px)`;
+}

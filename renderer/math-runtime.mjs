@@ -33,27 +33,36 @@ export async function renderMathBlock(source,container,mode) {
 
 export function queueMathRender(run) { const task = queue.then(run); queue = task.catch(()=>{}); return task; }
 
-// Qiita typesets the sanitized Markdown DOM, not the Markdown source.
-export function renderQiitaMath(article, diagnostics) {
+// GitHub renders only parsed math nodes; Qiita typesets the sanitized Markdown DOM.
+export function renderCustomMath(article, diagnostics, mode) {
   return queueMathRender(async () => {
-    await mathRuntime('qiita');
+    await mathRuntime(mode);
     window.MathJax.typesetClear(); window.MathJax.texReset();
     for (const node of article.querySelectorAll('[data-mdv-tex]')) {
       const source = node.dataset.mdvTex;
-      try { node.replaceChildren(await renderMathBlock(source,node,'qiita')); }
+      try { node.replaceChildren(mode === 'qiita'
+        ? await renderMathBlock(source,node,mode)
+        : await window.MathJax.tex2svgPromise(source,{display:node.classList.contains('math-block')})); }
       catch (error) { node.textContent=source; node.classList.add('math-error'); diagnostics.push(`math: ${error.message}`); }
     }
-    for (const code of article.querySelectorAll('code')) {
-      if (code.closest('pre')) continue;
-      const before=code.previousSibling, after=code.nextSibling;
-      if (before?.nodeType===Node.TEXT_NODE && after?.nodeType===Node.TEXT_NODE && /(?<!\$)\$$/.test(before.textContent) && /^\$(?!\$)/.test(after.textContent)) {
-        before.textContent=before.textContent.slice(0,-1); after.textContent=after.textContent.slice(1);
-        const span=document.createElement('span'); span.textContent=`$${code.textContent}$`; code.replaceWith(span);
+    if (mode === 'qiita') {
+      for (const code of article.querySelectorAll('code')) {
+        if (code.closest('pre')) continue;
+        const before=code.previousSibling, after=code.nextSibling;
+        if (before?.nodeType===Node.TEXT_NODE && after?.nodeType===Node.TEXT_NODE && /(?<!\$)\$$/.test(before.textContent) && /^\$(?!\$)/.test(after.textContent)) {
+          before.textContent=before.textContent.slice(0,-1); after.textContent=after.textContent.slice(1);
+          const span=document.createElement('span'); span.textContent=`$${code.textContent}$`; code.replaceWith(span);
+        }
       }
+      prepareQiitaMathScope(article);
+      await document.fonts.ready;
+      await window.MathJax.typesetPromise([article]);
+    } else {
+      // Direct TeX-to-SVG conversion does not install document styles.
+      // Include SVG layout and visually hidden assistive MathML styles.
+      window.MathJax.startup.document.clear();
+      window.MathJax.startup.document.updateDocument();
     }
-    prepareQiitaMathScope(article);
-    await document.fonts.ready;
-    await window.MathJax.typesetPromise([article]);
     for (const error of article.querySelectorAll('[data-mjx-error]')) diagnostics.push(`math: ${error.getAttribute('data-mjx-error')}`);
     article.getBoundingClientRect(); // Start font loads before awaiting the current FontFaceSet.ready.
     await document.fonts.ready;

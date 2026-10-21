@@ -427,8 +427,7 @@ for (const engine of ['legacy','original']) test.describe(`${engine} service pre
         await expect(page.locator('mjx-math').first()).toHaveCSS('padding-left','2px');
         await expect(page.locator('mjx-container').first()).toHaveCSS('vertical-align','middle');
         expect(await page.evaluate(()=>document.fonts.check('16px MJXZERO')&&document.fonts.check('16px MJXTEX'))).toBe(true);
-      } else if(engine==='original')await expect(page.locator('mjx-container[jax="SVG"]')).toHaveCount(2);
-      else await expect(page.locator('.katex')).toHaveCount(2);
+      } else await expect(page.locator('mjx-container[jax="SVG"]')).toHaveCount(2);
       await expect(page.locator('.math-error,[data-mjx-error]')).toHaveCount(0);
     }
   });

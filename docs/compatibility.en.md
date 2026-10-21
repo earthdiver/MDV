@@ -64,14 +64,14 @@ Qiita documents use MDV's own CSS and Font Awesome icons. Body text, headings, t
 
 ### Math and diagrams
 
-Both engines support math and Mermaid, using different math libraries.
+Both engines use MathJax for math and Mermaid for diagrams.
 
 | Engine | Math | Diagrams |
 | --- | --- | --- |
-| Custom | GitHub: KaTeX / Qiita: MathJax | Mermaid |
+| Custom | MathJax | Mermaid |
 | Upstream | MathJax | Mermaid |
 
-In GitHub mode, supported math commands and numbering can differ between engines. In Qiita mode both engines typeset the Markdown DOM with the same MathJax settings, excluding headings, links, and bare TeX environments. Use `$...$`, `$$...$$`, or a `math` code fence. For example:
+In GitHub mode both engines use the same MathJax settings and SVG output, but differences in Markdown math recognition can still affect rendering. In Qiita mode both engines typeset the Markdown DOM with the same MathJax settings, excluding headings, links, and bare TeX environments. Use `$...$`, `$$...$$`, or a `math` code fence. For example:
 
 ````markdown
 ```math

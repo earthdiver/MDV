@@ -101,3 +101,9 @@ Qiitaの保存機能は `--qiita-image-snapshots --qiita-card-snapshots` で比�
 GitHubのissue/PR自動参照はオンラインのサービス機能に依存します。`--exclude-service-issue-links` を指定すると本家が生成した参照だけを原文に戻して比較し、除外内容を記録します。著者が明示したリンクは対象外です。
 
 この比較は全記事・全テーマ・全画面幅での同一性を保証しません。`compat:check` も保存済みの結果からの変化を検出するものであり、本家との完全互換の証明ではありません。
+
+### 数式の比較テスト
+
+`npm run compat:math` は、数式5種類×GitHub／Qiita×ライト・ダーク・印刷の30ケースを、本文の表示条件を揃えた独立のMathJax描画と比較します。DOMと画像寸法の一致、RGBA各成分の差16・差分画素率1%以内を要求し、不一致は失敗終了します。結果は `artifacts/compatibility/browser-math/index.html` に保存します。実サイトとの一致を検証するものではありません。
+
+GitHubの両エンジンを直接比較するには、`MDV_RUBY` を設定して `npm run test:browser -- renderer/test/browser/github-math-engines.spec.mjs` を実行します。15ケースで数式DOM（実行時のメニュー識別番号を除く）と画像を比較し、画像は補正・許容差なしで寸法一致と差分0画素を要求します。結果は `artifacts/github-math-engines/` に保存します。`MDV_RUBY` 未指定時はスキップされます。

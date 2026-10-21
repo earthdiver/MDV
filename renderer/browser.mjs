@@ -417,9 +417,9 @@ async function render(options) {
     article.replaceChildren(template.content);
     if (qiita) {
       applyQiitaHighlighting(options.original);
-      const { renderQiitaMath } = await import('./math-runtime.mjs');
-      await renderQiitaMath(article, result.diagnostics);
     }
+    const { renderCustomMath } = await import('./math-runtime.mjs');
+    await renderCustomMath(article, result.diagnostics, options.mode);
     if (options.highlightFailure) result.diagnostics.push(options.highlightFailure);
     await diagrams(localGeneration, theme, result.diagnostics);
   }

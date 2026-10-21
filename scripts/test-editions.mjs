@@ -25,7 +25,7 @@ try {
           const result=await page.evaluate(o=>window.mdv.render(o),{mode,markdown,engine:edition==='dual'?engine:engine==='legacy'?'original':'legacy',original});
           assert.deepEqual(result.diagnostics,[]);
           assert.equal(await page.locator('h1').innerText(),'見出し');
-          assert.equal(await page.locator(engine==='legacy' && mode==='github'?'.katex':'mjx-container').count(),1);
+          assert.equal(await page.locator('mjx-container').count(),1);
           assert.equal(await page.locator('.diagram-screen svg').count(),1);
           assert.equal(await page.evaluate(()=>window.mdv.find('本文').total),1);
           results.push({edition,mode,math:true,mermaid:true,search:true,unavailableEngineNormalized:edition!=='dual'});

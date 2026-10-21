@@ -15,7 +15,6 @@ import { toString } from 'mdast-util-to-string';
 import GithubSlugger from 'github-slugger';
 import { gemoji } from 'gemoji';
 import hljs from 'highlight.js';
-import katex from 'katex';
 import { parseDocument } from 'yaml';
 
 const emojis = new Map(gemoji.flatMap(({ names, emoji }) => names.map(name => [name, emoji])));
@@ -261,33 +260,13 @@ function fragment(html) {
   return rawParser.runSync({ type: 'root', children: [{ type: 'raw', value: html }] }).children;
 }
 
-// MathJax's default tags:none (used by Qiita) differs from KaTeX's automatic
-// AMS numbering. Star only numbering environments, preserving explicit tags,
-// comments and escaped backslashes. Do not change the author's source/fallback.
-function withoutAutomaticMathNumbers(value) {
-  return value.replace(/%[^\n]*|\\(?:begin|end)\s*\{(?:equation|align|alignat|gather)\}|\\[a-zA-Z]+|\\[^]/g,
-    token => /^\\(?:begin|end)\s*\{/.test(token) ? token.replace('}', '*}') : token);
-}
-
-function mathMarkup(value, display, diagnostics, mode) {
-  try {
-    return fragment(katex.renderToString(mode === 'qiita' ? withoutAutomaticMathNumbers(value) : value, {
-      displayMode: display, throwOnError: true, strict: 'ignore', trust: false,
-      maxExpand: 1000, maxSize: 20, output: 'htmlAndMathml',
-    }));
-  } catch {
-    diagnostics.add(uiText('解釈できない数式があります。該当箇所は元の数式を表示しています。', 'Some math could not be parsed and is shown as source.'));
-    return [el('code', { className: ['math-error'], title: uiText('数式を解釈できませんでした', 'Unable to parse math') }, [txt(value)])];
-  }
-}
-
 function highlight(value, language) {
   if (!language || !hljs.getLanguage(language) || value.length > maxHighlightCharacters) return htmlEscape(value);
   try { return hljs.highlight(value, { language, ignoreIllegals: true }).value; }
   catch { return htmlEscape(value); }
 }
 
-function decorateHtml(tree, mode, diagnostics, outline, deferMath, deferGithubEmoji) {
+function decorateHtml(tree, mode, diagnostics, outline, deferGithubEmoji) {
   const slugger = new GithubSlugger();
   const qiitaSlugs = new Map();
   const usedQiitaSlugs = new Set();
@@ -347,10 +326,9 @@ function decorateHtml(tree, mode, diagnostics, outline, deferMath, deferGithubEm
     const value = textOf(node).replace(/\n$/, '');
     if (language === 'math' || classes.includes('math-inline') || classes.includes('math-display')) {
       const display = parent?.tagName === 'pre' || classes.includes('math-display');
-      const output = deferMath ? [txt(value)] : mathMarkup(value, display, diagnostics, mode);
       node.tagName = 'span';
-      node.properties = { className: [display ? 'math-block' : 'math-inline'], ...(deferMath ? {dataMdvTex:value} : {}) };
-      node.children = output;
+      node.properties = { className: [display ? 'math-block' : 'math-inline'], dataMdvTex: value };
+      node.children = [txt(value)];
       if (parent?.tagName === 'pre') { parent.tagName = 'div'; parent.properties = { className: ['math-container'] }; }
       return 'skip';
     }
@@ -446,6 +424,6 @@ export function renderMarkdown(source, { mode = 'github', language = 'ja', defer
     attributes: {...schema.attributes, font: ['color']},
   } : schema);
   const tree = converter.runSync(mdast);
-  decorateHtml(tree, mode, diagnostics, outline, deferMath, deferGithubEmoji);
+  decorateHtml(tree, mode, diagnostics, outline, deferGithubEmoji);
   return { html: stringify.stringify(tree), outline, diagnostics: [...diagnostics] };
 }

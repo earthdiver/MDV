@@ -101,3 +101,9 @@ Use `--qiita-image-snapshots --qiita-card-snapshots` to compare saved Qiita imag
 GitHub issue/PR enrichment depends on online service functionality. `--exclude-service-issue-links` restores only service-generated references to their authored text and records the exclusions. Explicit author links remain in scope.
 
 These comparisons do not establish equivalence for every article, theme, or viewport. `compat:check` detects changes from saved results; it is not proof of complete service compatibility.
+
+### Math comparison tests
+
+`npm run compat:math` compares five formulas across GitHub/Qiita and light/dark/print (30 cases) with independent MathJax output under matched host presentation conditions. DOM and image dimensions must match; image tolerances are 16 per RGBA channel and a maximum changed-pixel ratio of 1%. Mismatches cause a failing exit code. Results are saved to `artifacts/compatibility/browser-math/index.html`. This does not verify equivalence with the live services.
+
+To directly compare the two GitHub engines, set `MDV_RUBY` and run `npm run test:browser -- renderer/test/browser/github-math-engines.spec.mjs`. The 15 cases compare math DOM (excluding runtime menu identities) and screenshots, requiring identical image dimensions and zero changed pixels without adjustment or tolerance. Results are saved under `artifacts/github-math-engines/`. Tests skip when `MDV_RUBY` is unset.

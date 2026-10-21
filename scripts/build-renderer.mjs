@@ -22,14 +22,9 @@ if (!upstream && inputs.includes('renderer/upstream-display.mjs')) throw new Err
 await buildGithubAssets(out);
 for (const name of ['github-host.css', 'qiita.css', 'qiita-host.css', 'diagram.css']) await cp(join('renderer', name), join(out, name));
 let html = await readFile('renderer/index.html', 'utf8');
-if (!custom) html = html.replace(/.*href="katex.min.css".*\n/, '');
 await writeFile(join(out, 'index.html'), html);
 await cp('third_party/font-awesome', join(out, 'qiita/font-awesome'), { recursive: true });
 await cp('node_modules/mathjax/es5', join(out, 'mathjax'), { recursive: true });
-if (custom) {
-  await cp('node_modules/katex/dist/katex.min.css', join(out, 'katex.min.css'));
-  await cp('node_modules/katex/dist/fonts', join(out, 'fonts'), { recursive: true });
-}
 // License notices follow the packages actually bundled in this edition.
 // Mermaid itself uses KaTeX, including in the upstream edition.
 const lock = JSON.parse(await readFile('package-lock.json', 'utf8'));

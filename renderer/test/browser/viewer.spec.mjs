@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
+import { comparePng } from '../../../scripts/compatibility/png-compare.mjs';
 
 async function render(page, markdown, mode = 'github', other = {}) {
   await page.goto('/');
@@ -41,7 +42,7 @@ test('both modes display the sample, math, diagrams, notes and filenames offline
   const github = await render(page, source);
   expect(github.diagnostics).toEqual([]);
   await expect(page.locator('.markdown-alert-note')).toBeVisible();
-  await expect(page.locator('.katex')).toHaveCount(2);
+  await expect(page.locator('mjx-container[jax="SVG"]')).toHaveCount(2);
   await expect(page.locator('.diagram svg:visible')).toHaveCount(1);
   await expect(page.locator('.diagram svg:visible .nodeLabel').first()).toBeVisible();
   await expect(page.locator('img')).toHaveJSProperty('naturalWidth', 880);
@@ -403,4 +404,51 @@ test('tab shortcuts reach the native host while the preview has focus', async ({
   for (const key of ['Control+t', 'Control+Tab', 'Control+Shift+Tab', 'Control+w']) await page.keyboard.press(key);
   expect(await page.evaluate(() => window.messages.filter(message => message.type === 'shortcut').map(message => message.key)))
     .toEqual(['newTab', 'nextTab', 'previousTab', 'closeTab']);
+});
+
+test('GitHub MathJax handles parsed math, tags, code isolation and malformed input', async ({ page }) => {
+  const source = '$x^2$ and $`y_1`$\n\n$$\nz^2\n$$\n\n```math\n\\begin{align} a&=b \\tag{A} \\end{align}\n```\n\n`$literal$`\n\n```text\n$literal$\n```';
+  const result = await render(page, source);
+  expect(result.diagnostics).toEqual([]);
+  await expect(page.locator('mjx-container[jax="SVG"]')).toHaveCount(4);
+  await expect(page.locator('mjx-container[display="true"]')).toHaveCount(2);
+  await expect(page.locator('code mjx-container, .katex')).toHaveCount(0);
+  await expect(page.locator('code').filter({ hasText: '$literal$' })).toHaveCount(2);
+  expect(await page.locator('[data-mdv-tex]').last().getAttribute('data-mdv-tex')).toContain('\\tag{A}');
+  const invalid = await page.evaluate(() => window.mdv.render({ engine: 'legacy', mode: 'github', markdown: '```math\n\\frac{\n```', requestId: 2 }));
+  expect(invalid.diagnostics.length).toBeGreaterThan(0);
+  await expect(page.locator('[data-mjx-error], .math-error')).not.toHaveCount(0);
+});
+
+
+test('GitHub direct math conversion hides assistive output on first load and after mode switches', async ({ page }) => {
+  await page.goto('/');
+  await page.waitForFunction(() => window.mdv);
+  const markdown = '$x^2 + y_1$\n\n```math\n\\frac{1}{2} + \\sqrt{x}\n```';
+  for (const variant of [
+    { theme: 'light', media: 'screen' },
+    { theme: 'dark', media: 'screen' },
+    { theme: 'light', media: 'print' },
+  ]) {
+    await page.emulateMedia({ media: variant.media });
+    for (const mode of ['github', 'qiita', 'github']) {
+      const result = await page.evaluate(options => window.mdv.render(options), { engine: 'legacy', markdown, mode, theme: variant.theme });
+      expect(result.diagnostics).toEqual([]);
+      if (mode !== 'github') continue;
+      await expect(page.locator('#MJX-SVG-styles')).toHaveCount(1);
+      const assistive = page.locator('mjx-assistive-mml');
+      await expect(assistive).toHaveCount(2);
+      for (const node of await assistive.all()) {
+        await expect(node).toHaveCSS('position', 'absolute');
+        await expect(node).toHaveCSS('overflow', 'hidden');
+      }
+      const target = page.locator('#document');
+      const before = await target.screenshot({ animations: 'disabled' });
+      await assistive.evaluateAll(nodes => nodes.forEach(node => node.remove()));
+      const after = await target.screenshot({ animations: 'disabled' });
+      const diff = comparePng(before, after, 0);
+      expect(diff.sameSize).toBe(true);
+      expect(diff.changedPixels).toBe(0);
+    }
+  }
 });
