@@ -23,7 +23,8 @@ if ((Get-FileHash -LiteralPath $cab -Algorithm SHA256).Hash.ToLowerInvariant() -
 if (-not (Test-Path $stamp) -or (Get-Content $stamp -Raw).Trim() -ne $manifest.sha256) {
     if (Test-Path $runtime) { Remove-Item -LiteralPath $runtime -Recurse -Force }
     New-Item -ItemType Directory -Force -Path $unpacked | Out-Null
-    & expand.exe '-F:*' $cab $unpacked | Out-Null
+    # Ruby/MSYS can put its unrelated GNU expand.exe first on PATH.
+    & (Join-Path $env:SystemRoot 'System32/expand.exe') '-F:*' $cab $unpacked | Out-Null
     if ($LASTEXITCODE -ne 0) { throw "expand.exe failed: $LASTEXITCODE" }
     if (-not (Test-Path (Join-Path $runtime 'msedgewebview2.exe'))) { throw 'Fixed Version runtime was not extracted.' }
     Set-Content -Path $stamp -Value $manifest.sha256 -Encoding ASCII
