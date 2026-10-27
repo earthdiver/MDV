@@ -15,7 +15,7 @@ The conversion engine is separate from the GitHub/Qiita syntax mode.
 
 In the dual edition, switch using **View → Use upstream engine**. Upstream is the default. The engine selection applies to all tabs and persists after restarting. Custom and upstream editions have fixed engines and hide the switch. Settings copied from another edition are normalized to an available engine.
 
-The status-bar time (ms) measures from handling a syntax or engine switch to receiving the render-completion notification, including upstream startup, conversion, and communication. In dual and upstream editions, GitHub and Qiita Ruby workers start on first use and remain available until the app closes. After both services have been used, switching avoids restarting the workers at the cost of keeping two processes in memory. Required Ruby initialization overlaps WebView2 startup. Custom Qiita rendering skips Ruby when the document can be identified as having no code requiring syntax highlighting.
+The status-bar time (ms) shows how long a display switch took to complete.
 
 An upstream conversion failure displays an error. In the dual edition, you can uncheck the option to use the custom engine.
 
@@ -60,22 +60,15 @@ Published code and the versions or settings used on the live sites may differ. T
 
 Both engines receive styling for the selected service. Heading link icons appear on hover or keyboard focus. Footnote references use the `[1]` format.
 
-GitHub documents use official Primer CSS, color definitions, and Octicons. Copy controls use GitHub's JavaScript component connected to the Windows clipboard. Code highlighting uses bundled Tree-sitter grammars for JavaScript/TypeScript and Shiki TextMate grammars for other languages, mapped to Primer palette roles. Grammar differences from the live service can still affect colors; unsupported languages retain the previous highlighting.
+Code highlighting may differ from the live websites.
 
-Qiita documents use MDV's own CSS and Font Awesome icons. Body text, headings, tables, code, and notes are adjusted for Qiita articles, but official article CSS is not bundled. In editions containing upstream assets, the custom engine also uses upstream Qiita highlighting for blocks whose language and code text match. Missing assets or unmatched blocks use the custom highlighting, so differences can remain. Language identifiers recognize both `PowerShell` and `powershell`.
+Qiita code highlighting may differ between editions. Language identifiers recognize both `PowerShell` and `powershell`.
 
 ### Math and diagrams
 
-Both engines use MathJax for math and Mermaid for diagrams. MathJax is loaded on demand when the document contains potential math syntax. Plain documents without math candidates do not initialize it.
+In Qiita mode, equations in headings or links and TeX environments without math delimiters are not rendered as math.
 
-| Engine | Math | Diagrams |
-| --- | --- | --- |
-| Custom | MathJax | Mermaid |
-| Upstream | MathJax | Mermaid |
-
-In GitHub mode both engines recognize math after Markdown conversion through a shared pass, using the same MathJax settings and SVG output. In Qiita mode both engines typeset the Markdown DOM with the same MathJax settings, excluding headings, links, and bare TeX environments.
-
-Ordinary dollar-delimited GitHub math first decodes Markdown backslash escapes and character references, so `\$x$` also becomes math. Links, ordinary code, expressions crossing emphasis or HTML elements, and inline expressions containing line breaks stay literal. Recognition is covered by 29 regression cases captured from GitHub's official Markdown API. Code-delimited math preserves literal TeX: wrap the content in backticks inside the dollar delimiters, or use a `math` code fence, to avoid Markdown interpretation.
+In GitHub mode, `\$x$` also becomes math. Links, ordinary code, expressions crossing emphasis or HTML elements, and inline expressions containing line breaks stay literal. To preserve math symbols as written, use backticks inside the dollar delimiters or a `math` code fence.
 
 Use `$...$`, `$$...$$`, or a `math` code fence. For example:
 
@@ -85,9 +78,7 @@ E = mc^2
 ```
 ````
 
-Use a `mermaid` code fence for diagrams. Both engines use Mermaid 12.1.0 in GitHub mode and 11.12.1 in Qiita mode, matching the live service versions observed on October 14, 2026. Mindmaps are supported. Settings, fonts, zoom levels, and subsequent service updates can still affect text placement and line shapes.
-
-MDV preserves indentation in diagram code. In an observed Qiita article, the service embedding process collapsed consecutive spaces, causing a mindmap that renders from the original source to fail. MDV does not reproduce errors caused by this service-side input transformation.
+Use a `mermaid` code fence for diagrams. Mindmaps are supported. Text placement and line shapes may differ from the live websites.
 
 PlantUML, GeoJSON/TopoJSON maps, and STL 3D models are not rendered.
 

@@ -18,7 +18,7 @@ MDV is a Windows app for reading Markdown documents from GitHub repositories and
 | --- | --- |
 | `dual` — Dual engine edition | Switch between the custom and upstream engines. Defaults to upstream. Recommended if you are unsure |
 | `upstream` — Upstream engine edition | Uses the conversion implementations published by GitHub and Qiita. No engine switch |
-| `custom` — Custom engine edition | MDV's own conversion pipeline built from third-party libraries. No engine switch |
+| `custom` — Custom engine edition | MDV's custom rendering engine. No engine switch |
 
 ## Get started
 
