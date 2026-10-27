@@ -102,7 +102,7 @@ internal static class NativeSmoke
             await WaitFor(window, "document.querySelector('.diagram svg') !== null");
             await WaitFor(window, "[...document.querySelectorAll('.diagram svg text, .diagram svg .nodeLabel')].some(node => node.textContent.trim().length > 0)");
             checks.Add("Mermaid rendered offline");
-            await WaitFor(window, BuildEdition.HasCustom ? "document.querySelector('.katex') !== null" : "document.querySelector('mjx-container') !== null");
+            await WaitFor(window, "document.querySelector('mjx-container') !== null");
             checks.Add("Math rendered offline");
             await WaitFor(window, "[...document.querySelectorAll('img')].some(img => img.complete && img.naturalWidth > 0)");
             checks.Add("Local image served by native host");
