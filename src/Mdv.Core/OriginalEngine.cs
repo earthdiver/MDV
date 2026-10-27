@@ -37,7 +37,7 @@ public sealed class OriginalEngine : IDisposable
         if (System.Text.RegularExpressions.Regex.IsMatch(markdown, @"<(?:pre|code)\b",
             System.Text.RegularExpressions.RegexOptions.IgnoreCase)) return true;
         foreach (System.Text.RegularExpressions.Match match in System.Text.RegularExpressions.Regex.Matches(
-            markdown, @"(?:`{3,}|~{3,})[ \t]*([^\s`~]+)"))
+            markdown, @"(?:`{3,}|~{3,})[ \t]*([^\s`~]+)", System.Text.RegularExpressions.RegexOptions.NonBacktracking))
         {
             var language = match.Groups[1].Value.Split(':')[0].ToLowerInvariant();
             if (language is not ("" or "math" or "mermaid" or "text" or "plain" or "plaintext" or "txt")) return true;
