@@ -17,7 +17,7 @@ Use Windows x64, .NET 10 SDK, Node.js 22 or newer, and PowerShell 7. The dual an
 .\scripts\build.ps1 -Edition all -OriginalEngineDirectory artifacts/OriginalEngines -CompressionCodec zstd -CompressionQuality 22
 ```
 
-Outputs are `artifacts/MDV-<edition>-win-x64/MDV-v0.3.2-<edition>-win-x64.exe` and SHA-256 files. Output directories are recreated: do not keep personal settings or actively used EXEs there. Distribute dual and upstream; distribute custom only when it is strictly smaller than both. Sizes and the selection are recorded in `artifacts/edition-sizes-win-x64.json`. The script does not upload files.
+Outputs are `artifacts/MDV-<edition>-win-x64/MDV-v0.3.3-<edition>-win-x64.exe` and SHA-256 files. Output directories are recreated: do not keep personal settings or actively used EXEs there. Distribute dual and upstream; distribute custom only when it is strictly smaller than both. Sizes and the selection are recorded in `artifacts/edition-sizes-win-x64.json`. The script does not upload files.
 
 Development builds default to Zstandard level 3. Explicitly select `-CompressionQuality 22` for releases. Every compressed payload file is verified against its original SHA-256. .NET single-file publishing is also used.
 
@@ -111,3 +111,15 @@ To directly compare the two GitHub engines, set `MDV_RUBY` and run `npm run test
 `renderer/test/browser/github-math-api.spec.mjs` checks both engines against 29 cases captured from GitHub's official Markdown API in GFM mode (`tests/compatibility/github-math-api.json`). It verifies math counts, inline/display classification and HTML element boundaries without contacting the API during tests. Only upstream cases skip when `MDV_RUBY` is unset. This verifies math recognition, not pixel equivalence with the entire live site.
 
 For Qiita, set `MDV_RUBY` and run `npm run test:browser -- renderer/test/browser/qiita-math-engines.spec.mjs`. It compares 43 inputs across light/dark/print (129 cases), including escapes, emphasis, HTML, tables, notes and explicit equation tags. Math DOM and image dimensions must match exactly. Screenshots allow only small CHTML font rasterization color differences (up to 16 per RGBA channel), with zero pixels exceeding that tolerance. Failed captures are saved under `artifacts/qiita-math-engines/`. Four inputs also compare against MathML captured from the official Qiita Markdown cheat sheet (`tests/compatibility/qiita-live-math.json`). Their Markdown wraps TeX observed on the live site in math syntax; these cases do not verify the article's original Markdown parsing or full-site pixel equivalence. Tests skip when `MDV_RUBY` is unset.
+
+## Measuring repeat startup time
+
+Place instrumented builds at `<BuildRoot>/dual/MDV.exe`, `custom/MDV.exe`, and `upstream/MDV.exe`, then run on Windows:
+
+```powershell
+.\scripts\measure-startup.ps1 -BuildRoot artifacts/startup-profile -OutputDirectory artifacts/startup-profile/results -Runs 3
+```
+
+The script copies executables to local temporary storage. Each edition, engine, syntax mode, and document case (bundled sample or short plain document) gets one warmup followed by the requested number of runs. WebView2 profiles are created and deleted on every run, as in normal use; extracted assets are reused. Results are saved to `runs.json` and environment details to `environment.json`. Exclude rows with `warmup: true` from summaries.
+
+Total time runs from process creation to the first render-completion notification. Sequential stages cover window initialization, asset preparation, WebView2 environment and controller, document setup, renderer bootstrap, Ruby startup/conversion, and browser rendering/communication. `processBeforeWindow` is the residual after subtracting those stages, including .NET startup; it is an estimate. Later image loading and shutdown are excluded.

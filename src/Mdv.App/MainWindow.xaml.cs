@@ -43,7 +43,53 @@ public partial class MainWindow : Window
     private TaskCompletionSource<bool>? _renderCompletion;
     private ViewPosition? _pendingView;
     private int _requestId;
+    private long _renderStarted;
+    private long _startupStageStarted = Stopwatch.GetTimestamp();
+    internal Dictionary<string, double> StartupTimings { get; } = new();
+    internal double StartupMilliseconds { get; private set; }
+
+    private void RecordStartupStage(string name)
+    {
+        if (FirstRender.Task.IsCompleted) return;
+        var now = Stopwatch.GetTimestamp();
+        StartupTimings[name] = Stopwatch.GetElapsedTime(_startupStageStarted, now).TotalMilliseconds;
+        _startupStageStarted = now;
+    }
+
     private OriginalEngine? _originalEngine;
+    private Task _rubyWarmup = Task.CompletedTask;
+    internal double RubyWarmupMilliseconds { get; private set; }
+
+    private string InitialDocumentPath
+    {
+        get
+        {
+            var index = Array.IndexOf(_arguments, "--smoke-document");
+            if (_arguments.Contains("--smoke-startup") && index >= 0) return _arguments[index + 1];
+            return _arguments.Contains("--smoke-test") ? SamplePath : _arguments.FirstOrDefault(a => !a.StartsWith('-')) ?? SamplePath;
+        }
+    }
+
+    private async Task WarmInitialRubyAsync()
+    {
+        var started = Stopwatch.GetTimestamp();
+        try
+        {
+            var mode = _settings.Mode;
+            if (_settings.Engine != "original")
+            {
+                if (mode != "qiita") return;
+                var document = await DocumentReader.ReadAsync(InitialDocumentPath, _lifetime.Token);
+                if (!OriginalEngine.MayNeedQiitaHighlighting(document.Text)) return;
+            }
+            _originalEngine ??= new OriginalEngine(Path.Combine(_portable.Assets, "OriginalEngines"));
+            await _originalEngine.WarmupAsync(mode, _lifetime.Token);
+        }
+        // The actual render retries and reports errors through the usual UI.
+        catch (Exception) { }
+        finally { RubyWarmupMilliseconds = Stopwatch.GetElapsedTime(started).TotalMilliseconds; }
+    }
+
     private CancellationTokenSource? _conversionCancellation;
     private Task _renderWork = Task.CompletedTask;
     private string? _pendingAnchor;
@@ -101,11 +147,16 @@ public partial class MainWindow : Window
         try
         {
             StatusText.Text = UiLanguage.Text("同梱の描画資材を準備しています（初回は展開に時間がかかります）…", "Preparing bundled rendering assets (first launch may take a while)…");
+            RecordStartupStage("windowInitialization");
             await _portable.PrepareAsync();
+            RecordStartupStage("assetPreparation");
             if (_closed || _closing) return;
+            if (BuildEdition.HasUpstream) _rubyWarmup = WarmInitialRubyAsync();
             var environment = await CoreWebView2Environment.CreateAsync(_portable.Runtime, _portable.UserData);
+            RecordStartupStage("webViewEnvironment");
             if (_closed) return;
             await Preview.EnsureCoreWebView2Async(environment);
+            RecordStartupStage("webViewController");
             if (_closed) return;
             var core = Preview.CoreWebView2;
             core.Settings.AreHostObjectsAllowed = false;
@@ -134,9 +185,10 @@ public partial class MainWindow : Window
             Preview.ZoomFactor = _settings.Zoom;
             UpdateZoomLabel();
             var files = _arguments.Contains("--smoke-test") ? [] : _arguments.Where(a => !a.StartsWith('-')).ToArray();
-            await OpenDocumentAsync(files.FirstOrDefault() ?? SamplePath, remember: files.Length > 0);
+            await OpenDocumentAsync(InitialDocumentPath, remember: files.Length > 0);
             foreach (var file in files.Skip(1)) await OpenDocumentAsync(file, newTab: true);
             if (_closed) return;
+            RecordStartupStage("hostAndDocumentPreparation");
             core.Navigate(AppOrigin + "/index.html");
             if (_arguments.Contains("--smoke-test")) _ = NativeSmoke.RunAsync(this, _arguments);
         }
@@ -333,9 +385,10 @@ public partial class MainWindow : Window
         }
     }
 
-    private void Render(bool resetScroll = false)
+    private void Render(bool resetScroll = false, long? started = null)
     {
         if (!_ready || _closed) return;
+        _renderStarted = started ?? Stopwatch.GetTimestamp();
         _rendering = true;
         _renderCompletion?.TrySetResult(false);
         _renderCompletion = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -402,13 +455,15 @@ public partial class MainWindow : Window
                     Image = c.Image is { } image ? "https://document.mdv.invalid/qiita-card-image/" + image.Hash : null });
                 var savedQiitaImages = savedManifest?.Images.ToDictionary(i => i.OriginalUrl, i => "https://document.mdv.invalid/qiita-image/" + i.Hash);
                 string? highlightFailure = null;
-                if (BuildEdition.HasUpstream && (engine == "original" || (mode == "qiita" && File.Exists(Path.Combine(_portable.Assets, "OriginalEngines", "worker.rb")))))
+                RecordStartupStage("nativeRenderPreparation");
+                if (BuildEdition.HasUpstream && (engine == "original" || (mode == "qiita" && OriginalEngine.MayNeedQiitaHighlighting(markdown) && File.Exists(Path.Combine(_portable.Assets, "OriginalEngines", "worker.rb")))))
                 {
                     _originalEngine ??= new OriginalEngine(Path.Combine(_portable.Assets, "OriginalEngines"));
                     try { original = await _originalEngine.RenderAsync(markdown, mode, cancellation.Token); }
                     catch (Exception error) when (engine != "original" && error is not OperationCanceledException)
                     { highlightFailure = UiLanguage.Text("Qiitaのコード色分けを実行できないため、独自エンジンの色分けを使用しています: ", "Qiita highlighting is unavailable; using custom engine highlighting: ") + error.Message; }
                 }
+                RecordStartupStage("rubyStartupAndConversion");
                 if (!_closed && requestId == _requestId)
                 {
                     _savedQiitaCardManifest = savedCards;
@@ -449,9 +504,17 @@ public partial class MainWindow : Window
             var root = json.RootElement;
             switch (root.GetProperty("type").GetString())
             {
-                case "ready": _ready = true; Render(true); break;
+                case "ready": RecordStartupStage("rendererBootstrap"); _ready = true; Render(true); break;
                 case "rendered":
                     if (root.GetProperty("requestId").GetInt32() != _requestId) return;
+                    if (!FirstRender.Task.IsCompleted)
+                    {
+                        RecordStartupStage("browserRenderAndBridge");
+                        using var process = Process.GetCurrentProcess();
+                        StartupMilliseconds = (DateTime.UtcNow - process.StartTime.ToUniversalTime()).TotalMilliseconds;
+                        StartupTimings["processBeforeWindow"] = StartupMilliseconds - StartupTimings.Values.Sum();
+                    }
+                    var duration = Math.Round(Stopwatch.GetElapsedTime(_renderStarted).TotalMilliseconds);
                     PrintMenu.IsEnabled = PdfMenu.IsEnabled = _document != null;
                     OutlineList.ItemsSource = root.GetProperty("outline").EnumerateArray().Select(h => new OutlineEntry(
                         h.GetProperty("id").GetString()!, h.GetProperty("text").GetString()!, h.GetProperty("level").GetInt32())).ToList();
@@ -459,7 +522,7 @@ public partial class MainWindow : Window
                     _diagnostics = root.GetProperty("diagnostics").EnumerateArray().Select(x => x.GetString()!).ToArray();
                     DiagnosticsButton.Content = _diagnostics.Length == 0 ? UiLanguage.Text("対応範囲", "Compatibility") : UiLanguage.Text($"表示上の注意 {_diagnostics.Length}", $"Display notes: {_diagnostics.Length}");
                     StatusText.Text = _document == null ? UiLanguage.Text("ファイルを開くか、ドラッグ＆ドロップしてください", "Open a file or drag and drop it here") :
-                        $"{(_settings.Mode == "qiita" ? "Qiita" : "GitHub")} / {(_settings.Engine == "original" ? UiLanguage.Text("公開実装", "Upstream") : UiLanguage.Text("独自", "Custom"))}  ·  {root.GetProperty("duration").GetInt32()} ms  ·  {UiLanguage.Text("更新を自動反映", "Auto reload enabled")}";
+                        $"{(_settings.Mode == "qiita" ? "Qiita" : "GitHub")} / {(_settings.Engine == "original" ? UiLanguage.Text("公開実装", "Upstream") : UiLanguage.Text("独自", "Custom"))}  ·  {duration} ms  ·  {UiLanguage.Text("更新を自動反映", "Auto reload enabled")}";
                     if (_pendingView is { } restored)
                     {
                         // WPF queues scrolling until layout. Finish it before exposing
@@ -656,11 +719,12 @@ public partial class MainWindow : Window
     private void Exit_Click(object sender, RoutedEventArgs e) => Close();
     private void Mode_Checked(object sender, RoutedEventArgs e)
     {
+        var started = Stopwatch.GetTimestamp();
         if (_updatingTabControls) return;
         if (sender is RadioButton { Tag: string mode })
         {
             _settings.Mode = _workspace.Active.Mode = mode;
-            if (IsLoaded) { ApplyTheme(); Render(); }
+            if (IsLoaded) { ApplyTheme(); Render(started: started); }
         }
     }
     internal void SetMode(string mode) { if (mode == "qiita") QiitaMode.IsChecked = true; else GithubMode.IsChecked = true; }
@@ -681,9 +745,10 @@ public partial class MainWindow : Window
     }
     internal void SetEngine(string engine)
     {
+        var started = Stopwatch.GetTimestamp();
         _settings.Engine = BuildEdition.ResolveEngine(engine);
         OriginalEngineMenu.IsChecked = _settings.Engine == "original";
-        Render();
+        Render(started: started);
     }
     private void Theme_Click(object sender, RoutedEventArgs e) { _settings.Theme = DarkMenu.IsChecked ? "dark" : "light"; ApplyTheme(); Render(); }
     private void RemoteImages_Click(object sender, RoutedEventArgs e) => SetRemoteImages(RemoteImagesMenu.IsChecked);
@@ -837,6 +902,7 @@ public partial class MainWindow : Window
         // Let an in-flight startup finish before disposing its controller or removing its profile.
         if (_initialization != null) await _initialization;
         await _renderWork;
+        await _rubyWarmup;
         _originalEngine?.Dispose();
         uint? browserProcessId = Preview.CoreWebView2?.BrowserProcessId;
         Preview.Dispose();

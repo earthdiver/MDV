@@ -46,7 +46,7 @@ internal static class NativeSmoke
         {
             await window.FirstRender.Task.WaitAsync(TimeSpan.FromSeconds(45));
             using var currentProcess = Process.GetCurrentProcess();
-            var startupMilliseconds = (DateTime.UtcNow - currentProcess.StartTime.ToUniversalTime()).TotalMilliseconds;
+            var startupMilliseconds = window.StartupMilliseconds;
             checks.Add("WPF window and WebView2 ready");
             if (!window.Portable.Bundled) throw new InvalidOperationException("The portable test requires an embedded Fixed Version runtime.");
             using var browser = Process.GetProcessById(checked((int)window.Preview.CoreWebView2.BrowserProcessId));
@@ -57,6 +57,11 @@ internal static class NativeSmoke
             if (!File.Exists(window.SettingsPath) || Path.GetDirectoryName(window.SettingsPath) != Path.GetDirectoryName(Environment.ProcessPath))
                 throw new IOException("INI was not created beside the executable.");
             checks.Add("INI created beside the executable");
+            if (args.Contains("--smoke-startup"))
+            {
+                await FinishAsync();
+                return;
+            }
             if (Array.IndexOf(args, "--smoke-wsl-directory") is var wslIndex && wslIndex >= 0)
             {
                 await CheckWslReload(window, args[wslIndex + 1], checks);
@@ -296,6 +301,9 @@ internal static class NativeSmoke
                 await File.WriteAllTextAsync(path, JsonSerializer.Serialize(new { success = true, checks,
                     settingsPath = window.SettingsPath, runtime = window.Portable.Runtime, userData = window.Portable.UserData,
                     browserPath, assets = window.Portable.Assets, startupMilliseconds,
+                    edition = BuildEdition.Id, engine = window.Settings.Engine, mode = window.Settings.Mode,
+                    document = window.Workspace.Active.Document?.FileName, startupStagesMilliseconds = window.StartupTimings,
+                    rubyWarmupMilliseconds = window.RubyWarmupMilliseconds,
                     payloadPreparationMilliseconds = window.Portable.PreparationTime.TotalMilliseconds }, new JsonSerializerOptions { WriteIndented = true }));
                 window.Close();
             }

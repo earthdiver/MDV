@@ -5,8 +5,56 @@ using System.Text.Json;
 
 namespace Mdv.Core;
 
-/// <summary>One persistent, serialized JSONL worker. Cancellation invalidates the process.</summary>
+/// <summary>Retains one lazy Ruby worker per service until disposal.</summary>
 public sealed class OriginalEngine : IDisposable
+{
+    private readonly OriginalEngineWorker _github;
+    private readonly OriginalEngineWorker _qiita;
+
+    public OriginalEngine(string root, string? ruby = null, string? gems = null, TimeSpan? timeout = null)
+    {
+        _github = new(root, ruby, gems, timeout);
+        _qiita = new(root, ruby, gems, timeout);
+    }
+
+    public Task<OriginalRender> RenderAsync(string markdown, string mode, CancellationToken cancellationToken = default) =>
+        mode switch
+        {
+            "github" => _github.RenderAsync(markdown, mode, cancellationToken),
+            "qiita" => _qiita.RenderAsync(markdown, mode, cancellationToken),
+            _ => throw new ArgumentException("Unknown Markdown mode", nameof(mode)),
+        };
+
+    // Reuse the normal protocol and serialization gate; an empty conversion loads
+    // the selected service without waiting for WebView2 to become ready.
+    public async Task WarmupAsync(string mode, CancellationToken cancellationToken = default) =>
+        _ = await RenderAsync("", mode, cancellationToken);
+
+    public static bool MayNeedQiitaHighlighting(string markdown)
+    {
+        // Only language-tagged blocks can receive borrowed Rouge tokens. Keep
+        // ambiguous raw HTML and fence-like text conservative, including nesting.
+        if (System.Text.RegularExpressions.Regex.IsMatch(markdown, @"<(?:pre|code)\b",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase)) return true;
+        foreach (System.Text.RegularExpressions.Match match in System.Text.RegularExpressions.Regex.Matches(
+            markdown, @"(?:`{3,}|~{3,})[ \t]*([^\s`~]+)"))
+        {
+            var language = match.Groups[1].Value.Split(':')[0].ToLowerInvariant();
+            if (language is not ("" or "math" or "mermaid" or "text" or "plain" or "plaintext" or "txt")) return true;
+        }
+        return false;
+    }
+
+    // Caller cancels and awaits outstanding work before disposing.
+    public void Dispose()
+    {
+        _github.Dispose();
+        _qiita.Dispose();
+    }
+}
+
+/// <summary>One persistent, serialized JSONL worker. Cancellation invalidates only this worker.</summary>
+internal sealed class OriginalEngineWorker : IDisposable
 {
     private readonly string _root, _ruby, _gems;
     private readonly SemaphoreSlim _gate = new(1, 1);
@@ -17,7 +65,7 @@ public sealed class OriginalEngine : IDisposable
     private int _id;
     private JsonElement _metadata;
 
-    public OriginalEngine(string root, string? ruby = null, string? gems = null, TimeSpan? timeout = null)
+    public OriginalEngineWorker(string root, string? ruby = null, string? gems = null, TimeSpan? timeout = null)
     {
         _root = Path.GetFullPath(root);
         _ruby = ruby ?? Path.Combine(_root, "ruby", "bin", "ruby.exe");

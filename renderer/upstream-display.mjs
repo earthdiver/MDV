@@ -2,7 +2,7 @@ import { createDiagramMeasurement } from './diagram-layout.mjs';
 import { cleanSvg, diagramLabelSanitizer } from './diagram-svg.mjs';
 import {prepareGithubDiagramViewport} from './github-diagram.mjs';
 import { imageDimensionStyle } from './image-styles.mjs';
-import { mathRuntime, queueMathRender, prepareQiitaMathScope, prepareCodeMath, renderGithubMath, renderMathBlock } from './math-runtime.mjs';
+import { hasMathCandidate, mathRuntime, queueMathRender, prepareQiitaMathScope, prepareCodeMath, renderGithubMath, renderMathBlock } from './math-runtime.mjs';
 import { text as uiText } from './language.mjs';
 import { prepareServicePresentation } from './service-presentation.mjs';
 import createDOMPurify from 'dompurify';
@@ -110,7 +110,6 @@ export function prepareHtml(html, mode) {
 
 async function render(article, result, { theme = 'light', captureStages = false, prepareResources, articleClass = '' } = {}) {
   if (!['github', 'qiita'].includes(result.metadata?.mode) || typeof result.html !== 'string') throw new Error('Invalid original rendering result');
-  await mathRuntime(result.metadata.mode); window.MathJax.typesetClear(); window.MathJax.texReset();
   const diagnostics = [], graphics = [], prepared = prepareHtml(result.html, result.metadata.mode);
   prepareServicePresentation(prepared.root, result.metadata.mode);
   prepared.prepared = prepared.root.innerHTML;
@@ -118,6 +117,9 @@ async function render(article, result, { theme = 'light', captureStages = false,
   document.documentElement.dataset.theme = theme === 'dark' ? 'dark' : 'light';
   if (prepareResources) prepareResources(prepared.root);
   article.className = `original-body ${result.metadata.mode} ${articleClass}`.trim(); article.replaceChildren(...prepared.root.childNodes);
+  const needsMath = hasMathCandidate(article);
+  if (needsMath) { await mathRuntime(result.metadata.mode); window.MathJax.typesetClear(); window.MathJax.texReset(); }
+  else window.MathJax?.typesetClear?.();
   let diagrams = 0, mathBlocks = 0;
   for (const block of [...article.querySelectorAll('.code-frame[data-lang], pre[lang]')]) {
     const language = (block.dataset.lang || block.getAttribute('lang') || '').toLowerCase();
@@ -154,11 +156,13 @@ async function render(article, result, { theme = 'light', captureStages = false,
       const fallback = document.createElement('pre'); fallback.textContent = code; container.append(fallback); container.classList.add('render-error');
     }
   }
-  prepareCodeMath(article, result.metadata.mode);
-  if (result.metadata.mode === 'qiita') prepareQiitaMathScope(article);
-  await document.fonts.ready;
-  if (result.metadata.mode === 'github') await renderGithubMath(article);
-  else await window.MathJax.typesetPromise([article]);
+  if (needsMath) {
+    prepareCodeMath(article, result.metadata.mode);
+    if (result.metadata.mode === 'qiita') prepareQiitaMathScope(article);
+    await document.fonts.ready;
+    if (result.metadata.mode === 'github') await renderGithubMath(article);
+    else await window.MathJax.typesetPromise([article]);
+  }
   for (const error of article.querySelectorAll('[data-mjx-error]')) diagnostics.push(`math: ${error.getAttribute('data-mjx-error')}`);
   article.getBoundingClientRect(); // Flush layout so newly inserted CHTML starts its local font loads.
   await document.fonts.ready;

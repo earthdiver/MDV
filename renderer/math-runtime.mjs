@@ -1,3 +1,10 @@
+// Conservative DOM check: false positives cost a load; false negatives lose equations.
+// Read decoded text so HTML entities and Markdown escapes cannot hide delimiters.
+export function hasMathCandidate(root) {
+  return !!root.querySelector('[data-mdv-tex], pre[lang="math" i], .code-frame[data-lang="math" i], code.language-math, .math-inline, .math-display') ||
+    /[$\\]/.test(root.textContent || '');
+}
+
 let mathReady;
 let queue = Promise.resolve();
 export async function mathRuntime(mode='github') {
@@ -37,6 +44,10 @@ export function queueMathRender(run) { const task = queue.then(run); queue = tas
 // bypasses Markdown parsing and is converted from its literal TeX separately.
 export function renderCustomMath(article, diagnostics, mode) {
   return queueMathRender(async () => {
+    if (!hasMathCandidate(article)) {
+      window.MathJax?.typesetClear?.();
+      return;
+    }
     await mathRuntime(mode);
     window.MathJax.typesetClear(); window.MathJax.texReset();
     for (const node of article.querySelectorAll('[data-mdv-tex]')) {

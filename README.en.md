@@ -30,7 +30,7 @@ The distribution targets **Windows 10/11 x64**. Runtimes are bundled, so no addi
 
 The interface automatically uses Japanese when the Windows display language is Japanese, and English otherwise. Choose **Language → Automatic (system language) / 日本語 / English** to override this. Changes apply immediately and are retained after restarting.
 
-Settings are stored beside the EXE in an `.ini` file with the same base name. For example, `MDV-v0.3.2-dual-win-x64.exe` uses `MDV-v0.3.2-dual-win-x64.ini`. Copy both files to carry your settings with you.
+Settings are stored beside the EXE in an `.ini` file with the same base name. For example, `MDV-v0.3.3-dual-win-x64.exe` uses `MDV-v0.3.3-dual-win-x64.ini`. Copy both files to carry your settings with you.
 
 **MDV is not fully compatible with GitHub or Qiita.** Development aims to reproduce the appearance and behavior of the live websites, but some differences in syntax support and rendering remain. MDV is not an official GitHub or Qiita app.
 

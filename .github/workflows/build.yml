@@ -62,7 +62,7 @@ jobs:
       # Publish a release only after verification has succeeded.
       - uses: actions/upload-artifact@v4
         with:
-          name: MDV-v0.3.2-win-x64
+          name: MDV-v0.3.3-win-x64
           compression-level: 0
           path: artifacts/distribution/
       - name: Verify each portable EXE

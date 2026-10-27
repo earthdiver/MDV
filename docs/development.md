@@ -17,7 +17,7 @@ Windows x64、.NET 10 SDK、Node.js 22以降、PowerShell 7を使用します。
 .\scripts\build.ps1 -Edition all -OriginalEngineDirectory artifacts/OriginalEngines -CompressionCodec zstd -CompressionQuality 22
 ```
 
-出力は `artifacts/MDV-<版>-win-x64/MDV-v0.3.2-<版>-win-x64.exe` とSHA-256ファイルです。各出力フォルダは再作成するため、使用中のEXEや個人設定を置かないでください。dual・upstreamを配布し、customは他の2版より厳密に小さい場合に配布します。サイズと判定は `artifacts/edition-sizes-win-x64.json` に記録されます。スクリプトはアップロードを行いません。
+出力は `artifacts/MDV-<版>-win-x64/MDV-v0.3.3-<版>-win-x64.exe` とSHA-256ファイルです。各出力フォルダは再作成するため、使用中のEXEや個人設定を置かないでください。dual・upstreamを配布し、customは他の2版より厳密に小さい場合に配布します。サイズと判定は `artifacts/edition-sizes-win-x64.json` に記録されます。スクリプトはアップロードを行いません。
 
 開発時の既定値はZstandardレベル3です。リリース時は必ず `-CompressionQuality 22` を指定します。圧縮後に全資材のSHA-256を元ファイルと照合します。.NETの単一EXE化も使用します。
 
@@ -111,3 +111,15 @@ GitHubの両エンジンを直接比較するには、`MDV_RUBY` を設定して
 `renderer/test/browser/github-math-api.spec.mjs` は、GitHub公式Markdown APIのGFMモードで取得した29ケース（`tests/compatibility/github-math-api.json`）を基準に、両エンジンの数式の個数・インライン／表示数式の区別・HTML要素の境界を検証します。実行時のAPI接続は不要です。`MDV_RUBY` 未指定時は公開実装側のみスキップします。これは数式認識の検証であり、実サイト全体の画像一致を保証するものではありません。
 
 Qiitaの両エンジンの比較は、`MDV_RUBY` を設定して `npm run test:browser -- renderer/test/browser/qiita-math-engines.spec.mjs` で実行します。エスケープ・強調・HTML・表・補足説明・明示的な数式番号など43入力×ライト・ダーク・印刷の129ケースを検証します。数式DOMと画像寸法は完全一致を要求し、画像はCHTMLフォントの描画時に生じる微小な色差（RGBA各成分16まで）のみ許容します。それを超える差分画素は0が条件です。失敗時の画像は `artifacts/qiita-math-engines/` に保存します。うち4入力は、Qiita公式Markdownチートシートから取得したMathML（`tests/compatibility/qiita-live-math.json`）とも比較します。この4入力は実サイトで観測したTeXを数式構文で包み直したもので、元記事のMarkdown解析やサイト全体の画像一致を検証するものではありません。`MDV_RUBY` 未指定時はスキップします。
+
+## ２回目以降の起動時間の計測
+
+計測対応ビルドの各版を `<BuildRoot>/dual/MDV.exe`、`custom/MDV.exe`、`upstream/MDV.exe` に配置し、Windowsで実行します。
+
+```powershell
+.\scripts\measure-startup.ps1 -BuildRoot artifacts/startup-profile -OutputDirectory artifacts/startup-profile/results -Runs 3
+```
+
+EXEはローカル一時フォルダへコピーします。各版・エンジン・記法について、同梱サンプルと数式・図のない短い文書をそれぞれ1回ウォームアップし、指定回数測定します。通常どおりWebView2のプロファイルは毎回新規作成・終了時削除し、資材キャッシュは再利用します。結果は `runs.json`、環境は `environment.json` に保存します。`warmup: true` は集計から除外します。
+
+総時間はプロセス開始から最初の描画完了通知までです。段階別の時間は、ウィンドウ初期化、資材準備、WebView2環境・コントローラー、文書準備、表示スクリプト初期化、Ruby起動・変換、ブラウザー描画・通信を区切って計測します。`processBeforeWindow` は総時間から各段階を差し引いた残りで、.NET起動などを含む推定値です。描画完了後の画像読み込みや終了処理は総時間に含みません。

@@ -43,6 +43,12 @@ Check("Empty tab labels refresh when the UI language changes", () => {
         Equal(true, changed.Contains("Title") && changed.Contains("FilePath"));
     } finally { UiLanguage.Set(previous); }
 });
+Check("Qiita highlighting skips plain prose and non-highlighted fences but retains code", () => {
+    foreach (var markdown in new[] { "# Plain\n\nText", "```\nhello\n```", "```math\nx+y\n```", "~~~mermaid\nflowchart LR\n~~~", "```text\nhello\n```" })
+        Equal(false, OriginalEngine.MayNeedQiitaHighlighting(markdown));
+    foreach (var markdown in new[] { "```PowerShell:file.ps1\n$x=1\n```", "> ~~~ ruby\nputs 1\n~~~", "    ```js\nx()\n```", "<pre><code class=\"language-ruby\">x</code></pre>", "```unknown\nx\n```" })
+        Equal(true, OriginalEngine.MayNeedQiitaHighlighting(markdown));
+});
 Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 Check("Renderer reading state survives native JSON serialization", () => {
     var options = new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web);

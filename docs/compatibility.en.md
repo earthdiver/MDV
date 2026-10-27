@@ -15,6 +15,8 @@ The conversion engine is separate from the GitHub/Qiita syntax mode.
 
 In the dual edition, switch using **View → Use upstream engine**. Upstream is the default. The engine selection applies to all tabs and persists after restarting. Custom and upstream editions have fixed engines and hide the switch. Settings copied from another edition are normalized to an available engine.
 
+The status-bar time (ms) measures from handling a syntax or engine switch to receiving the render-completion notification, including upstream startup, conversion, and communication. In dual and upstream editions, GitHub and Qiita Ruby workers start on first use and remain available until the app closes. After both services have been used, switching avoids restarting the workers at the cost of keeping two processes in memory. Required Ruby initialization overlaps WebView2 startup. Custom Qiita rendering skips Ruby when the document can be identified as having no code requiring syntax highlighting.
+
 An upstream conversion failure displays an error. In the dual edition, you can uncheck the option to use the custom engine.
 
 ## Custom engine
@@ -64,7 +66,7 @@ Qiita documents use MDV's own CSS and Font Awesome icons. Body text, headings, t
 
 ### Math and diagrams
 
-Both engines use MathJax for math and Mermaid for diagrams.
+Both engines use MathJax for math and Mermaid for diagrams. MathJax is loaded on demand when the document contains potential math syntax. Plain documents without math candidates do not initialize it.
 
 | Engine | Math | Diagrams |
 | --- | --- | --- |
