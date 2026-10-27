@@ -1,0 +1,3 @@
+# These pinned upstream files are verified byte-for-byte against source hashes.
+# Preserve their original line endings even on Windows with core.autocrlf=true.
+tests/compatibility/upstream/** -text
