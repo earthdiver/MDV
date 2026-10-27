@@ -26,7 +26,7 @@ MDV is a Windows app for reading Markdown documents from GitHub repositories and
 2. Launch it and use **Open** or drag and drop to open documents.
 3. Select **GitHub** or **Qiita** at the top right to match the document's syntax.
 
-The distribution targets **Windows 10/11 x64**. Runtimes are bundled, so no additional installation is required. Core features work offline. The first launch extracts bundled assets and needs **at least 1 GB free in the temporary folder**.
+The distribution targets **Windows 10/11 x64**. Runtimes are bundled, so no additional installation is required. Core features work offline. Required files are extracted on first launch. **Allow around 1 GB of free space per edition** on the drive containing the temporary folder. This is a planning guideline, not a fixed minimum requirement. See [Usage and settings](docs/portable.en.md#updates-and-temporary-files) for measured sizes.
 
 The interface automatically uses Japanese when the Windows display language is Japanese, and English otherwise. Choose **Language → Automatic (system language) / 日本語 / English** to override this. Changes apply immediately and are retained after restarting.
 

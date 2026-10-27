@@ -59,6 +59,8 @@ dual・upstreamの場合は準備した `OriginalEngines` を `src/Mdv.App/Origi
 
 ## リリース前の検証
 
+先の手順で `artifacts/OriginalEngines` を準備済みの場合は、次の `prepare-original-engines.ps1` の実行を省略してください。
+
 ```powershell
 npm test
 npm run compat:check
@@ -71,7 +73,8 @@ npm run upstream:test
 npm run build
 npx playwright install chromium
 npm run test:browser
-# build.ps1 -Edition all の生成後
+.\scripts\prepare-original-engines.ps1 -RubyDirectory C:\Ruby34-x64
+.\scripts\build.ps1 -Edition all -OriginalEngineDirectory artifacts/OriginalEngines -CompressionCodec zstd -CompressionQuality 22
 npm run test:editions
 'dual', 'custom', 'upstream' | ForEach-Object {
     .\scripts\smoke-windows.ps1 -BuildDirectory "artifacts/MDV-$_-win-x64" -Report "artifacts/verification/$_/native-smoke.json"

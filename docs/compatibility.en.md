@@ -66,10 +66,6 @@ Qiita code highlighting may differ between editions. Language identifiers recogn
 
 ### Math and diagrams
 
-In Qiita mode, equations in headings or links and TeX environments without math delimiters are not rendered as math.
-
-In GitHub mode, `\$x$` also becomes math. Links, ordinary code, expressions crossing emphasis or HTML elements, and inline expressions containing line breaks stay literal. To preserve math symbols as written, use backticks inside the dollar delimiters or a `math` code fence.
-
 Use `$...$`, `$$...$$`, or a `math` code fence. For example:
 
 ````markdown
@@ -77,6 +73,10 @@ Use `$...$`, `$$...$$`, or a `math` code fence. For example:
 E = mc^2
 ```
 ````
+
+In Qiita mode, equations in headings or links and TeX environments without math delimiters are not rendered as math.
+
+In GitHub mode, `\$x$` also becomes math. Links, ordinary code, expressions crossing emphasis or HTML elements, and inline expressions containing line breaks stay literal. To preserve math symbols as written, use backticks inside the dollar delimiters or a `math` code fence.
 
 Use a `mermaid` code fence for diagrams. Mindmaps are supported. Text placement and line shapes may differ from the live websites.
 

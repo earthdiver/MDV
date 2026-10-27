@@ -46,8 +46,6 @@ The choice is saved immediately beside the EXE and survives restarts. Select **A
 
 ## Images and links
 
-GitHub mode removes authored HTML text colors (`font color` and `style="color:…"`) as GitHub does. Qiita retains `font color`. Both engines bundle Mermaid 12.1.0 for GitHub and 11.12.1 for Qiita, matching the service scripts observed on October 14, 2026. Mindmap SVG rendering was also verified on GitHub. The public Markdown converters do not include all service sanitization or browser diagram rendering; MDV applies these adjustments at display time.
-
 Remote images are disabled by default. Enabling **View → Load remote images** connects to the image hosts. Document text is never sent to an external conversion service. Web and email links open in the default application when clicked.
 
 In either mode, choose **View → GitHub images / Qiita images → Download and save images…** to save authored HTTP/HTTPS images for offline viewing. No article or document URL is required by default. Existing local images keep their files; move those files together with the document.
@@ -61,7 +59,7 @@ The save dialog has an optional service setting, off by default:
 
 For GitHub resolution, enter the public document's blob or raw URL. Relative paths resolve from the document, leading `/` paths from the repository root, and `../images/a.png` is supported within the repository. These additional downloads use GitHub raw images. Private repositories requiring authentication are unsupported. For branch names containing `/`, use a commit SHA. Absolute remote-image URLs can be saved without this setting.
 
-The Qiita setting requires a public article URL. Matching images use the published standard-density CDN variant (`1x` in `srcset`, otherwise `src`); unmatched remote images use their authored URLs. Default saving downloads the original S3 or other source image without CDN resizing or conversion. Display size also depends on content width, zoom and authored dimensions, so it is not guaranteed to match Qiita exactly.
+The Qiita setting requires a public article URL. Matching images use the standard-resolution images published in the article; unmatched images use their URLs from the Markdown. Without this setting, images are saved from the Markdown URLs, so their resolution or format may differ from the article images. Display size also depends on content width, zoom and authored dimensions, so it is not guaranteed to match Qiita exactly.
 
 Results show saved images, existing local images and unsaved images, listing every unsaved source and reason. Partial success updates the snapshot with the images downloaded this time, replacing the previous snapshot. If no image can be saved, or the overall operation fails or is cancelled, previous snapshots and display settings are preserved. Successful saving enables **Use saved images**.
 
@@ -81,7 +79,7 @@ For example, when reading `notes/readme.md`, `images/photo.png` can refer to `no
 
 ## Save Qiita link cards
 
-The default is an offline URL card. In Qiita mode, choose **View → Qiita link cards → Download and save online**, then **Download and save** to fetch service titles and thumbnails. Only this command contacts Qiita's public OGP endpoint and thumbnail hosts. It processes standalone URL cards, not ordinary inline links.
+The default is an offline URL card. In Qiita mode, choose **View → Qiita link cards → Download and save online**, then **Download and save** to fetch service titles and thumbnails. Downloading card details connects to Qiita and the thumbnail hosts. It processes standalone URL cards, not ordinary inline links.
 
 Both engines can then display saved cards offline. Disable **Use saved link cards** to restore URL cards. Opening, reloading and switching modes never refresh the snapshot. Run the download command again to update it; failures and cancellation preserve the previous snapshot. **Delete saved cards for this document** removes it.
 
@@ -97,13 +95,17 @@ Settings are stored in an `.ini` beside the executable with the same base name. 
 
 Recent file paths are not updated automatically when documents move. Select moved documents using **Open**. If settings cannot be saved, check that the executable folder is writable and the INI is not read-only.
 
-MDV does not use the Windows registry for settings or file association registration. It does not erase execution history recorded by Windows itself.
+MDV does not register or change file associations. Use Windows settings if you want to associate Markdown files with MDV.
 
 ## Updates and temporary files
 
-To update, close MDV, replace the EXE, and keep the INI. If the version or edition in the executable's filename changes, rename the INI to match. Renaming every release to `MDV.exe` lets you keep using `MDV.ini`. The bundled WebView2 runtime is updated by replacing the MDV distribution.
+To update, close all MDV instances, replace the EXE, and keep the INI. If the version or edition in the executable's filename changes, rename the INI to match. Renaming every release to `MDV.exe` lets you keep using `MDV.ini`.
 
-Startup extracts required files into the Windows temporary folder. Allow **at least 1 GB of free space**; the first launch takes longer. Using multiple editions leaves separate extracted assets.
+The first launch extracts required files into the Windows temporary folder, so it may take longer than later launches.
+
+In v0.3.3, the extracted startup files total approximately 0.74 GB for custom and 0.81 GB for dual/upstream (1 GB = one billion bytes). Storage for the EXE itself is separate.
+
+Running MDV also uses working space. **Allow around 1 GB of free space per edition on the drive containing the temporary folder.** This is not a fixed minimum requirement; working data may require more space. Using multiple editions or updating MDV can leave previously extracted files behind.
 
 If display fails or you want to clean up temporary files, close all MDV instances and enter `%TEMP%` in Explorer's address bar. You can remove:
 
