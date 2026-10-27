@@ -1,0 +1,152 @@
+{
+  "capturedAt": "2026-10-27T10:57:05.683Z",
+  "endpoint": "https://api.github.com/markdown",
+  "mode": "gfm",
+  "cases": [
+    {
+      "id": "escaped-parentheses",
+      "markdown": "$\\(1\\)$",
+      "html": "<p><math-renderer class=\"js-inline-math\" style=\"display: inline-block\" data-run-id=\"75ba644c9ea81f939d792011b3f961f4\">$(1)$</math-renderer></p>"
+    },
+    {
+      "id": "escaped-open-dollar",
+      "markdown": "\\$x$",
+      "html": "<p><math-renderer class=\"js-inline-math\" style=\"display: inline-block\" data-run-id=\"a7661bda9bff675a1fbb5e9ecc2eb26d\">$x$</math-renderer></p>"
+    },
+    {
+      "id": "escaped-close-dollar",
+      "markdown": "$x\\$",
+      "html": "<p><math-renderer class=\"js-inline-math\" style=\"display: inline-block\" data-run-id=\"9b63f1882792fc26028dbd617214d5a1\">$x$</math-renderer></p>"
+    },
+    {
+      "id": "escaped-inner-dollar",
+      "markdown": "$\\$1$",
+      "html": "<p>$$1$</p>"
+    },
+    {
+      "id": "escaped-backslash-close",
+      "markdown": "$x\\\\$",
+      "html": "<p>$x\\$</p>"
+    },
+    {
+      "id": "emphasis",
+      "markdown": "$\\text{a *b* c}$",
+      "html": "<p>$\\text{a <em>b</em> c}$</p>"
+    },
+    {
+      "id": "html-bold",
+      "markdown": "$a<b>c</b>$",
+      "html": "<p>$a<b>c</b>$</p>"
+    },
+    {
+      "id": "html-span",
+      "markdown": "$a<span>b</span>c$",
+      "html": "<p>$a<span>b</span>c$</p>"
+    },
+    {
+      "id": "code-dollar",
+      "markdown": "$`\\sqrt{\\$4}`$",
+      "html": "<p><math-renderer class=\"js-inline-math\" style=\"display: inline-block\" data-run-id=\"f8d26d9c28692363dc88fa8fcc1cb6f5\">$\\sqrt{\\$4}$</math-renderer></p>"
+    },
+    {
+      "id": "literal-dollar-span",
+      "markdown": "To split <span>$</span>100 in half, we calculate $100/2$",
+      "html": "<p>To split <span>$</span>100 in half, we calculate <math-renderer class=\"js-inline-math\" style=\"display: inline-block\" data-run-id=\"0aa4a724b9451b48f91228d8a41f085c\">$100/2$</math-renderer></p>"
+    },
+    {
+      "id": "hard-break",
+      "markdown": "$a\\\nb$",
+      "html": "<p>$a<br>\nb$</p>"
+    },
+    {
+      "id": "same-line-display",
+      "markdown": "$$\\(1\\)$$",
+      "html": "<p><math-renderer class=\"js-display-math\" style=\"display: block\" data-run-id=\"54c1b195c55693face9259ae032ee8c0\">$$(1)$$</math-renderer></p>"
+    },
+    {
+      "id": "block-display",
+      "markdown": "$$\n\\(1\\)\n$$",
+      "html": "<p><math-renderer class=\"js-display-math\" style=\"display: block\" data-run-id=\"ad35453a4cb40f52b94e097feb79c001\">$$\n(1)\n$$</math-renderer></p>"
+    },
+    {
+      "id": "numeric-reference",
+      "markdown": "$&#40;1&#x29;$",
+      "html": "<p><math-renderer class=\"js-inline-math\" style=\"display: inline-block\" data-run-id=\"7857e1529cc8e364f834da1595c47b96\">$(1)$</math-renderer></p>"
+    },
+    {
+      "id": "multiple-backticks",
+      "markdown": "$``\\{1\\}``$",
+      "html": "<p><math-renderer class=\"js-inline-math\" style=\"display: inline-block\" data-run-id=\"f789061ff35e5244fd83a3dcbd7014af\">$\\{1\\}$</math-renderer></p>"
+    },
+    {
+      "id": "inline-code",
+      "markdown": "`$x$`",
+      "html": "<p><code class=\"notranslate\">$x$</code></p>"
+    },
+    {
+      "id": "fenced-code",
+      "markdown": "```text\n$x$\n```",
+      "html": "<pre lang=\"text\" class=\"notranslate\"><code class=\"notranslate\">$x$\n</code></pre>"
+    },
+    {
+      "id": "link",
+      "markdown": "[$x$](https://example.com)",
+      "html": "<p><a href=\"https://example.com\" rel=\"nofollow\">$x$</a></p>"
+    },
+    {
+      "id": "heading",
+      "markdown": "# $x$",
+      "html": "<h1><math-renderer class=\"js-inline-math\" style=\"display: inline-block\" data-run-id=\"d0e20e1b5183aca67cc3b3cbfef9b26d\">$x$</math-renderer></h1>"
+    },
+    {
+      "id": "emphasis-around",
+      "markdown": "**$x$**",
+      "html": "<p><strong><math-renderer class=\"js-inline-math\" style=\"display: inline-block\" data-run-id=\"7f80d4916a63a3802acfe4c2c1b9c500\">$x$</math-renderer></strong></p>"
+    },
+    {
+      "id": "code-emphasis",
+      "markdown": "$`\\text{a *b* c}`$",
+      "html": "<p><math-renderer class=\"js-inline-math\" style=\"display: inline-block\" data-run-id=\"8bc11dd9d5a5d0f1e08788f90388bca8\">$\\text{a *b* c}$</math-renderer></p>"
+    },
+    {
+      "id": "code-html",
+      "markdown": "$`a<b>c`$",
+      "html": "<p><math-renderer class=\"js-inline-math\" style=\"display: inline-block\" data-run-id=\"7585dca0c19f9e85b3c2d49a07786a52\">$a&amp;lt;b&amp;gt;c$</math-renderer></p>"
+    },
+    {
+      "id": "math-fence",
+      "markdown": "```math\n\\sqrt{\\$4}\n```",
+      "html": "<math-renderer class=\"js-display-math\" style=\"display: block\" data-run-id=\"6be513203d0701a756fc15ac66029742\">$$\\sqrt{\\$4}$$</math-renderer>"
+    },
+    {
+      "id": "dollar-inside-tex-delimiters",
+      "markdown": "\\\\($x$\\\\)",
+      "html": "<p>\\(<math-renderer class=\"js-inline-math\" style=\"display: inline-block\" data-run-id=\"0057e3477cc53357716fc1e0455fe2db\">$x$</math-renderer>\\)</p>"
+    },
+    {
+      "id": "span-contained",
+      "markdown": "<span>$x$</span>",
+      "html": "<p><span><math-renderer class=\"js-inline-math\" style=\"display: inline-block\" data-run-id=\"be537a4414a3f4f1f63fe30de628a95a\">$x$</math-renderer></span></p>"
+    },
+    {
+      "id": "keyboard-contained",
+      "markdown": "<kbd>$x$</kbd>",
+      "html": "<p><kbd><math-renderer class=\"js-inline-math\" style=\"display: inline-block\" data-run-id=\"13e3dc95b26611a7be29a9c98aafb516\">$x$</math-renderer></kbd></p>"
+    },
+    {
+      "id": "link-code",
+      "markdown": "[$`x`$](https://example.com)",
+      "html": "<p><a href=\"https://example.com\" rel=\"nofollow\">$<code class=\"notranslate\">x</code>$</a></p>"
+    },
+    {
+      "id": "soft-break",
+      "markdown": "$a\nb$",
+      "html": "<p>$a<br>\nb$</p>"
+    },
+    {
+      "id": "plain-tex-delimiters",
+      "markdown": "\\\\(x\\\\)",
+      "html": "<p>\\(x\\)</p>"
+    }
+  ]
+}

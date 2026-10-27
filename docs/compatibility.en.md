@@ -71,7 +71,11 @@ Both engines use MathJax for math and Mermaid for diagrams.
 | Custom | MathJax | Mermaid |
 | Upstream | MathJax | Mermaid |
 
-In GitHub mode both engines use the same MathJax settings and SVG output, but differences in Markdown math recognition can still affect rendering. In Qiita mode both engines typeset the Markdown DOM with the same MathJax settings, excluding headings, links, and bare TeX environments. Use `$...$`, `$$...$$`, or a `math` code fence. For example:
+In GitHub mode both engines recognize math after Markdown conversion through a shared pass, using the same MathJax settings and SVG output. In Qiita mode both engines typeset the Markdown DOM with the same MathJax settings, excluding headings, links, and bare TeX environments.
+
+Ordinary dollar-delimited GitHub math first decodes Markdown backslash escapes and character references, so `\$x$` also becomes math. Links, ordinary code, expressions crossing emphasis or HTML elements, and inline expressions containing line breaks stay literal. Recognition is covered by 29 regression cases captured from GitHub's official Markdown API. Code-delimited math preserves literal TeX: wrap the content in backticks inside the dollar delimiters, or use a `math` code fence, to avoid Markdown interpretation.
+
+Use `$...$`, `$$...$$`, or a `math` code fence. For example:
 
 ````markdown
 ```math

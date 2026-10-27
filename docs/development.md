@@ -106,4 +106,8 @@ GitHubのissue/PR自動参照はオンラインのサービス機能に依存し
 
 `npm run compat:math` は、数式5種類×GitHub／Qiita×ライト・ダーク・印刷の30ケースを、本文の表示条件を揃えた独立のMathJax描画と比較します。DOMと画像寸法の一致、RGBA各成分の差16・差分画素率1%以内を要求し、不一致は失敗終了します。結果は `artifacts/compatibility/browser-math/index.html` に保存します。実サイトとの一致を検証するものではありません。
 
-GitHubの両エンジンを直接比較するには、`MDV_RUBY` を設定して `npm run test:browser -- renderer/test/browser/github-math-engines.spec.mjs` を実行します。15ケースで数式DOM（実行時のメニュー識別番号を除く）と画像を比較し、画像は補正・許容差なしで寸法一致と差分0画素を要求します。結果は `artifacts/github-math-engines/` に保存します。`MDV_RUBY` 未指定時はスキップされます。
+GitHubの両エンジンを直接比較するには、`MDV_RUBY` を設定して `npm run test:browser -- renderer/test/browser/github-math-engines.spec.mjs` を実行します。エスケープ・文字参照・1行の表示数式・コード形式の数式を含む51ケースで数式DOM（実行時のメニュー識別番号を除く）と画像を比較し、画像は補正・許容差なしで寸法一致と差分0画素を要求します。結果は `artifacts/github-math-engines/` に保存します。`MDV_RUBY` 未指定時はスキップされます。
+
+`renderer/test/browser/github-math-api.spec.mjs` は、GitHub公式Markdown APIのGFMモードで取得した29ケース（`tests/compatibility/github-math-api.json`）を基準に、両エンジンの数式の個数・インライン／表示数式の区別・HTML要素の境界を検証します。実行時のAPI接続は不要です。`MDV_RUBY` 未指定時は公開実装側のみスキップします。これは数式認識の検証であり、実サイト全体の画像一致を保証するものではありません。
+
+Qiitaの両エンジンの比較は、`MDV_RUBY` を設定して `npm run test:browser -- renderer/test/browser/qiita-math-engines.spec.mjs` で実行します。エスケープ・強調・HTML・表・補足説明・明示的な数式番号など43入力×ライト・ダーク・印刷の129ケースを検証します。数式DOMと画像寸法は完全一致を要求し、画像はCHTMLフォントの描画時に生じる微小な色差（RGBA各成分16まで）のみ許容します。それを超える差分画素は0が条件です。失敗時の画像は `artifacts/qiita-math-engines/` に保存します。うち4入力は、Qiita公式Markdownチートシートから取得したMathML（`tests/compatibility/qiita-live-math.json`）とも比較します。この4入力は実サイトで観測したTeXを数式構文で包み直したもので、元記事のMarkdown解析やサイト全体の画像一致を検証するものではありません。`MDV_RUBY` 未指定時はスキップします。

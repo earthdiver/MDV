@@ -6,6 +6,20 @@ import { comparePng } from '../../../scripts/compatibility/png-compare.mjs';
 
 const catalog = JSON.parse(await readFile('tests/compatibility/browser-cases.json', 'utf8'));
 const cases = catalog.cases.filter(item => item.kind === 'math' && item.modes.includes('github'));
+cases.push(
+  {id:'math-escaped-parentheses', markdown:String.raw`$\(1\)$`, display:false},
+  {id:'math-escaped-backslashes', markdown:String.raw`$\\{1\\}$`, display:false},
+  {id:'math-code-escapes', markdown:'$`' + String.raw`\{1\}` + '`$', display:false},
+  {id:'math-display-escapes', markdown:'$$\n' + String.raw`\(1\)` + '\n$$', display:true},
+  {id:'math-same-line-display', markdown:String.raw`$$\(1\)$$`, display:true},
+  {id:'math-numeric-references', markdown:'$&#40;1&#x29;$', display:false},
+  {id:'math-named-references', markdown:'$&lt;x&gt;$', display:false},
+  {id:'math-display-references', markdown:'$$\n&#40;1&#41;\n$$', display:true},
+  {id:'math-multiple-backticks', markdown:'$``' + String.raw`\{1\}` + '``$', display:false},
+  {id:'math-code-padding', markdown:'$` ' + String.raw`\{1\}` + ' `$', display:false},
+  {id:'math-code-newline', markdown:'$`x +\ny`$', display:false},
+  {id:'math-code-literal-reference', markdown:'$`' + String.raw`\text{\&amp;}` + '`$', display:false},
+);
 const output = 'artifacts/github-math-engines';
 
 test.describe('GitHub math agrees between custom and upstream engines', () => {

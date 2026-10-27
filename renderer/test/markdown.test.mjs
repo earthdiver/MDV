@@ -49,8 +49,9 @@ for (const mode of ['github', 'qiita']) {
   });
   test(`${mode}: inline dollars, backtick math, fenced math and code isolation`, () => {
     const { html } = render('$x^2$ and $`y_1`$\n\n```math\n\\frac{1}{2}\n```\n\n`$not_math$`', mode);
-    assert.equal((html.match(/data-mdv-tex=/g) || []).length, 3);
-    assert.match(html, /data-mdv-tex="y_1"/);
+    assert.equal((html.match(/data-mdv-tex=/g) || []).length, mode === 'github' ? 1 : 3);
+    if (mode === 'github') assert.match(html, /\$x\^2\$ and \$<code>y_1<\/code>\$/);
+    else assert.match(html, /data-mdv-tex="y_1"/);
     assert.doesNotMatch(html, /data-mdv-tex="`/);
     assert.match(html, /<code>\$not_math\$<\/code>/);
   });
@@ -174,6 +175,35 @@ test('authored HTML IDs cannot collide with generated heading IDs', () => {
     assert.equal(new Set(ids).size, ids.length);
     assert.deepEqual(outline.map(item => item.id), ['mdv-heading-target', 'mdv-heading-other']);
   }
+});
+
+test('GitHub processes Markdown before finding dollar math', () => {
+  for (const [source, html] of [
+    [String.raw`$\(1\)$`, '<p>$(1)$</p>'],
+    [String.raw`\$x$`, '<p>$x$</p>'],
+    [String.raw`$x\$`, '<p>$x$</p>'],
+    [String.raw`$\\{1\\}$`, String.raw`<p>$\{1\}$</p>`],
+    ['$&#40;1&#x29;$', '<p>$(1)$</p>'],
+    ['$$\n' + String.raw`\(1\)` + '\n$$', '<p>$$\n(1)\n$$</p>'],
+    ['$``' + String.raw`\{1\}` + '``$', String.raw`<p>$<code>\{1\}</code>$</p>`],
+    ['$`x +\ny`$', '<p>$<code>x + y</code>$</p>'],
+    [String.raw`$\text{a *b* c}$`, String.raw`<p>$\text{a <em>b</em> c}$</p>`],
+    ['$a<span>b</span>c$', '<p>$a<span>b</span>c$</p>'],
+    ['$a' + '\\' + '\nb$', '<p>$a<br>\nb$</p>'],
+  ]) {
+    assert.equal(render(source, 'github').html, html, source);
+  }
+  assert.match(render('`' + String.raw`$\(1\)$` + '`', 'github').html, /<code>\$\\\(1\\\)\$<\/code>/);
+  assert.ok(render(String.raw`$\(1\)$`, 'qiita').html.includes(String.raw`data-mdv-tex="\(1\)"`));
+});
+
+test('GitHub decodes references once and leaves encoded HTML as text', () => {
+  for (const source of [String.raw`$\&lt;$`, '$&amp;lt;$'])
+    assert.equal(render(source).html, '<p>$&#x26;lt;$</p>', source);
+  assert.equal(render('$`&lt;`$').html, '<p>$<code>&#x26;lt;</code>$</p>');
+  assert.ok(render('```math\n&lt;\n```').html.includes('data-mdv-tex="&#x26;lt;"'));
+  const html = render('$&lt;img src=x onerror=alert(1)&gt;$').html;
+  assert.equal(html, '<p>$&#x3C;img src=x onerror=alert(1)>$</p>');
 });
 
 test('math preserves AMS environments and explicit tags for MathJax', () => {

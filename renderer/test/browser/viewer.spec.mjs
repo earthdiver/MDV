@@ -406,7 +406,7 @@ test('tab shortcuts reach the native host while the preview has focus', async ({
     .toEqual(['newTab', 'nextTab', 'previousTab', 'closeTab']);
 });
 
-test('GitHub MathJax handles parsed math, tags, code isolation and malformed input', async ({ page }) => {
+test('GitHub MathJax handles Markdown math, tags, code isolation and malformed input', async ({ page }) => {
   const source = '$x^2$ and $`y_1`$\n\n$$\nz^2\n$$\n\n```math\n\\begin{align} a&=b \\tag{A} \\end{align}\n```\n\n`$literal$`\n\n```text\n$literal$\n```';
   const result = await render(page, source);
   expect(result.diagnostics).toEqual([]);

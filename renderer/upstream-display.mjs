@@ -2,7 +2,7 @@ import { createDiagramMeasurement } from './diagram-layout.mjs';
 import { cleanSvg, diagramLabelSanitizer } from './diagram-svg.mjs';
 import {prepareGithubDiagramViewport} from './github-diagram.mjs';
 import { imageDimensionStyle } from './image-styles.mjs';
-import { mathRuntime, queueMathRender, prepareQiitaMathScope,renderMathBlock } from './math-runtime.mjs';
+import { mathRuntime, queueMathRender, prepareQiitaMathScope, prepareCodeMath, renderGithubMath, renderMathBlock } from './math-runtime.mjs';
 import { text as uiText } from './language.mjs';
 import { prepareServicePresentation } from './service-presentation.mjs';
 import createDOMPurify from 'dompurify';
@@ -154,18 +154,11 @@ async function render(article, result, { theme = 'light', captureStages = false,
       const fallback = document.createElement('pre'); fallback.textContent = code; container.append(fallback); container.classList.add('render-error');
     }
   }
-  for (const code of article.querySelectorAll('code')) {
-    if (code.closest('pre')) continue;
-    const before = code.previousSibling, after = code.nextSibling;
-    if (before?.nodeType === Node.TEXT_NODE && after?.nodeType === Node.TEXT_NODE &&
-        /(?<!\$)\$$/.test(before.textContent) && /^\$(?!\$)/.test(after.textContent)) {
-      before.textContent = before.textContent.slice(0, -1); after.textContent = after.textContent.slice(1);
-      const span = document.createElement('span'); span.textContent = `$${code.textContent}$`; code.replaceWith(span);
-    }
-  }
+  prepareCodeMath(article, result.metadata.mode);
   if (result.metadata.mode === 'qiita') prepareQiitaMathScope(article);
   await document.fonts.ready;
-  await window.MathJax.typesetPromise([article]);
+  if (result.metadata.mode === 'github') await renderGithubMath(article);
+  else await window.MathJax.typesetPromise([article]);
   for (const error of article.querySelectorAll('[data-mjx-error]')) diagnostics.push(`math: ${error.getAttribute('data-mjx-error')}`);
   article.getBoundingClientRect(); // Flush layout so newly inserted CHTML starts its local font loads.
   await document.fonts.ready;

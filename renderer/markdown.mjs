@@ -45,7 +45,9 @@ const schema = {
 
 function parserFor(mode, deferMath, frontmatter = true) {
   const parser = unified().use(remarkParse).use(remarkGfm, { singleTilde: mode === 'github' });
-  if (!deferMath) parser.use(remarkMath);
+  // GitHub finds math after Markdown has decoded escapes, parsed formatting
+  // and sanitized HTML. Parsing dollar spans here changes those boundaries.
+  if (!deferMath && mode !== 'github') parser.use(remarkMath);
   return frontmatter ? parser.use(remarkFrontmatter, ['yaml']) : parser;
 }
 
