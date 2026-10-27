@@ -1,7 +1,7 @@
 import { chromium } from '@playwright/test';
 import { createServer } from 'node:http';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
-import { resolve, extname } from 'node:path';
+import { resolve, extname, sep } from 'node:path';
 import assert from 'node:assert/strict';
 import { OriginalEngine } from './upstream/client.mjs';
 const repo=process.cwd();
@@ -11,7 +11,7 @@ const results=[];
 try {
   for(const edition of ['dual','custom','upstream']) {
     const root=resolve(repo,`artifacts/renderer-${edition}`);
-    const server=createServer(async(req,res)=>{try {const p=resolve(root,'.'+new URL(req.url,'http://localhost').pathname.replace(/\/$/,'/index.html'));if(!p.startsWith(root+'/'))throw Error();res.setHeader('Content-Type',mime[extname(p)]||'application/octet-stream');res.end(await readFile(p));}catch{res.writeHead(404);res.end();}});
+    const server=createServer(async(req,res)=>{try {const p=resolve(root,'.'+new URL(req.url,'http://localhost').pathname.replace(/\/$/,'/index.html'));if(!p.startsWith(root+sep))throw Error();res.setHeader('Content-Type',mime[extname(p)]||'application/octet-stream');res.end(await readFile(p));}catch{res.writeHead(404);res.end();}});
     await new Promise(r=>server.listen(0,'127.0.0.1',r));
     const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('response',r=>{if(r.status()>=400)errors.push(r.url()+':'+r.status())});
     try {

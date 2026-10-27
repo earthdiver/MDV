@@ -31,24 +31,22 @@ jobs:
           $env:MDV_RUBY = (Get-Command ruby).Source
           npm run test:browser
           if ($LASTEXITCODE -ne 0) { throw 'Browser tests failed.' }
+      - name: Verify edition bundles in browser
+        shell: pwsh
+        run: |
+          $env:MDV_RUBY = (Get-Command ruby).Source
+          foreach ($edition in @('dual', 'custom', 'upstream')) {
+            node scripts/build-renderer.mjs $edition "artifacts/renderer-$edition"
+            if ($LASTEXITCODE -ne 0) { throw 'Edition renderer build failed.' }
+          }
+          npm run test:editions
+          if ($LASTEXITCODE -ne 0) { throw 'Edition tests failed.' }
       - name: Build all editions with Zstandard
         shell: pwsh
         run: |
           $rubyDirectory = ruby -rrbconfig -e 'print RbConfig::CONFIG["prefix"]'
           ./scripts/prepare-original-engines.ps1 -RubyDirectory $rubyDirectory
           ./scripts/build.ps1 -Edition all -OriginalEngineDirectory artifacts/OriginalEngines -CompressionCodec zstd -CompressionQuality 22
-      - name: Verify edition bundles in browser
-        shell: pwsh
-        run: |
-          $env:MDV_RUBY = (Get-Command ruby).Source
-          npm run test:editions
-          if ($LASTEXITCODE -ne 0) { throw 'Edition tests failed.' }
-      - name: Verify each portable EXE
-        shell: pwsh
-        run: |
-          foreach ($edition in @('dual', 'custom', 'upstream')) {
-            ./scripts/smoke-windows.ps1 -BuildDirectory "artifacts/MDV-$edition-win-x64" -Report "artifacts/verification/$edition/native-smoke.json"
-          }
       - name: Select distribution assets
         shell: pwsh
         run: |
@@ -59,11 +57,20 @@ jobs:
             Copy-Item -LiteralPath $file.file -Destination artifacts/distribution
             Copy-Item "artifacts/MDV-$($file.edition)-win-x64.sha256" -Destination artifacts/distribution
           }
+      # Preserve the exact built candidates before native checks. A failed
+      # verification must not discard EXEs needed for diagnosis or retesting.
+      # Publish a release only after verification has succeeded.
       - uses: actions/upload-artifact@v4
         with:
           name: MDV-v0.3.2-win-x64
           compression-level: 0
           path: artifacts/distribution/
+      - name: Verify each portable EXE
+        shell: pwsh
+        run: |
+          foreach ($edition in @('dual', 'custom', 'upstream')) {
+            ./scripts/smoke-windows.ps1 -BuildDirectory "artifacts/MDV-$edition-win-x64" -Report "artifacts/verification/$edition/native-smoke.json"
+          }
       - uses: actions/upload-artifact@v4
         if: always()
         with:
