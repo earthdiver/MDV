@@ -464,12 +464,14 @@ $x^2$` + '\n\n```math:ignored\n'+String.raw`\displaylines{x=1 \\ y=2}`+'\n```';
       const geometry=await heading.evaluate(h=>{
         const a=h.querySelector('.mdv-heading-link'),i=a.querySelector('.fa-link');
         const hr=h.getBoundingClientRect(),ar=a.getBoundingClientRect(),ir=i.getBoundingClientRect();
-        return {left:ar.left-hr.left,width:ar.width,iconHeight:ir.height,
+        return {left:ar.left-hr.left,width:ar.width,iconWidth:ir.width,iconHeight:ir.height,
           heightDelta:ar.height-(hr.height-parseFloat(getComputedStyle(h).borderBottomWidth)),
           centerDelta:(ir.top+ir.height/2)-(ar.top+ar.height/2),
           glyph:getComputedStyle(i,'::before').content};
       });
-      expect(geometry.left).toBe(-33); expect(geometry.width).toBe(33);
+      // The anchor uses width:auto with 8px padding on each side. FontAwesome
+      // glyph advance widths can be fractional on Windows; do not round to 33px.
+      expect(geometry.left).toBe(-33); expect(geometry.width).toBe(geometry.iconWidth+16);
       expect(geometry.iconHeight).toBe(18); expect(Math.abs(geometry.heightDelta)).toBeLessThan(.02);
       expect(Math.abs(geometry.centerDelta)).toBeLessThan(.02); expect(geometry.glyph).toBe('"\uf0c1"');
       await icon.hover();
