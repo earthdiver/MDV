@@ -26,6 +26,7 @@ public partial class MainWindow
         Resources["TextFindMenu"] = UiLanguage.Text("文書内を検索(_F)", "_Find in document");
         Resources["TextOutlineMenu"] = UiLanguage.Text("目次(_T)", "_Table of contents");
         Resources["TextSourceMenu"] = UiLanguage.Text("ソースを表示(_S)", "Show _source");
+        Resources["TextRestoreSessionMenu"] = UiLanguage.Text("前回の続きを開く", "Reopen previous session");
         Resources["TextUpstreamMenu"] = UiLanguage.Text("公開実装エンジンを使用", "Use upstream engine");
         Resources["TextDarkMenu"] = UiLanguage.Text("ダークテーマ(_D)", "_Dark theme");
         Resources["TextRemoteImagesMenu"] = UiLanguage.Text("外部画像を読み込む(_I)", "Load remote _images");
@@ -96,7 +97,7 @@ public partial class MainWindow
         {
             var previous = _settings.Language;
             _settings.Language = language;
-            try { _settings.Save(_settingsPath); }
+            try { DocumentSession.SaveSettings(_settingsPath, _settings); }
             catch (Exception error) when (error is IOException or UnauthorizedAccessException)
             {
                 _settings.Language = previous;

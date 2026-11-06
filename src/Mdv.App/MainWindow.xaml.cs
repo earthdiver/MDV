@@ -38,6 +38,7 @@ public partial class MainWindow : Window
     private bool _closing;
     private bool _closeReady;
     private Task? _initialization;
+    private readonly TaskCompletionSource<bool> _startupDocuments = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private bool _openingDocument;
     private bool _reloadPending;
     private TaskCompletionSource<bool>? _renderCompletion;
@@ -64,6 +65,7 @@ public partial class MainWindow : Window
     {
         get
         {
+            if (_sessionRestored && _document != null) return _document.FilePath;
             var index = Array.IndexOf(_arguments, "--smoke-document");
             if (_arguments.Contains("--smoke-startup") && index >= 0) return _arguments[index + 1];
             return _arguments.Contains("--smoke-test") ? SamplePath : _arguments.FirstOrDefault(a => !a.StartsWith('-')) ?? SamplePath;
@@ -109,7 +111,7 @@ public partial class MainWindow : Window
             _settings = UserSettings.Load(_settingsPath);
             UiLanguage.Set(_settings.Language);
             // Create/validate the portable INI immediately, including on the first launch.
-            _settings.Save(_settingsPath);
+            DocumentSession.SaveSettings(_settingsPath, _settings);
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
         {
@@ -124,6 +126,7 @@ public partial class MainWindow : Window
         QiitaMode.IsChecked = _settings.Mode == "qiita";
         OutlineMenu.IsChecked = _settings.ShowOutline;
         SourceMenu.IsChecked = _settings.ShowSource;
+        RestoreSessionMenu.IsChecked = _settings.RestoreSession;
         DarkMenu.IsChecked = _settings.Theme == "dark";
         RemoteImagesMenu.IsChecked = AllowRemoteImages;
         SavedQiitaCardsMenu.IsChecked = _settings.UseSavedQiitaCards;
@@ -150,6 +153,8 @@ public partial class MainWindow : Window
             RecordStartupStage("windowInitialization");
             await _portable.PrepareAsync();
             RecordStartupStage("assetPreparation");
+            if (_closed || _closing) return;
+            _sessionRestored = await RestoreSessionAsync();
             if (_closed || _closing) return;
             if (BuildEdition.HasUpstream) _rubyWarmup = WarmInitialRubyAsync();
             var environment = await CoreWebView2Environment.CreateAsync(_portable.Runtime, _portable.UserData);
@@ -185,11 +190,12 @@ public partial class MainWindow : Window
             Preview.ZoomFactor = _settings.Zoom;
             UpdateZoomLabel();
             var files = _arguments.Contains("--smoke-test") ? [] : _arguments.Where(a => !a.StartsWith('-')).ToArray();
-            await OpenDocumentAsync(InitialDocumentPath, remember: files.Length > 0);
-            foreach (var file in files.Skip(1)) await OpenDocumentAsync(file, newTab: true);
+            if (!_sessionRestored) await NavigateDocumentAsync(InitialDocumentPath, files.Length > 0, false, initializing: true);
+            foreach (var file in files.Skip(1)) await NavigateDocumentAsync(file, true, false, newTab: true, initializing: true);
             if (_closed) return;
             RecordStartupStage("hostAndDocumentPreparation");
             core.Navigate(AppOrigin + "/index.html");
+            _startupDocuments.TrySetResult(true);
             if (_arguments.Contains("--smoke-test")) _ = NativeSmoke.RunAsync(this, _arguments);
         }
         catch (Exception error)
@@ -198,6 +204,7 @@ public partial class MainWindow : Window
             ShowPreviewError((_portable.Bundled ? UiLanguage.Text("同梱の描画エンジンを起動できませんでした。\n\n", "Unable to start the bundled rendering engine.\n\n") : UiLanguage.Text("開発版の実行にはWebView2 Runtimeが必要です。配布には scripts/build.ps1 で作る単一EXE版を使用してください。\n\n", "Development builds require WebView2 Runtime. For distribution, use the single EXE built by scripts/build.ps1.\n\n")) + error.Message);
             if (_arguments.Contains("--smoke-test")) NativeSmoke.Fail(_arguments, error);
         }
+        finally { _startupDocuments.TrySetResult(false); }
     }
 
     private string SamplePath => Path.Combine(_portable.Assets, "Samples", UiLanguage.Current == "ja" ? "welcome.md" : "welcome.en.md");
@@ -209,7 +216,7 @@ public partial class MainWindow : Window
         ? Task.FromResult(false) : NavigateDocumentAsync(null, false, true, direction: direction);
 
     private Task<bool> NavigateDocumentAsync(string? path, bool remember, bool quiet, string? anchor = null,
-        int? direction = null, bool reload = false, bool newTab = false) => RunNavigationAsync(async () =>
+        int? direction = null, bool reload = false, bool newTab = false, bool initializing = false) => RunNavigationAsync(async () =>
     {
         if (newTab && path != null && _workspace.Find(path) is { } existing)
         {
@@ -237,7 +244,7 @@ public partial class MainWindow : Window
         Render(newVisit || direction.HasValue);
         await WaitForRenderAsync();
         return true;
-    }, quiet);
+    }, quiet, initializing);
 
     private async Task<MarkdownDocument> ReadDocumentAsync(string path)
     {
@@ -248,14 +255,21 @@ public partial class MainWindow : Window
         }
     }
 
-    private async Task<bool> RunNavigationAsync(Func<Task<bool>> navigate, bool quiet = true)
+    private async Task<bool> RunNavigationAsync(Func<Task<bool>> navigate, bool quiet = true, bool initializing = false)
     {
+        // Explicit opens during asset/session/CLI initialization run afterwards,
+        // so restoring the saved workspace cannot erase a document just opened.
+        if (!initializing)
+        {
+            try { if (!await _startupDocuments.Task.WaitAsync(_lifetime.Token)) return false; }
+            catch (OperationCanceledException) when (_closed || _closing) { return false; }
+        }
         await _navigationGate.WaitAsync();
         try
         {
-            if (_closed) return false;
+            if (_closed || _closing) return false;
             await WaitForRenderAsync();
-            if (_closed) return false;
+            if (_closed || _closing) return false;
             _openingDocument = true;
             UpdateNavigationControls();
             return await navigate();
@@ -297,7 +311,8 @@ public partial class MainWindow : Window
 
     private void UpdateNavigationControls()
     {
-        var available = _ready && !_closed && !_openingDocument && !_rendering;
+        var available = _ready && !_closed && !_closing && !_openingDocument && !_rendering;
+        RestoreSessionMenu.IsEnabled = available;
         BackButton.IsEnabled = BackMenu.IsEnabled = available && _history.CanGoBack;
         ForwardButton.IsEnabled = ForwardMenu.IsEnabled = available && _history.CanGoForward;
         DocumentTabs.IsEnabled = NewTabButton.IsEnabled = NewTabMenu.IsEnabled = available;
@@ -541,6 +556,7 @@ public partial class MainWindow : Window
                     UpdateNavigationControls();
                     ResumePendingReload();
                     FirstRender.TrySetResult(true);
+                    if (_sessionNotice != null) { StatusText.Text = _sessionNotice; _sessionNotice = null; }
                     break;
                 case "error":
                     if (root.GetProperty("requestId").GetInt32() != _requestId) return;
@@ -915,6 +931,10 @@ public partial class MainWindow : Window
         e.Cancel = true;
         if (_closing) return;
         _closing = true;
+        IsEnabled = false;
+        _reloadTimer.Stop();
+        _pollTimer.Stop();
+        await SaveSessionOnCloseAsync();
         _closed = true;
         _lifetime.Cancel();
         _remoteImages.Dispose();
@@ -929,7 +949,7 @@ public partial class MainWindow : Window
         _originalEngine?.Dispose();
         uint? browserProcessId = Preview.CoreWebView2?.BrowserProcessId;
         Preview.Dispose();
-        try { _settings.Save(_settingsPath); }
+        try { DocumentSession.SaveSettings(_settingsPath, _settings); }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
         {
             if (_arguments.Contains("--smoke-test")) { NativeSmoke.Fail(_arguments, error); return; }

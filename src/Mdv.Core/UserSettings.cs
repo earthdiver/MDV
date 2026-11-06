@@ -11,6 +11,7 @@ public sealed class UserSettings
     public string Theme { get; set; } = "light";
     public double Zoom { get; set; } = 1;
     public bool ShowSource { get; set; }
+    public bool RestoreSession { get; set; }
     public bool ShowOutline { get; set; } = true;
     public double OutlineWidth { get; set; } = 230;
     public bool AllowRemoteImages { get; set; }
@@ -66,6 +67,7 @@ public sealed class UserSettings
         settings.Theme = values.GetValueOrDefault("Viewer.Theme", settings.Theme).ToLowerInvariant();
         if (double.TryParse(values.GetValueOrDefault("Viewer.Zoom"), NumberStyles.Float, CultureInfo.InvariantCulture, out var zoom)) settings.Zoom = zoom;
         settings.ShowSource = ReadBool("ShowSource", settings.ShowSource);
+        settings.RestoreSession = ReadBool("RestoreSession", settings.RestoreSession);
         settings.ShowOutline = ReadBool("ShowOutline", settings.ShowOutline);
         if (double.TryParse(values.GetValueOrDefault("Viewer.OutlineWidth"), NumberStyles.Float, CultureInfo.InvariantCulture, out var outlineWidth)) settings.OutlineWidth = outlineWidth;
         settings.AllowRemoteImages = ReadBool("AllowRemoteImages", settings.AllowRemoteImages);
@@ -94,6 +96,7 @@ public sealed class UserSettings
             "[Viewer]", "Language=" + Language, "Engine=" + Engine, "Mode=" + Mode, "Theme=" + Theme,
             "Zoom=" + Zoom.ToString("0.###", CultureInfo.InvariantCulture),
             "ShowSource=" + ShowSource.ToString().ToLowerInvariant(),
+            "RestoreSession=" + RestoreSession.ToString().ToLowerInvariant(),
             "ShowOutline=" + ShowOutline.ToString().ToLowerInvariant(),
             "OutlineWidth=" + OutlineWidth.ToString("0.###", CultureInfo.InvariantCulture),
             "AllowRemoteImages=" + AllowRemoteImages.ToString().ToLowerInvariant(),

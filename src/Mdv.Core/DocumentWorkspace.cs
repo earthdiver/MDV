@@ -57,6 +57,14 @@ public sealed class DocumentWorkspace
         return true;
     }
 
+    internal void Restore(IReadOnlyList<DocumentTab> tabs, DocumentTab active)
+    {
+        if (tabs.Count == 0 || !tabs.Contains(active)) throw new ArgumentException("A restored workspace must contain its active tab.");
+        _tabs.Clear();
+        foreach (var tab in tabs) _tabs.Add(tab);
+        Active = active;
+    }
+
     public DocumentTab? Find(string path)
     {
         path = Path.GetFullPath(path);

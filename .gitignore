@@ -5,6 +5,8 @@ src/Mdv.App/Renderer/
 src/Mdv.App/PortablePayload/
 MDV.ini
 *.ini.*.tmp
+*.session.json
+*.session.json.*.tmp
 *.mdv-qiita-images.zip
 *.mdv-qiita-images.zip.*.tmp
 *.mdv-github-images.zip

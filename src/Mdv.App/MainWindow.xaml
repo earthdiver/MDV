@@ -28,6 +28,7 @@
     <MenuItem Header="{DynamicResource TextFindMenu}" InputGestureText="Ctrl+F" Click="Find_Click" />
     <MenuItem x:Name="OutlineMenu" Header="{DynamicResource TextOutlineMenu}" IsCheckable="True" Click="Outline_Click" />
     <MenuItem x:Name="SourceMenu" Header="{DynamicResource TextSourceMenu}" IsCheckable="True" InputGestureText="Ctrl+U" Click="Source_Click" />
+    <MenuItem x:Name="RestoreSessionMenu" Header="{DynamicResource TextRestoreSessionMenu}" IsCheckable="True" IsEnabled="False" Click="RestoreSession_Click" />
     <Separator />
     <MenuItem x:Name="OriginalEngineMenu" Header="{DynamicResource TextUpstreamMenu}" IsCheckable="True" Click="Engine_Click" />
     <MenuItem x:Name="DarkMenu" Header="{DynamicResource TextDarkMenu}" IsCheckable="True" Click="Theme_Click" />
