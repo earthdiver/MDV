@@ -8,6 +8,7 @@ import { githubIcon } from './github-icons.mjs';
 import { selectStyles } from './service-styles.mjs';
 import { applySavedQiitaCards } from './qiita-cards.mjs';
 import { prepareServicePresentation } from './service-presentation.mjs';
+import { findTextRanges } from './search.mjs';
 import DOMPurify from 'dompurify';
 import hljs from 'highlight.js';
 
@@ -456,23 +457,8 @@ async function render(options) {
 
 function find(query, direction = 0, scroll = true) {
   if (direction === 0) {
-    searchRanges = [];
+    searchRanges = findTextRanges(article, query);
     searchIndex = -1;
-    if (query) {
-      const expression = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'giu');
-      const walker = document.createTreeWalker(article, NodeFilter.SHOW_TEXT, {
-        acceptNode(node) { return node.parentElement.closest('button, clipboard-copy, svg, math, .katex-mathml') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT; },
-      });
-      let node;
-      while ((node = walker.nextNode()) && searchRanges.length < 10_000) {
-        for (const match of node.textContent.matchAll(expression)) {
-          if (searchRanges.length >= 10_000) break;
-          const range = new Range();
-          range.setStart(node, match.index); range.setEnd(node, match.index + match[0].length);
-          searchRanges.push(range);
-        }
-      }
-    }
   }
   if (searchRanges.length) searchIndex = (searchIndex + (direction || 1) + searchRanges.length) % searchRanges.length;
   CSS.highlights?.set('mdv-search', new Highlight(...searchRanges));
