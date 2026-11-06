@@ -23,6 +23,8 @@ let originalAliases = {};
 let searchRanges = [];
 let searchIndex = -1;
 let currentRequestId = 0;
+let hoveredLink = '';
+let linkHoverEnabled = false;
 let restoration;
 const post = message => window.chrome?.webview?.postMessage(message);
 const scrollableSelector = '.highlight, pre, table, .math-container, .math-display, .diagram';
@@ -367,6 +369,8 @@ function copyButtons() {
 
 
 async function render(options) {
+  linkHoverEnabled = false;
+  showHoveredLink(null);
   const language = setLanguage(options.language);
   document.documentElement.lang = language;
   document.title = uiText('MDV プレビュー', 'MDV Preview');
@@ -445,6 +449,8 @@ async function render(options) {
   const message = { type: 'rendered', requestId: options.requestId, outline: result.outline,
     diagnostics: [...new Set(result.diagnostics)], duration: Math.round(performance.now() - started) };
   post(message);
+  linkHoverEnabled = true;
+  showHoveredLink(article.querySelector('a[href]:hover'));
   return message;
 }
 
@@ -492,6 +498,19 @@ function find(query, direction = 0, scroll = true) {
   post(result);
   return result;
 }
+
+function showHoveredLink(target) {
+  const anchor = target instanceof Element ? target.closest('a[href]') : null;
+  // Keep relative paths and fragments as written, just like the click handler.
+  // The browser's resolved URL would incorrectly point at the renderer origin.
+  const href = linkHoverEnabled && anchor && article.contains(anchor) ? anchor.getAttribute('href') : '';
+  if (href === hoveredLink) return;
+  hoveredLink = href;
+  post({ type: 'hoverLink', href, requestId: currentRequestId });
+}
+article.addEventListener('mouseover', event => showHoveredLink(event.target));
+article.addEventListener('mouseout', event => showHoveredLink(event.relatedTarget));
+window.addEventListener('blur', () => showHoveredLink(null));
 
 function openLink(event, newTab) {
   const anchor = event.target.closest('a[href]');

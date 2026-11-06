@@ -133,6 +133,7 @@
    <Grid>
     <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
     <TextBlock x:Name="StatusText" Text="{DynamicResource TextStarting}" Foreground="{DynamicResource MutedBrush}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+    <TextBlock x:Name="LinkTargetText" Visibility="Collapsed" Foreground="{DynamicResource MutedBrush}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
     <TextBlock x:Name="FileStats" Grid.Column="1" Foreground="{DynamicResource MutedBrush}" Margin="16,0" VerticalAlignment="Center" />
     <Button x:Name="DiagnosticsButton" Grid.Column="2" Content="{DynamicResource TextCompatibility}" Padding="8,2" Click="Compatibility_Click" />
     <TextBlock x:Name="ZoomLabel" Grid.Column="3" Text="100%" Width="52" TextAlignment="Right" VerticalAlignment="Center" />

@@ -388,6 +388,7 @@ public partial class MainWindow : Window
     private void Render(bool resetScroll = false, long? started = null)
     {
         if (!_ready || _closed) return;
+        ShowLinkTarget();
         _renderStarted = started ?? Stopwatch.GetTimestamp();
         _rendering = true;
         _renderCompletion?.TrySetResult(false);
@@ -543,6 +544,7 @@ public partial class MainWindow : Window
                     break;
                 case "error":
                     if (root.GetProperty("requestId").GetInt32() != _requestId) return;
+                    ShowLinkTarget();
                     _rendering = false;
                     _renderCompletion?.TrySetResult(false);
                     _pendingView = null;
@@ -557,6 +559,10 @@ public partial class MainWindow : Window
                 case "copy":
                     var text = root.GetProperty("text").GetString();
                     if (text is { Length: > 0 and <= DocumentReader.MaxCharacters }) Clipboard.SetText(text);
+                    break;
+                case "hoverLink":
+                    if (_rendering || root.GetProperty("requestId").GetInt32() != _requestId) break;
+                    ShowLinkTarget(root.GetProperty("href").GetString());
                     break;
                 case "openLink":
                     if (_openingDocument || _rendering || root.GetProperty("requestId").GetInt32() != _requestId) break;
@@ -686,8 +692,17 @@ public partial class MainWindow : Window
         catch (Exception error) when (error is Win32Exception or InvalidOperationException) { StatusText.Text = error.Message; }
     }
 
+    private void ShowLinkTarget(string? href = null)
+    {
+        var visible = !string.IsNullOrEmpty(href);
+        LinkTargetText.Text = href ?? "";
+        LinkTargetText.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
+        StatusText.Visibility = visible ? Visibility.Collapsed : Visibility.Visible;
+    }
+
     private void ShowPreviewError(string message)
     {
+        ShowLinkTarget();
         ErrorText.Text = message;
         _rendering = false;
         _renderCompletion?.TrySetResult(false);

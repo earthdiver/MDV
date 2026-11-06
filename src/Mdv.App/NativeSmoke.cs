@@ -57,6 +57,23 @@ internal static class NativeSmoke
             if (!File.Exists(window.SettingsPath) || Path.GetDirectoryName(window.SettingsPath) != Path.GetDirectoryName(Environment.ProcessPath))
                 throw new IOException("INI was not created beside the executable.");
             checks.Add("INI created beside the executable");
+            if (args.Contains("--smoke-link-hover"))
+            {
+                var title = window.Title;
+                var status = window.StatusText.Text;
+                var href = JsonSerializer.Deserialize<string>(await window.Preview.CoreWebView2.ExecuteScriptAsync(
+                    "(() => { const link = document.querySelector('#document a[href]'); link.dispatchEvent(new MouseEvent('mouseover', { bubbles: true })); return link.getAttribute('href'); })()"));
+                for (var attempt = 0; attempt < 50 && window.LinkTargetText.Visibility != Visibility.Visible; attempt++) await Task.Delay(50);
+                if (string.IsNullOrEmpty(href) || window.LinkTargetText.Text != href || window.LinkTargetText.Visibility != Visibility.Visible ||
+                    window.StatusText.Visibility != Visibility.Collapsed || window.Title != title)
+                    throw new InvalidOperationException("Hovered link destination was not shown in the bottom status bar.");
+                await window.Preview.CoreWebView2.ExecuteScriptAsync(
+                    "document.querySelector('#document a[href]').dispatchEvent(new MouseEvent('mouseout', { bubbles: true }))");
+                for (var attempt = 0; attempt < 50 && window.LinkTargetText.Visibility != Visibility.Collapsed; attempt++) await Task.Delay(50);
+                if (window.LinkTargetText.Visibility != Visibility.Collapsed || window.StatusText.Visibility != Visibility.Visible || window.StatusText.Text != status)
+                    throw new InvalidOperationException("The status bar was not restored after leaving the link.");
+                checks.Add("Link hover shows destination in bottom status bar and restores original status on leave");
+            }
             if (args.Contains("--smoke-startup"))
             {
                 await FinishAsync();

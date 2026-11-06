@@ -45,6 +45,7 @@ public partial class MainWindow
             FindInput.Text = tab.SearchQuery;
             FindBar.Visibility = tab.ShowSearch ? Visibility.Visible : Visibility.Collapsed;
             FindCount.Text = "0 / 0";
+            ShowLinkTarget();
             Title = $"{tab.Title} — MDV / {BuildEdition.DisplayName}";
             FileTitle.Text = tab.Title;
             FileSubtitle.Text = tab.FilePath;

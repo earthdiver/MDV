@@ -46,6 +46,8 @@ The choice is saved immediately beside the EXE and survives restarts. Select **A
 
 ## Images and links
 
+Hover over a document link to see its destination in the status bar at the bottom of the window. Moving the pointer away restores the previous status.
+
 Remote images are disabled by default. Enabling **View → Load remote images** connects to the image hosts. Document text is never sent to an external conversion service. Web and email links open in the default application when clicked.
 
 In either mode, choose **View → GitHub images / Qiita images → Download and save images…** to save authored HTTP/HTTPS images for offline viewing. No article or document URL is required by default. Existing local images keep their files; move those files together with the document.
