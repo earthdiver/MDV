@@ -36,7 +36,7 @@ public partial class MainWindow
             var url = new TextBox { IsEnabled = false, Margin = new Thickness(0, 4, 0, 12) };
             System.Windows.Automation.AutomationProperties.SetName(url, label.Text);
             try { url.Text = QiitaImageArchive.Load(document.FilePath, github)?.ArticleUrl ?? ""; }
-            catch (Exception error) when (error is IOException or JsonException or ArgumentException or UnauthorizedAccessException) { }
+            catch (Exception error) when (error is IOException or InvalidDataException or JsonException or ArgumentException or UnauthorizedAccessException) { }
             service.Checked += (_, _) => { url.IsEnabled = true; url.Focus(); };
             service.Unchecked += (_, _) => url.IsEnabled = false;
             panel.Children.Add(url);
@@ -66,7 +66,7 @@ public partial class MainWindow
                     if (!dismissed) dialog.DialogResult = true;
                 }
                 catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
-                catch (Exception error) when (error is HttpRequestException or IOException or UnauthorizedAccessException or ArgumentException or JsonException or OperationCanceledException)
+                catch (Exception error) when (error is HttpRequestException or IOException or InvalidDataException or UnauthorizedAccessException or ArgumentException or JsonException or OperationCanceledException)
                 { if (!dismissed) status.Text = UiLanguage.Text("保存できませんでした: ", "Unable to save: ") + error.Message; }
                 finally
                 {
@@ -96,12 +96,15 @@ public partial class MainWindow
     private void ShowImageImportResult(string documentPath, bool github, ImageImportResult result)
     {
         var count = result.Manifest?.Images.Length ?? 0;
-        var summary = UiLanguage.Text($"保存: {count} 枚 / ローカル画像: {result.LocalImages} 枚 / 未取得: {result.Failures.Length} 枚",
-            $"Saved: {count} / Local images: {result.LocalImages} / Not saved: {result.Failures.Length}");
+        var downloaded = result.Manifest == null ? 0 : count - result.ReusedImages;
+        var unavailable = result.Failures.Count(f => !f.UsedPrevious);
+        var summary = UiLanguage.Text($"更新成功: {downloaded} 枚 / 前回分を維持: {result.ReusedImages} 枚 / ローカル画像: {result.LocalImages} 枚 / 未保存: {unavailable} 枚",
+            $"Downloaded: {downloaded} / Previous images retained: {result.ReusedImages} / Local images: {result.LocalImages} / Not saved: {unavailable}");
         summary += "\n\n" + (count > 0 ? QiitaImageArchive.PathFor(documentPath, github) :
             UiLanguage.Text("保存画像は更新していません。以前の保存画像と表示設定は維持します。", "No snapshot was updated. Previous saved images and display settings are retained."));
         if (count > 0) summary += "\n\n" + UiLanguage.Text("保存画像の使用を有効にしました。取得できなかった外部画像は表示しません。", "Saved images are now enabled. Remote images that were not saved are not displayed.");
-        foreach (var failure in result.Failures) summary += "\n\n" + failure.Source + "\n" + failure.Reason;
+        foreach (var failure in result.Failures) summary += "\n\n" + failure.Source + "\n" +
+            (failure.UsedPrevious ? UiLanguage.Text("前回の保存画像を使用します。\n", "The previously saved image is retained.\n") : "") + failure.Reason;
         var dialog = new Window { Owner = this, Title = UiLanguage.Text("画像の保存結果", "Image download results"), Width = 680, Height = 440,
             WindowStartupLocation = WindowStartupLocation.CenterOwner };
         var panel = new DockPanel { Margin = new Thickness(16) };
