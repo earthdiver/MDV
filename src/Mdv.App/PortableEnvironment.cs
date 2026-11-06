@@ -14,6 +14,11 @@ internal sealed class PortableEnvironment
     internal string UserData { get; } = Path.Combine(Path.GetTempPath(), "MDV", "sessions", Guid.NewGuid().ToString("N"));
     internal bool Bundled => Runtime != null;
     internal TimeSpan PreparationTime { get; private set; }
+    // Older hosts never acquire a lease. Keep their cache separate, even when
+    // the payload hash is identical, so they cannot race managed cache cleanup.
+    internal string CacheRoot => Path.Combine(Path.GetTempPath(), "MDV", "payload-v2");
+    internal string LegacyCacheRoot => Path.Combine(Path.GetTempPath(), "MDV", "payload");
+    private PayloadCache.Lease? _payloadLease;
 
     internal async Task PrepareAsync()
     {
@@ -28,7 +33,8 @@ internal sealed class PortableEnvironment
             using var reader = new StreamReader(hashStream);
             var hash = (await reader.ReadToEndAsync()).Trim();
             var compression = zstdPayload != null ? PayloadCompression.Zstandard : PayloadCompression.Brotli;
-            Assets = await Task.Run(() => PortablePayload.Extract(payload, Path.Combine(Path.GetTempPath(), "MDV", "payload"), hash, compression));
+            _payloadLease = await Task.Run(() => PayloadCache.ExtractAndLease(payload, CacheRoot, hash, compression));
+            Assets = _payloadLease.Path;
             Runtime = Path.Combine(Assets, "WebView2Runtime");
             // Fixed Version 120+ requires these read/execute ACLs for its Windows 10 sandbox.
             if (!OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22000))
@@ -56,19 +62,23 @@ internal sealed class PortableEnvironment
 
     internal async Task CleanupAsync(uint? browserProcessId)
     {
-        if (browserProcessId is { } id)
+        try
         {
-            try
+            if (browserProcessId is { } id)
             {
-                using var process = Process.GetProcessById(checked((int)id));
-                await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(8));
+                try
+                {
+                    using var process = Process.GetProcessById(checked((int)id));
+                    await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(8));
+                }
+                catch (Exception error) when (error is ArgumentException or InvalidOperationException or TimeoutException) { }
             }
-            catch (Exception error) when (error is ArgumentException or InvalidOperationException or TimeoutException) { }
+            for (var attempt = 0; attempt < 5; attempt++)
+            {
+                try { if (Directory.Exists(UserData)) Directory.Delete(UserData, true); return; }
+                catch (Exception error) when (error is IOException or UnauthorizedAccessException) { await Task.Delay(150); }
+            }
         }
-        for (var attempt = 0; attempt < 5; attempt++)
-        {
-            try { if (Directory.Exists(UserData)) Directory.Delete(UserData, true); return; }
-            catch (Exception error) when (error is IOException or UnauthorizedAccessException) { await Task.Delay(150); }
-        }
+        finally { _payloadLease?.Dispose(); _payloadLease = null; }
     }
 }

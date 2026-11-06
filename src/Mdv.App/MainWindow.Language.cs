@@ -50,6 +50,7 @@ public partial class MainWindow
         Resources["TextCompatibilityMenu"] = UiLanguage.Text("互換性・対応範囲", "Compatibility");
         Resources["TextAbout"] = UiLanguage.Text("MDVについて", "About MDV");
         Resources["TextLicenses"] = UiLanguage.Text("同梱ライセンス", "Bundled licenses");
+        Resources["TextCacheMenu"] = UiLanguage.Text("展開ファイルを管理…", "Manage extracted files…");
         Resources["TextBackTooltip"] = UiLanguage.Text("戻る (Alt+←)", "Back (Alt+←)");
         Resources["TextBack"] = UiLanguage.Text("戻る", "Back");
         Resources["TextForwardTooltip"] = UiLanguage.Text("進む (Alt+→)", "Forward (Alt+→)");

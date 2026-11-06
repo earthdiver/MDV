@@ -157,6 +157,7 @@ try
         Throws<ArgumentException>(() => images.Set(first, "github", ImageSourceSelection.Cdn));
     });
     DocumentImageTests.Run(Check, temp);
+    PayloadCacheTests.Run(Check, temp);
     QiitaImageTests.Run(Check, temp);
     GithubImageTests.Run(Check, temp);
     QiitaCardTests.Run(Check, temp);

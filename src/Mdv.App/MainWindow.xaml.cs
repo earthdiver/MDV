@@ -178,7 +178,7 @@ public partial class MainWindow : Window
             core.ProcessFailed += (_, args) => ShowPreviewError(UiLanguage.Text($"描画プロセスが終了しました ({args.ProcessFailedKind})。MDVを起動し直してください。", $"The rendering process exited ({args.ProcessFailedKind}). Please restart MDV."));
             core.NavigationCompleted += (_, args) =>
             {
-                if (!args.IsSuccess) ShowPreviewError(UiLanguage.Text($"描画資材を読み込めませんでした ({args.WebErrorStatus})。MDVを終了して一時フォルダ内のMDV/payloadを削除し、起動し直してください。", $"Unable to load rendering assets ({args.WebErrorStatus}). Close MDV, delete MDV/payload in the temporary folder, and restart."));
+                if (!args.IsSuccess) ShowPreviewError(UiLanguage.Text($"描画資材を読み込めませんでした ({args.WebErrorStatus})。MDVを終了して一時フォルダ内のMDV/payload-v2を削除し、起動し直してください。", $"Unable to load rendering assets ({args.WebErrorStatus}). Close MDV, delete MDV/payload-v2 in the temporary folder, and restart."));
             };
             core.AddWebResourceRequestedFilter("*", CoreWebView2WebResourceContext.All, CoreWebView2WebResourceRequestSourceKinds.All);
             core.WebResourceRequested += WebResourceRequested;

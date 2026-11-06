@@ -63,6 +63,7 @@
     <MenuItem Header="{DynamicResource TextCompatibilityMenu}" Click="Compatibility_Click" />
     <MenuItem Header="{DynamicResource TextAbout}" Click="About_Click" />
     <MenuItem Header="{DynamicResource TextLicenses}" Click="Licenses_Click" />
+    <MenuItem x:Name="CacheMenu" Header="{DynamicResource TextCacheMenu}" Click="Cache_Click" />
    </MenuItem>
   </Menu>
   <Border DockPanel.Dock="Top" Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="20,16">
