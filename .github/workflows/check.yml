@@ -1,0 +1,37 @@
+name: Check pull requests
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: checks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  renderer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run compat:check
+  core:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Verify core behavior in every edition
+        shell: pwsh
+        run: |
+          foreach ($edition in @('dual', 'custom', 'upstream')) {
+            dotnet run --project tests/Mdv.Core.Tests -c Release "-p:MdvEdition=$edition"
+            if ($LASTEXITCODE -ne 0) { throw "Core tests failed: $edition" }
+          }
