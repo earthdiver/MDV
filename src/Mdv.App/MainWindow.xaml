@@ -139,8 +139,8 @@
    </Grid>
   </Border>
   <Grid>
-   <Grid.ColumnDefinitions><ColumnDefinition x:Name="OutlineColumn" Width="230" MinWidth="0" /><ColumnDefinition x:Name="SourceColumn" Width="0" MinWidth="0" /><ColumnDefinition x:Name="SplitterColumn" Width="0" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-   <Border x:Name="OutlinePanel" Grid.Column="0" Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0">
+   <Grid.ColumnDefinitions><ColumnDefinition x:Name="OutlineColumn" Width="230" MinWidth="120" MaxWidth="600" /><ColumnDefinition x:Name="OutlineSplitterColumn" Width="5" /><ColumnDefinition Width="*" MinWidth="200" /></Grid.ColumnDefinitions>
+   <Border x:Name="OutlinePanel" Grid.Column="0" Background="{DynamicResource PanelBrush}" SizeChanged="OutlinePanel_SizeChanged">
     <DockPanel Margin="10,18,10,10">
      <StackPanel DockPanel.Dock="Top" Margin="12,0,0,14"><TextBlock Text="{DynamicResource TextOutline}" FontSize="12" FontWeight="SemiBold" /><TextBlock x:Name="HeadingCount" Text="{DynamicResource TextOutlineHint}" Foreground="{DynamicResource MutedBrush}" FontSize="11" Margin="0,5,0,0" /></StackPanel>
      <ListBox x:Name="OutlineList" SelectionChanged="Outline_SelectionChanged" PreviewMouseLeftButtonDown="Outline_MouseLeftButtonDown" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="{DynamicResource TextOutline}">
@@ -148,23 +148,27 @@
      </ListBox>
     </DockPanel>
    </Border>
-   <DockPanel x:Name="SourcePanel" Grid.Column="1" Visibility="Collapsed">
-    <TextBlock DockPanel.Dock="Top" Text="{DynamicResource TextSourceHeader}" FontSize="10" Foreground="{DynamicResource MutedBrush}" Margin="14,10" />
-    <TextBox x:Name="SourceText" IsReadOnly="True" AcceptsReturn="True" AcceptsTab="True" TextWrapping="NoWrap" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" FontFamily="Cascadia Code, Consolas" FontSize="13" Padding="16" BorderThickness="0" AutomationProperties.Name="{DynamicResource TextSourceLabel}" />
-   </DockPanel>
-   <GridSplitter Grid.Column="2" Width="5" HorizontalAlignment="Stretch" Background="{DynamicResource BorderBrush}" ResizeBehavior="PreviousAndNext" />
-   <Grid Grid.Column="3" Background="{DynamicResource PanelBrush}">
-    <wv:WebView2 x:Name="Preview" AllowDrop="True" />
-    <Border x:Name="EmptyPanel" Visibility="Collapsed" Background="{DynamicResource PanelBrush}" Padding="30">
-     <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-      <TextBlock Text="{DynamicResource TextNewTab}" FontSize="24" FontWeight="SemiBold" HorizontalAlignment="Center" />
-      <TextBlock Text="{DynamicResource TextEmptyHint}" Foreground="{DynamicResource MutedBrush}" Margin="0,12,0,20" TextWrapping="Wrap" TextAlignment="Center" />
-      <Button Content="{DynamicResource TextOpenFile}" Click="Open_Click" HorizontalAlignment="Center" ToolTip="{DynamicResource TextMultiSelectTooltip}" />
-     </StackPanel>
-    </Border>
-    <Border x:Name="ErrorPanel" Visibility="Collapsed" Background="{DynamicResource PanelBrush}" Padding="40">
-     <StackPanel VerticalAlignment="Center"><TextBlock Text="{DynamicResource TextPreviewError}" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,16" /><TextBlock x:Name="ErrorText" TextWrapping="Wrap" /></StackPanel>
-    </Border>
+   <GridSplitter x:Name="OutlineSplitter" Grid.Column="1" Width="5" HorizontalAlignment="Stretch" Background="{DynamicResource BorderBrush}" ResizeDirection="Columns" ResizeBehavior="PreviousAndNext" KeyboardIncrement="10" ToolTip="{DynamicResource TextResizeOutline}" AutomationProperties.Name="{DynamicResource TextResizeOutline}" />
+   <Grid Grid.Column="2">
+    <Grid.ColumnDefinitions><ColumnDefinition x:Name="SourceColumn" Width="0" MinWidth="0" /><ColumnDefinition x:Name="SplitterColumn" Width="0" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+    <DockPanel x:Name="SourcePanel" Grid.Column="0" Visibility="Collapsed">
+     <TextBlock DockPanel.Dock="Top" Text="{DynamicResource TextSourceHeader}" FontSize="10" Foreground="{DynamicResource MutedBrush}" Margin="14,10" />
+     <TextBox x:Name="SourceText" IsReadOnly="True" AcceptsReturn="True" AcceptsTab="True" TextWrapping="NoWrap" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" FontFamily="Cascadia Code, Consolas" FontSize="13" Padding="16" BorderThickness="0" AutomationProperties.Name="{DynamicResource TextSourceLabel}" />
+    </DockPanel>
+    <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" Background="{DynamicResource BorderBrush}" ResizeBehavior="PreviousAndNext" />
+    <Grid Grid.Column="2" Background="{DynamicResource PanelBrush}">
+     <wv:WebView2 x:Name="Preview" AllowDrop="True" />
+     <Border x:Name="EmptyPanel" Visibility="Collapsed" Background="{DynamicResource PanelBrush}" Padding="30">
+      <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+       <TextBlock Text="{DynamicResource TextNewTab}" FontSize="24" FontWeight="SemiBold" HorizontalAlignment="Center" />
+       <TextBlock Text="{DynamicResource TextEmptyHint}" Foreground="{DynamicResource MutedBrush}" Margin="0,12,0,20" TextWrapping="Wrap" TextAlignment="Center" />
+       <Button Content="{DynamicResource TextOpenFile}" Click="Open_Click" HorizontalAlignment="Center" ToolTip="{DynamicResource TextMultiSelectTooltip}" />
+      </StackPanel>
+     </Border>
+     <Border x:Name="ErrorPanel" Visibility="Collapsed" Background="{DynamicResource PanelBrush}" Padding="40">
+      <StackPanel VerticalAlignment="Center"><TextBlock Text="{DynamicResource TextPreviewError}" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,16" /><TextBlock x:Name="ErrorText" TextWrapping="Wrap" /></StackPanel>
+     </Border>
+    </Grid>
    </Grid>
   </Grid>
  </DockPanel>

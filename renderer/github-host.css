@@ -3,7 +3,9 @@ html { scroll-padding-top:28px; }
 body { margin:0; }
 /* GitHub's article links add underlines to Primer's base link styling. */
 .markdown-body a[href]:not(.anchor):not(.mdv-heading-link) { text-decoration:underline; text-underline-offset:.2rem; }
-#document { box-sizing:border-box; max-width:980px; padding:40px 56px 100px; margin:auto; }
+/* GitHub's file preview caps the article content (.container-lg) at 1012px.
+   Our padding belongs to the same border box, so add it to the content cap. */
+#document { box-sizing:border-box; max-width:calc(1012px + 112px); padding:40px 56px 100px; margin:auto; }
 .octicon { display:inline-block; overflow:visible; vertical-align:text-bottom; fill:currentColor; }
 .markdown-body :is(h1,h2,h3,h4,h5,h6):has(> .mdv-heading-link) { position:relative; }
 /* Match the service's 28px anchor, centered on its heading wrapper. Our

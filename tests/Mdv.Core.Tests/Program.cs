@@ -203,6 +203,17 @@ try
         Equal("auto", UserSettings.Load(Path.Combine(temp, "no-language.ini")).Language);
     });
     Check("Missing INI uses defaults", () => Equal("github", UserSettings.Load(Path.Combine(temp, "none.ini")).Mode));
+    Check("Outline width loads old settings and recovers invalid saved values", () => {
+        var path = Path.Combine(temp, "outline.ini");
+        foreach (var (value, expected) in new[] { ("", 230d), ("broken", 230d), ("NaN", 230d), ("Infinity", 230d), ("-1", 120d), ("9999", 600d), ("345.5", 345.5) }) {
+            File.WriteAllText(path, "[Viewer]\nShowOutline=false\n" + (value.Length == 0 ? "" : "OutlineWidth=" + value));
+            var settings = UserSettings.Load(path);
+            Equal(expected, settings.OutlineWidth);
+            settings.Save(path);
+            Equal(expected, UserSettings.Load(path).OutlineWidth);
+            Equal(false, UserSettings.Load(path).ShowOutline);
+        }
+    });
     Check("Corrupt preferences recover", () => {
         var path = Path.Combine(temp, "bad.ini"); File.WriteAllText(path, "{\n[Viewer]\nZoom=broken\nShowOutline=invalid\nMode=other");
         var settings = UserSettings.Load(path); Equal(1d, settings.Zoom); Equal(true, settings.ShowOutline); Equal("github", settings.Mode);
@@ -249,8 +260,9 @@ try
         var previous = CultureInfo.CurrentCulture;
         try {
             CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("fr-FR");
-            var path = Path.Combine(temp, "culture.ini"); new UserSettings { Zoom = 1.25 }.Save(path);
+            var path = Path.Combine(temp, "culture.ini"); new UserSettings { Zoom = 1.25, OutlineWidth = 345.5 }.Save(path);
             Equal(true, File.ReadAllText(path).Contains("Zoom=1.25")); Equal(1.25, UserSettings.Load(path).Zoom);
+            Equal(true, File.ReadAllText(path).Contains("OutlineWidth=345.5")); Equal(345.5, UserSettings.Load(path).OutlineWidth);
         } finally { CultureInfo.CurrentCulture = previous; }
     });
     Check("INI duplicate keys use the last value", () => {

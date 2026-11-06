@@ -731,11 +731,19 @@ public partial class MainWindow : Window
 
     private void ApplyLayout()
     {
-        OutlineColumn.Width = new GridLength(_settings.ShowOutline ? 230 : 0);
+        OutlineColumn.MinWidth = _settings.ShowOutline ? 120 : 0;
+        OutlineColumn.Width = new GridLength(_settings.ShowOutline ? _settings.OutlineWidth : 0);
         OutlinePanel.Visibility = _settings.ShowOutline ? Visibility.Visible : Visibility.Collapsed;
+        OutlineSplitterColumn.Width = new GridLength(_settings.ShowOutline ? 5 : 0);
+        OutlineSplitter.Visibility = _settings.ShowOutline ? Visibility.Visible : Visibility.Collapsed;
         SourceColumn.Width = _settings.ShowSource ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
         SourcePanel.Visibility = _settings.ShowSource ? Visibility.Visible : Visibility.Collapsed;
         SplitterColumn.Width = new GridLength(_settings.ShowSource ? 5 : 0);
+    }
+    private void OutlinePanel_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (_settings.ShowOutline && e.WidthChanged && e.NewSize.Width >= 120)
+            _settings.OutlineWidth = e.NewSize.Width;
     }
     private void Outline_Click(object sender, RoutedEventArgs e) { _settings.ShowOutline = OutlineMenu.IsChecked; ApplyLayout(); }
     private void Source_Click(object sender, RoutedEventArgs e) { _settings.ShowSource = SourceMenu.IsChecked; ApplyLayout(); }

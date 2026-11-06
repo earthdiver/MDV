@@ -72,6 +72,7 @@ public partial class MainWindow
         Resources["TextCompatibility"] = UiLanguage.Text("対応範囲", "Compatibility");
         Resources["TextOutline"] = UiLanguage.Text("目次", "Table of contents");
         Resources["TextOutlineHint"] = UiLanguage.Text("見出しから移動できます", "Select a heading to navigate");
+        Resources["TextResizeOutline"] = UiLanguage.Text("目次の幅を変更", "Resize table of contents");
         Resources["TextSourceHeader"] = UiLanguage.Text("MARKDOWN ソース · 読み取り専用", "MARKDOWN SOURCE · READ ONLY");
         Resources["TextSourceLabel"] = UiLanguage.Text("Markdownソース", "Markdown source");
         Resources["TextEmptyHint"] = UiLanguage.Text("Markdownファイルを開くか、ここにドロップしてください。", "Open a Markdown file or drop it here.");

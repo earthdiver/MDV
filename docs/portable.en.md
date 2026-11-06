@@ -10,7 +10,7 @@ Check **Help → About MDV** or the window title for the current edition. In the
 
 Use **Open**, **Recent files**, or drag and drop. You can open multiple files and switch between them using tabs. Opening a file already in a tab selects that tab.
 
-- **Table of contents**: select a heading to jump to it.
+- **Table of contents**: select a heading to jump to it. Drag its right edge to resize the panel. The width is retained when you restart the app.
 - **Show source**: view the original Markdown as read-only text.
 - **Find in document**: search text and code. Text in diagrams, math, or across formatting boundaries may not be searchable.
 - **Reload**: changes saved in external editors appear automatically. For shared paths such as WSL (`\\wsl.localhost\…`, `\\wsl$\…`), MDV checks the active document about every two seconds. You can also reload manually.

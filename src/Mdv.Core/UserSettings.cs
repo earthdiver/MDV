@@ -12,6 +12,7 @@ public sealed class UserSettings
     public double Zoom { get; set; } = 1;
     public bool ShowSource { get; set; }
     public bool ShowOutline { get; set; } = true;
+    public double OutlineWidth { get; set; } = 230;
     public bool AllowRemoteImages { get; set; }
     public bool UseSavedQiitaImages { get; set; }
     public bool UseSavedGithubImages { get; set; }
@@ -25,6 +26,7 @@ public sealed class UserSettings
         if (Mode is not ("github" or "qiita")) Mode = "github";
         if (Theme is not ("light" or "dark")) Theme = "light";
         Zoom = double.IsFinite(Zoom) ? Math.Clamp(Zoom, 0.5, 2.5) : 1;
+        OutlineWidth = double.IsFinite(OutlineWidth) ? Math.Clamp(OutlineWidth, 120, 600) : 230;
         RecentFiles = (RecentFiles ?? []).Where(p => !string.IsNullOrWhiteSpace(p))
             .Distinct(StringComparer.OrdinalIgnoreCase).Take(12).ToList();
     }
@@ -65,6 +67,7 @@ public sealed class UserSettings
         if (double.TryParse(values.GetValueOrDefault("Viewer.Zoom"), NumberStyles.Float, CultureInfo.InvariantCulture, out var zoom)) settings.Zoom = zoom;
         settings.ShowSource = ReadBool("ShowSource", settings.ShowSource);
         settings.ShowOutline = ReadBool("ShowOutline", settings.ShowOutline);
+        if (double.TryParse(values.GetValueOrDefault("Viewer.OutlineWidth"), NumberStyles.Float, CultureInfo.InvariantCulture, out var outlineWidth)) settings.OutlineWidth = outlineWidth;
         settings.AllowRemoteImages = ReadBool("AllowRemoteImages", settings.AllowRemoteImages);
         settings.UseSavedQiitaCards = ReadBool("UseSavedQiitaCards", settings.UseSavedQiitaCards);
         settings.UseSavedGithubImages = ReadBool("UseSavedGithubImages", settings.UseSavedGithubImages);
@@ -92,6 +95,7 @@ public sealed class UserSettings
             "Zoom=" + Zoom.ToString("0.###", CultureInfo.InvariantCulture),
             "ShowSource=" + ShowSource.ToString().ToLowerInvariant(),
             "ShowOutline=" + ShowOutline.ToString().ToLowerInvariant(),
+            "OutlineWidth=" + OutlineWidth.ToString("0.###", CultureInfo.InvariantCulture),
             "AllowRemoteImages=" + AllowRemoteImages.ToString().ToLowerInvariant(),
             "UseSavedQiitaCards=" + UseSavedQiitaCards.ToString().ToLowerInvariant(),
             "UseSavedGithubImages=" + UseSavedGithubImages.ToString().ToLowerInvariant(),
