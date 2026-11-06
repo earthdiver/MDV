@@ -59,6 +59,8 @@ For dual/upstream, copy the prepared `OriginalEngines` to `src/Mdv.App/OriginalE
 
 ## Release verification
 
+Pull requests automatically run **Check pull requests**: JavaScript unit tests, compatibility checks against the saved HTML baseline, and core tests for all three editions on Windows. Distribution builds and browser/native verification remain part of the release verification below.
+
 If `artifacts/OriginalEngines` was already prepared above, skip the `prepare-original-engines.ps1` command below.
 
 ```powershell

@@ -12,12 +12,16 @@ Use **Open**, **Recent files**, or drag and drop. You can open multiple files an
 
 - **Table of contents**: select a heading to jump to it. Drag its right edge to resize the panel. The width is retained when you restart the app.
 - **Show source**: view the original Markdown as read-only text.
-- **Find in document**: search text and code. Text in diagrams, math, or across formatting boundaries may not be searchable.
+- **Find in document**: search text and code, including phrases spanning bold text, links, or syntax highlighting. Searches do not cross separate paragraphs, table cells, or explicit line breaks, and do not include text inside diagrams or equations.
 - **Reload**: changes saved in external editors appear automatically. For shared paths such as WSL (`\\wsl.localhost\…`, `\\wsl$\…`), MDV checks the active document about every two seconds. You can also reload manually.
 - **Print and export**: use **File → Print** or **File → Save as PDF**. PDF (Portable Document Format) preserves document layout for sharing.
 - **Appearance**: change the outline, source pane, dark theme, and zoom under **View**.
 
-Each tab keeps its syntax mode, zoom, search query, reading position, and collapsed sections. Tabs and navigation history are not restored after exiting. Close a tab using its × button or a middle click. Closing the last tab leaves an empty tab.
+Each tab keeps its syntax mode, zoom, search query, reading position, and collapsed sections. Close a tab using its × button or a middle click. Closing the last tab leaves an empty tab.
+
+Enable **View → Reopen previous session** to restore tabs and reading positions after a normal exit. This is off by default. Up to 100 tabs retain their selection, syntax mode, zoom, search query, reading position, and collapsed sections. Back/forward history is not restored. Starting MDV with explicit files opens those files instead. Unavailable documents are skipped; damaged session data or a session with no recoverable tabs opens the sample. With multiple windows, the last normal exit saves the session.
+
+Restoration data is stored beside the EXE in a matching `.session.json` file, such as `MDV.session.json`. It contains document paths and search queries, but not document contents. Turning the setting off deletes saved restoration data and stops saving it.
 
 Markdown links open in the same tab. Ctrl+click or middle-click opens a link in another tab. **Back** and **Forward** restore documents and reading positions. Following a new document after going back replaces the forward history.
 
@@ -63,7 +67,7 @@ For GitHub resolution, enter the public document's blob or raw URL. Relative pat
 
 The Qiita setting requires a public article URL. Matching images use the standard-resolution images published in the article; unmatched images use their URLs from the Markdown. Without this setting, images are saved from the Markdown URLs, so their resolution or format may differ from the article images. Display size also depends on content width, zoom and authored dimensions, so it is not guaranteed to match Qiita exactly.
 
-Results show saved images, existing local images and unsaved images, listing every unsaved source and reason. Partial success updates the snapshot with the images downloaded this time, replacing the previous snapshot. If no image can be saved, or the overall operation fails or is cancelled, previous snapshots and display settings are preserved. Successful saving enables **Use saved images**.
+Results show downloaded images, retained previous images, local images, and unsaved images, with the source and reason for each failed refresh. On partial failure, a verified previous image is retained if the current document still uses the same reference. Previous images are not reused if a changed GitHub source points to a different image or the saved data is damaged. References removed from the current document are omitted from a successfully updated snapshot. If no new image is downloaded, or the overall operation fails or is cancelled, previous snapshots and display settings are preserved. Successful saving enables **Use saved images**.
 
 Saved images work offline in both engines. In GitHub mode, **Use saved images** and **Load remote images** are mutually exclusive. In Qiita mode, enabling **Use saved images**, **Load remote images** or **Display directly from CDN** turns off the other two options. All options can be off. Local images remain visible. With saved images selected, remote images without a matching snapshot are not displayed. Enable **Load remote images** to display authored sources online. Image loading failures do not automatically switch to another source.
 
@@ -95,6 +99,8 @@ Settings are stored in an `.ini` beside the executable with the same base name. 
 - **Rename**: if you rename the executable to `Reader.exe`, rename its settings to `Reader.ini`.
 - **Reset**: close MDV and delete the settings file.
 
+To carry restoration data with you, also move the `.session.json` file and rename it to match when renaming the EXE. Delete this file to clear restoration data. Saved document paths are not updated automatically when documents move.
+
 Recent file paths are not updated automatically when documents move. Select moved documents using **Open**. If settings cannot be saved, check that the executable folder is writable and the INI is not read-only.
 
 MDV does not register or change file associations. Use Windows settings if you want to associate Markdown files with MDV.
@@ -108,6 +114,8 @@ The first launch extracts required files into the Windows temporary folder, so i
 In v0.3.3, the extracted startup files total approximately 0.74 GB for custom and 0.81 GB for dual/upstream (1 GB = one billion bytes). Storage for the EXE itself is separate.
 
 Running MDV also uses working space. **Allow around 1 GB of free space per edition on the drive containing the temporary folder.** This is not a fixed minimum requirement; working data may require more space. Using multiple editions or updating MDV can leave previously extracted files behind.
+
+Use **Help → Manage extracted files…** to review startup file storage and remove unused versions. Files in use, or whose usage or contents cannot be checked, are kept. Extracted files from older versions without this management feature can be inspected but must be removed manually using the steps below. Starting a removed version extracts its required files again.
 
 If display fails or you want to clean up temporary files, close all MDV instances and enter `%TEMP%` in Explorer's address bar. You can remove:
 

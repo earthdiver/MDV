@@ -59,6 +59,8 @@ dual・upstreamの場合は準備した `OriginalEngines` を `src/Mdv.App/Origi
 
 ## リリース前の検証
 
+PRでは `Check pull requests` が自動で実行され、JavaScriptの単体テスト、保存済みHTML基準との互換性チェック、Windows上での3版の共通処理テストを確認します。配布EXEの作成とブラウザー・実機検証は、引き続き以下のリリース前検証で行います。
+
 先の手順で `artifacts/OriginalEngines` を準備済みの場合は、次の `prepare-original-engines.ps1` の実行を省略してください。
 
 ```powershell
