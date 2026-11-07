@@ -78,8 +78,8 @@ public static class PayloadCache
                 if (Enter(mutex, TimeSpan.Zero))
                 {
                     try { state = SamePath(path, currentPath) ? PayloadCacheState.Current :
-                        !File.Exists(System.IO.Path.Combine(path, LeaseName)) ? PayloadCacheState.Untracked :
-                        IsInUse(path, usedByProcess) ? PayloadCacheState.InUse : PayloadCacheState.Unused; }
+                        IsInUse(path, usedByProcess) ? PayloadCacheState.InUse :
+                        !File.Exists(System.IO.Path.Combine(path, LeaseName)) ? PayloadCacheState.Untracked : PayloadCacheState.Unused; }
                     finally { mutex.ReleaseMutex(); }
                 }
                 entries.Add(new(path, bytes, Directory.GetLastWriteTimeUtc(path), state));
@@ -91,7 +91,7 @@ public static class PayloadCache
     }
 
     public static PayloadCacheCleanup DeleteUnused(string cacheRoot, string currentPath,
-        IEnumerable<string> candidates, Func<string, bool>? usedByProcess = null)
+        IEnumerable<string> candidates, Func<string, bool>? usedByProcess = null, bool allowUntracked = false)
     {
         cacheRoot = System.IO.Path.GetFullPath(cacheRoot);
         CheckParents(cacheRoot);
@@ -111,7 +111,7 @@ public static class PayloadCache
                 // same lock used by startup. Failed checks leave the directory alone.
                 ValidatePayload(cacheRoot, path);
                 var size = Measure(path);
-                if (!File.Exists(System.IO.Path.Combine(path, LeaseName)) || IsInUse(path, usedByProcess)) { skipped++; continue; }
+                if ((!allowUntracked && !File.Exists(System.IO.Path.Combine(path, LeaseName))) || IsInUse(path, usedByProcess)) { skipped++; continue; }
                 Directory.Delete(path, recursive: true);
                 deleted++;
                 bytes += size;

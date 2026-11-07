@@ -110,6 +110,17 @@ static class PayloadCacheTests
             Assert(PayloadCache.DeleteUnused(root, folder, [path], _ => false).Deleted == 0);
             Assert(Directory.Exists(path));
         });
+        check("Explicit legacy deletion still protects active, current and unselected caches", () =>
+        {
+            var root = Path.Combine(folder, "cache-explicit-legacy");
+            var selected = Create(root, 'a');
+            var other = Create(root, 'b');
+            File.Delete(Path.Combine(selected, ".in-use"));
+            Assert(PayloadCache.DeleteUnused(root, folder, [selected], _ => true, allowUntracked: true).Deleted == 0);
+            Assert(PayloadCache.DeleteUnused(root, selected, [selected], _ => false, allowUntracked: true).Deleted == 0);
+            Assert(PayloadCache.DeleteUnused(root, folder, [selected], _ => false, allowUntracked: true).Deleted == 1);
+            Assert(Directory.Exists(other));
+        });
         check("Cache cleanup excludes incomplete caches, unrelated folders, and paths outside its root", () =>
         {
             var root = Path.Combine(folder, "cache-invalid");
