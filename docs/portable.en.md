@@ -115,7 +115,7 @@ In v0.3.3, the extracted startup files total approximately 0.74 GB for custom an
 
 Running MDV also uses working space. **Allow around 1 GB of free space per edition on the drive containing the temporary folder.** This is not a fixed minimum requirement; working data may require more space. Using multiple editions or updating MDV can leave previously extracted files behind.
 
-Use **Help → Manage extracted files…** to review startup file storage and remove unused versions. Select entries and choose Delete selected files… to remove them. For older versions, confirm that all other MDV windows are closed before proceeding. Files detected as in use are protected. Select one entry and choose Open folder to open its location in Explorer. Starting a removed version extracts its required files again.
+Use **Help → Manage extracted files…** to review startup file storage and remove unused versions. Use each entry’s checkbox to select files for deletion. Select all / Clear all checks or unchecks all eligible entries. Delete selected files… asks for confirmation once for the selection. Right-click an entry to choose Copy path or Open in Explorer. For older versions, confirm that all other MDV windows are closed before proceeding. Files detected as in use are protected. Starting a removed version extracts its required files again.
 
 If display fails or you want to clean up temporary files, close all MDV instances and enter `%TEMP%` in Explorer's address bar. You can remove:
 
