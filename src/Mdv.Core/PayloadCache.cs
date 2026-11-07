@@ -1,9 +1,11 @@
 using System.Diagnostics;
+using System.Text.Json;
 
 namespace Mdv.Core;
 
 public enum PayloadCacheState { Unused, Current, InUse, Untracked, Unavailable }
-public sealed record PayloadCacheEntry(string Path, long Bytes, DateTime ModifiedUtc, PayloadCacheState State);
+public sealed record PayloadCacheEntry(string Path, long Bytes, DateTime ModifiedUtc, PayloadCacheState State,
+    DateTime CreatedUtc = default, DateTime AccessedUtc = default, string? Version = null);
 public sealed record PayloadCacheCleanup(int Deleted, int Skipped, long FreedBytes);
 
 /// <summary>Manages only completed MDV payloads, never browser profiles or .NET caches.</summary>
@@ -71,6 +73,11 @@ public static class PayloadCache
             if (!IsHash(System.IO.Path.GetFileName(path))) continue;
             try
             {
+                var directory = new DirectoryInfo(path);
+                directory.Refresh();
+                var created = directory.CreationTimeUtc;
+                var modified = directory.LastWriteTimeUtc;
+                var accessed = directory.LastAccessTimeUtc;
                 ValidatePayload(cacheRoot, path);
                 var bytes = Measure(path);
                 using var mutex = new Mutex(false, "MDV.Payload." + System.IO.Path.GetFileName(path));
@@ -82,12 +89,27 @@ public static class PayloadCache
                         !File.Exists(System.IO.Path.Combine(path, LeaseName)) ? PayloadCacheState.Untracked : PayloadCacheState.Unused; }
                     finally { mutex.ReleaseMutex(); }
                 }
-                entries.Add(new(path, bytes, Directory.GetLastWriteTimeUtc(path), state));
+                entries.Add(new(path, bytes, modified, state, created, accessed, ReadVersion(path)));
             }
             catch (Exception error) when (error is IOException or UnauthorizedAccessException)
             { entries.Add(new(path, 0, DateTime.MinValue, PayloadCacheState.Unavailable)); }
         }
         return entries.OrderByDescending(entry => entry.ModifiedUtc).ToArray();
+    }
+
+    private static string? ReadVersion(string path)
+    {
+        var manifest = System.IO.Path.Combine(path, "Renderer", "bundle-manifest.json");
+        try
+        {
+            if (!File.Exists(manifest) || new FileInfo(manifest).Length > 2 * 1024 * 1024) return null;
+            using var json = JsonDocument.Parse(File.ReadAllText(manifest));
+            if (json.RootElement.ValueKind != JsonValueKind.Object ||
+                !json.RootElement.TryGetProperty("version", out var version) || version.ValueKind != JsonValueKind.String) return null;
+            var value = version.GetString();
+            return System.Version.TryParse(value, out _) ? value : null;
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or JsonException) { return null; }
     }
 
     public static PayloadCacheCleanup DeleteUnused(string cacheRoot, string currentPath,

@@ -76,6 +76,7 @@ public partial class MainWindow
             { MessageBox.Show(dialog, error.Message, dialog.Title, MessageBoxButton.OK, MessageBoxImage.Warning); }
         }
 
+        static string Timestamp(DateTime value) => value == DateTime.MinValue ? UiLanguage.Text("不明", "Unknown") : value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
         static string Size(long bytes) => $"{bytes / 1_000_000_000d:0.00} GB ({bytes / 1_000_000d:N0} MB)";
         async Task RefreshAsync(string? result = null)
         {
@@ -107,7 +108,7 @@ public partial class MainWindow
                             PayloadCacheState.Unavailable => UiLanguage.Text("確認できません（削除しません）", "Unable to check (kept)"),
                             _ => UiLanguage.Text("未使用", "Unused"),
                         };
-                        var date = entry.ModifiedUtc == DateTime.MinValue ? "" : entry.ModifiedUtc.ToLocalTime().ToString("g") + "  ·  ";
+                        var version = entry.Version ?? UiLanguage.Text("不明", "Unknown");
                         var check = new CheckBox
                         {
                             IsEnabled = entry.State is PayloadCacheState.Unused or PayloadCacheState.Untracked,
@@ -120,7 +121,7 @@ public partial class MainWindow
                         var row = new DockPanel();
                         DockPanel.SetDock(check, Dock.Left);
                         row.Children.Add(check);
-                        row.Children.Add(new TextBlock { Text = $"{date}{Size(entry.Bytes)}  ·  {state}\n{entry.Path}", TextWrapping = TextWrapping.Wrap });
+                        row.Children.Add(new TextBlock { Text = UiLanguage.Text($"バージョン {version}  ·  {Size(entry.Bytes)}  ·  {state}\n作成日時 {Timestamp(entry.CreatedUtc)}\n最終更新日時 {Timestamp(entry.ModifiedUtc)}\n最終アクセス日時 {Timestamp(entry.AccessedUtc)}", $"Version {version}  ·  {Size(entry.Bytes)}  ·  {state}\nCreated {Timestamp(entry.CreatedUtc)}\nLast modified {Timestamp(entry.ModifiedUtc)}\nLast accessed {Timestamp(entry.AccessedUtc)}"), TextWrapping = TextWrapping.Wrap });
                         var item = new ListBoxItem { Tag = entry, Content = row, ToolTip = entry.Path, HorizontalContentAlignment = HorizontalAlignment.Stretch };
                         var menu = new ContextMenu();
                         var copyPath = new MenuItem { Header = UiLanguage.Text("パスをコピー", "Copy path") };

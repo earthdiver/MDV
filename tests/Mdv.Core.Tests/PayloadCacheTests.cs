@@ -31,6 +31,21 @@ static class PayloadCacheTests
                 }
             return output.ToArray();
         }
+        check("Cache metadata reads version and filesystem timestamps, preserving legacy entries", () =>
+        {
+            var root = Path.Combine(folder, "cache-metadata");
+            var path = Create(root, 'a');
+            var manifest = Path.Combine(path, "Renderer", "bundle-manifest.json");
+            File.WriteAllText(manifest, "{\"version\":\"0.3.5\"}");
+            var modified = new DateTime(2026, 1, 2, 3, 4, 5, DateTimeKind.Utc);
+            Directory.SetLastWriteTimeUtc(path, modified);
+            var entry = PayloadCache.Inspect(root, folder, _ => false).Single();
+            Assert(entry.Version == "0.3.5" && entry.ModifiedUtc == modified && entry.CreatedUtc != default && entry.AccessedUtc != default);
+            File.WriteAllText(manifest, "{\"edition\":\"dual\"}");
+            Assert(PayloadCache.Inspect(root, folder, _ => false).Single().Version == null);
+            File.WriteAllText(manifest, "broken");
+            Assert(PayloadCache.Inspect(root, folder, _ => false).Single().State == PayloadCacheState.Unused);
+        });
         check("A fresh extraction holds its lease until the host releases it", () =>
         {
             var root = Path.Combine(folder, "cache-extract-lease", "payload-v2");

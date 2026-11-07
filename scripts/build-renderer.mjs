@@ -58,5 +58,5 @@ async function hashAssets(directory,prefix='') {
   }
 }
 await hashAssets(out);
-await writeFile(join(out,'bundle-manifest.json'),JSON.stringify({edition,inputs,assetHashes},null,2)+'\n');
+await writeFile(join(out,'bundle-manifest.json'),JSON.stringify({version: JSON.parse(await readFile('package.json', 'utf8')).version,edition,inputs,assetHashes},null,2)+'\n');
 console.log(`${edition} renderer and licenses: ${out}`);
