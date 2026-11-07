@@ -122,7 +122,20 @@ public partial class MainWindow
                         DockPanel.SetDock(check, Dock.Left);
                         row.Children.Add(check);
                         row.Children.Add(new TextBlock { Text = UiLanguage.Text($"バージョン {version}  ·  {Size(entry.Bytes)}  ·  {state}\n作成日時 {Timestamp(entry.CreatedUtc)}\n最終更新日時 {Timestamp(entry.ModifiedUtc)}\n最終アクセス日時 {Timestamp(entry.AccessedUtc)}", $"Version {version}  ·  {Size(entry.Bytes)}  ·  {state}\nCreated {Timestamp(entry.CreatedUtc)}\nLast modified {Timestamp(entry.ModifiedUtc)}\nLast accessed {Timestamp(entry.AccessedUtc)}"), TextWrapping = TextWrapping.Wrap });
-                        var item = new ListBoxItem { Tag = entry, Content = row, ToolTip = entry.Path, HorizontalContentAlignment = HorizontalAlignment.Stretch };
+                        var frame = new Border
+                        {
+                            Child = row,
+                            BorderBrush = (System.Windows.Media.Brush)FindResource("BorderBrush"),
+                            BorderThickness = new Thickness(1),
+                            CornerRadius = new CornerRadius(4),
+                            Padding = new Thickness(12),
+                        };
+                        var item = new ListBoxItem
+                        {
+                            Tag = entry, Content = frame, ToolTip = entry.Path,
+                            HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                            Padding = new Thickness(0), Margin = new Thickness(0, 0, 0, 8),
+                        };
                         var menu = new ContextMenu();
                         var copyPath = new MenuItem { Header = UiLanguage.Text("パスをコピー", "Copy path") };
                         copyPath.Click += (_, _) =>
