@@ -11,9 +11,9 @@ The conversion engine is separate from the GitHub/Qiita syntax mode.
 | Engine | Description |
 | --- | --- |
 | Custom engine | MDV's conversion pipeline, based on GitHub Flavored Markdown (GFM), with support for Qiita-specific syntax |
-| Upstream engine | Uses conversion implementations published by GitHub and Qiita; available in dual and upstream editions |
+| Upstream engine | Uses conversion implementations published by GitHub and Qiita; available in the dual edition |
 
-In the dual edition, switch using **View → Use upstream engine**. Upstream is the default. The engine selection applies to all tabs and persists after restarting. Custom and upstream editions have fixed engines and hide the switch. Settings copied from another edition are normalized to an available engine.
+In the dual edition, switch using **View → Use upstream engine**. Upstream is the default. The engine selection applies to all tabs and persists after restarting. The custom edition uses the custom engine and hides the switch. Settings copied from another edition are normalized to an available engine.
 
 The status-bar time (ms) shows how long a display switch took to complete.
 

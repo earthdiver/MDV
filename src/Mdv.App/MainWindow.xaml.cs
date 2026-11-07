@@ -134,6 +134,7 @@ public partial class MainWindow : Window
         SavedGithubImagesMenu.IsChecked = ImageSelection("github") == ImageSourceSelection.Saved;
         OriginalEngineMenu.IsChecked = _settings.Engine == "original";
         OriginalEngineMenu.Visibility = BuildEdition.CanSwitch ? Visibility.Visible : Visibility.Collapsed;
+        CacheMenu.Visibility = BuildEdition.UsesMemoryAssets ? Visibility.Collapsed : Visibility.Visible;
         Title = "MDV — " + BuildEdition.DisplayName;
         ApplyLayout();
         ApplyTheme();
@@ -149,7 +150,7 @@ public partial class MainWindow : Window
     {
         try
         {
-            StatusText.Text = UiLanguage.Text("同梱の描画資材を準備しています（初回は展開に時間がかかります）…", "Preparing bundled rendering assets (first launch may take a while)…");
+            StatusText.Text = BuildEdition.UsesMemoryAssets ? UiLanguage.Text("表示資材を読み込んでいます…", "Loading rendering assets…") : UiLanguage.Text("同梱の描画資材を準備しています（初回は展開に時間がかかります）…", "Preparing bundled rendering assets (first launch may take a while)…");
             RecordStartupStage("windowInitialization");
             await _portable.PrepareAsync();
             RecordStartupStage("assetPreparation");
@@ -157,7 +158,7 @@ public partial class MainWindow : Window
             _sessionRestored = await RestoreSessionAsync();
             if (_closed || _closing) return;
             if (BuildEdition.HasUpstream) _rubyWarmup = WarmInitialRubyAsync();
-            var environment = await CoreWebView2Environment.CreateAsync(_portable.Runtime, _portable.UserData);
+            var environment = await CoreWebView2Environment.CreateAsync(browserExecutableFolder: null, userDataFolder: _portable.UserData);
             RecordStartupStage("webViewEnvironment");
             if (_closed) return;
             await Preview.EnsureCoreWebView2Async(environment);
@@ -171,7 +172,7 @@ public partial class MainWindow : Window
             core.Settings.AreBrowserAcceleratorKeysEnabled = false;
             core.Settings.IsZoomControlEnabled = false;
             core.Settings.AreDefaultContextMenusEnabled = false;
-            core.SetVirtualHostNameToFolderMapping("app.mdv.invalid", Path.Combine(_portable.Assets, "Renderer"), CoreWebView2HostResourceAccessKind.DenyCors);
+            if (_portable.MemoryAssets == null) core.SetVirtualHostNameToFolderMapping("app.mdv.invalid", Path.Combine(_portable.Assets, "Renderer"), CoreWebView2HostResourceAccessKind.DenyCors);
             core.WebMessageReceived += WebMessageReceived;
             core.NavigationStarting += (_, args) =>
             {
@@ -183,7 +184,7 @@ public partial class MainWindow : Window
             core.ProcessFailed += (_, args) => ShowPreviewError(UiLanguage.Text($"描画プロセスが終了しました ({args.ProcessFailedKind})。MDVを起動し直してください。", $"The rendering process exited ({args.ProcessFailedKind}). Please restart MDV."));
             core.NavigationCompleted += (_, args) =>
             {
-                if (!args.IsSuccess) ShowPreviewError(UiLanguage.Text($"描画資材を読み込めませんでした ({args.WebErrorStatus})。MDVを終了して一時フォルダ内のMDV/payload-v2を削除し、起動し直してください。", $"Unable to load rendering assets ({args.WebErrorStatus}). Close MDV, delete MDV/payload-v2 in the temporary folder, and restart."));
+                if (!args.IsSuccess) ShowPreviewError(BuildEdition.UsesMemoryAssets ? UiLanguage.Text($"表示資材を読み込めませんでした ({args.WebErrorStatus})。MDVを起動し直してください。", $"Unable to load rendering assets ({args.WebErrorStatus}). Please restart MDV.") : UiLanguage.Text($"描画資材を読み込めませんでした ({args.WebErrorStatus})。MDVを終了して一時フォルダ内のMDV/payload-v2を削除し、起動し直してください。", $"Unable to load rendering assets ({args.WebErrorStatus}). Close MDV, delete MDV/payload-v2 in the temporary folder, and restart."));
             };
             core.AddWebResourceRequestedFilter("*", CoreWebView2WebResourceContext.All, CoreWebView2WebResourceRequestSourceKinds.All);
             core.WebResourceRequested += WebResourceRequested;
@@ -201,7 +202,10 @@ public partial class MainWindow : Window
         catch (Exception error)
         {
             if (_closed) return;
-            ShowPreviewError((_portable.Bundled ? UiLanguage.Text("同梱の描画エンジンを起動できませんでした。\n\n", "Unable to start the bundled rendering engine.\n\n") : UiLanguage.Text("開発版の実行にはWebView2 Runtimeが必要です。配布には scripts/build.ps1 で作る単一EXE版を使用してください。\n\n", "Development builds require WebView2 Runtime. For distribution, use the single EXE built by scripts/build.ps1.\n\n")) + error.Message);
+            var message = error is WebView2RuntimeNotFoundException
+                ? UiLanguage.Text("WebView2 Evergreen Runtimeが見つかりません。Microsoftの公式サイトからインストールして、MDVを起動し直してください。\nhttps://developer.microsoft.com/microsoft-edge/webview2/\n\n", "WebView2 Evergreen Runtime was not found. Install it from Microsoft's official site, then restart MDV.\nhttps://developer.microsoft.com/microsoft-edge/webview2/\n\n")
+                : UiLanguage.Text("プレビューを起動できませんでした。\n\n", "Unable to start the preview.\n\n");
+            ShowPreviewError(message + error.Message);
             if (_arguments.Contains("--smoke-test")) NativeSmoke.Fail(_arguments, error);
         }
         finally { _startupDocuments.TrySetResult(false); }
@@ -239,7 +243,7 @@ public partial class MainWindow : Window
         _pendingView = direction.HasValue ? target?.View : newVisit ? null : view;
         _pendingAnchor = anchor;
         _workspace.Active.SetDocument(document);
-        if (remember) { _settings.Remember(document.FilePath); UpdateRecentMenu(); }
+        if (remember && !_portable.IsMemorySample(document.FilePath)) { _settings.Remember(document.FilePath); UpdateRecentMenu(); }
         DisplayActiveTab();
         Render(newVisit || direction.HasValue);
         await WaitForRenderAsync();
@@ -248,6 +252,7 @@ public partial class MainWindow : Window
 
     private async Task<MarkdownDocument> ReadDocumentAsync(string path)
     {
+        if (_portable.ReadMemorySample(path) is { } sample) return sample;
         for (var attempt = 0; ; attempt++)
         {
             try { return await DocumentReader.ReadAsync(path, _lifetime.Token); }
@@ -335,7 +340,7 @@ public partial class MainWindow : Window
         _pollTimer.Stop();
         _watcher?.Dispose();
         _watcher = null;
-        if (path == null) return;
+        if (path == null || _portable.IsMemorySample(path)) return;
         // WSL's UNC share can accept a watcher without delivering Linux-side changes.
         // Compare contents as well: timestamps and sizes can be preserved by editors.
         if (path.StartsWith(@"\\", StringComparison.Ordinal)) _pollTimer.Start();
@@ -599,8 +604,18 @@ public partial class MainWindow : Window
     {
         if (_closed) return;
         var uri = new Uri(e.Request.Uri);
-        if (uri.Host == "app.mdv.invalid" && uri.Scheme == "https") return;
         var core = Preview.CoreWebView2;
+        if (uri.Host == "app.mdv.invalid" && uri.Scheme == "https")
+        {
+            if (_portable.MemoryAssets is { } assets)
+            {
+                var stream = e.Request.Method is "GET" or "HEAD" ? assets.OpenRenderer(uri) : null;
+                e.Response = core.Environment.CreateWebResourceResponse(stream ?? Stream.Null,
+                    stream == null ? 404 : 200, stream == null ? "Not Found" : "OK",
+                    $"Content-Type: {MemoryPayload.ContentType(uri.AbsolutePath)}\r\nCache-Control: no-store\r\nX-Content-Type-Options: nosniff");
+            }
+            return;
+        }
         if (uri.Host == "document.mdv.invalid" && uri.Scheme == "https" && uri.AbsolutePath.StartsWith("/qiita-card-image/"))
         {
             await ServeSavedQiitaCardImageAsync(uri, e);
@@ -623,6 +638,12 @@ public partial class MainWindow : Window
             try
             {
                 var relative = Uri.UnescapeDataString(uri.AbsolutePath[7..]);
+                if (_portable.ResolveSampleLink(_document.FilePath, relative, imagesOnly: true) is { } samplePath)
+                {
+                    e.Response = core.Environment.CreateWebResourceResponse(_portable.OpenSampleAsset(samplePath), 200, "OK",
+                        $"Content-Type: {LocalAssets.ContentType(samplePath)}\r\nCache-Control: no-store\r\nX-Content-Type-Options: nosniff\r\nContent-Security-Policy: default-src 'none'; style-src 'unsafe-inline'");
+                    return;
+                }
                 var path = LocalAssets.ResolvePath(Path.GetDirectoryName(_document.FilePath)!, relative);
                 if (path != null && new FileInfo(path).Length <= 32 * 1024 * 1024)
                 {
@@ -693,7 +714,7 @@ public partial class MainWindow : Window
             await OpenDocumentAsync(_document.FilePath, anchor: href[1..], newTab: newTab);
             return;
         }
-        var path = LocalAssets.ResolvePath(Path.GetDirectoryName(_document.FilePath)!, href, imagesOnly: false);
+        var path = _portable.ResolveSampleLink(_document.FilePath, href) ?? LocalAssets.ResolvePath(Path.GetDirectoryName(_document.FilePath)!, href, imagesOnly: false);
         if (path != null && new[] { ".md", ".markdown", ".mdown", ".txt" }.Contains(Path.GetExtension(path).ToLowerInvariant()))
         {
             var anchor = href.Contains('#') ? href[(href.IndexOf('#') + 1)..] : null;
@@ -862,10 +883,8 @@ public partial class MainWindow : Window
     {
         try
         {
-            var paths = new[] { Path.Combine(_portable.Assets, "LICENSE"), Path.Combine(_portable.Assets, "Renderer", "THIRD-PARTY-NOTICES.txt"),
-                Path.Combine(_portable.Assets, "OriginalEngines", "THIRD-PARTY-NOTICES.txt") }
-                .Concat(Directory.Exists(Path.Combine(_portable.Assets, "Licenses")) ? Directory.GetFiles(Path.Combine(_portable.Assets, "Licenses")) : []);
-            var text = string.Join("\n\n", paths.Where(File.Exists).Select(path => Path.GetFileName(path) + "\n\n" + File.ReadAllText(path)));
+            var names = _portable.AssetNames.Where(name => name is "LICENSE" or "Renderer/THIRD-PARTY-NOTICES.txt" or "OriginalEngines/THIRD-PARTY-NOTICES.txt" || name.StartsWith("Licenses/", StringComparison.Ordinal));
+            var text = string.Join("\n\n", names.Select(name => Path.GetFileName(name) + "\n\n" + _portable.ReadText(name)));
             new Window { Title = UiLanguage.Text("MDV — 同梱ライセンス", "MDV — Bundled licenses"), Owner = this, Width = 850, Height = 650, WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 Content = new TextBox { Text = text, IsReadOnly = true, TextWrapping = TextWrapping.Wrap, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Padding = new Thickness(20) } }.ShowDialog();
         }

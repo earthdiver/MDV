@@ -35,7 +35,7 @@ jobs:
         shell: pwsh
         run: |
           $env:MDV_RUBY = (Get-Command ruby).Source
-          foreach ($edition in @('dual', 'custom', 'upstream')) {
+          foreach ($edition in @('dual', 'custom')) {
             node scripts/build-renderer.mjs $edition "artifacts/renderer-$edition"
             if ($LASTEXITCODE -ne 0) { throw 'Edition renderer build failed.' }
           }
@@ -53,7 +53,6 @@ jobs:
           $sizes = Get-Content artifacts/edition-sizes-win-x64.json -Raw | ConvertFrom-Json
           New-Item -ItemType Directory artifacts/distribution | Out-Null
           foreach ($file in $sizes.files) {
-            if ($file.edition -eq 'custom' -and -not $sizes.publishCustom) { continue }
             Copy-Item -LiteralPath $file.file -Destination artifacts/distribution
             Copy-Item "artifacts/MDV-$($file.edition)-win-x64.sha256" -Destination artifacts/distribution
           }
@@ -62,13 +61,13 @@ jobs:
       # Publish a release only after verification has succeeded.
       - uses: actions/upload-artifact@v4
         with:
-          name: MDV-v0.3.5-win-x64
+          name: MDV-v0.4.0-win-x64
           compression-level: 0
           path: artifacts/distribution/
       - name: Verify each portable EXE
         shell: pwsh
         run: |
-          foreach ($edition in @('dual', 'custom', 'upstream')) {
+          foreach ($edition in @('dual', 'custom')) {
             ./scripts/smoke-windows.ps1 -BuildDirectory "artifacts/MDV-$edition-win-x64" -Report "artifacts/verification/$edition/native-smoke.json"
           }
       - uses: actions/upload-artifact@v4

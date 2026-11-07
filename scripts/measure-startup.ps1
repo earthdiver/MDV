@@ -1,7 +1,7 @@
 param(
     [Parameter(Mandatory = $true)][string]$BuildRoot,
     [Parameter(Mandatory = $true)][string]$OutputDirectory,
-    [string[]]$Editions = @('dual', 'custom', 'upstream'),
+    [string[]]$Editions = @('dual', 'custom'),
     [ValidateRange(1, 20)][int]$Runs = 3
 )
 $ErrorActionPreference = 'Stop'
@@ -25,8 +25,9 @@ try {
         New-Item -ItemType Directory -Path $folder | Out-Null
         $exe = Join-Path $folder 'MDV.exe'
         Copy-Item (Join-Path $build "$edition/MDV.exe") $exe
-        $engines = if ($edition -eq 'dual') { @('original', 'legacy') } elseif ($edition -eq 'custom') { @('legacy') } else { @('original') }
-        foreach ($engine in $engines) { foreach ($mode in @('github', 'qiita')) { foreach ($document in @('sample', 'plain')) {
+        $engines = if ($edition -eq 'dual') { @('original', 'legacy') } else { @('legacy') }
+        $modes = @('github', 'qiita')
+        foreach ($engine in $engines) { foreach ($mode in $modes) { foreach ($document in @('sample', 'plain')) {
             for ($run = 0; $run -le $Runs; $run++) {
                 $name = "$edition-$engine-$mode-$document-$run"
                 [IO.File]::WriteAllText((Join-Path $folder 'MDV.ini'), "[Viewer]`r`nLanguage=ja`r`nEngine=$engine`r`nMode=$mode`r`nTheme=light`r`nAllowRemoteImages=False`r`n")

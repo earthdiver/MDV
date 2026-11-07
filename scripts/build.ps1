@@ -1,7 +1,6 @@
 param(
-    [ValidateSet('dual', 'custom', 'upstream', 'all')][string]$Edition = 'dual',
+    [ValidateSet('dual', 'custom', 'all')][string]$Edition = 'dual',
     [ValidateSet('win-x64', 'win-arm64')][string]$Runtime = 'win-x64',
-    [string]$FixedRuntimeDirectory,
     [string]$OriginalEngineDirectory,
     [ValidateSet('brotli', 'zstd')][string]$CompressionCodec = 'zstd',
     [Nullable[int]]$CompressionQuality,
@@ -11,10 +10,10 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 Push-Location (Split-Path $PSScriptRoot -Parent)
 try {
-    $editions = if ($Edition -eq 'all') { @('dual', 'custom', 'upstream') } else { @($Edition) }
-    $needsUpstream = @($editions | Where-Object { $_ -ne 'custom' }).Count -gt 0
+    $editions = if ($Edition -eq 'all') { @('dual', 'custom') } else { @($Edition) }
+    $needsUpstream = @($editions | Where-Object { $_ -eq 'dual' }).Count -gt 0
     if ($needsUpstream) {
-        if ($Runtime -ne 'win-x64') { throw 'The dual/upstream editions require win-x64.' }
+        if ($Runtime -ne 'win-x64') { throw 'The dual edition requires win-x64.' }
         if (-not $OriginalEngineDirectory) { throw 'Specify -OriginalEngineDirectory prepared by scripts/prepare-original-engines.ps1.' }
         $original = (Resolve-Path $OriginalEngineDirectory).Path
         foreach ($file in @('worker.rb', 'Gemfile', 'Gemfile.lock', 'ruby/bin/ruby.exe', 'THIRD-PARTY-NOTICES.txt')) {
@@ -35,20 +34,6 @@ try {
     }
     Invoke-Checked npm @('ci')
     if (-not $SkipTests) { Invoke-Checked npm @('test') }
-    if (-not $FixedRuntimeDirectory) {
-        if ($Runtime -ne 'win-x64') { throw 'For ARM64, specify its official Fixed Version runtime.' }
-        $FixedRuntimeDirectory = & (Join-Path $PSScriptRoot 'fetch-webview2.ps1')
-    }
-    $fixedRuntime = (Resolve-Path $FixedRuntimeDirectory).Path
-    $browser = Join-Path $fixedRuntime 'msedgewebview2.exe'
-    $stream = [System.IO.File]::OpenRead($browser)
-    $reader = [System.IO.BinaryReader]::new($stream)
-    try {
-        $stream.Position = 0x3c; $peOffset = $reader.ReadInt32()
-        $stream.Position = $peOffset + 4; $machine = $reader.ReadUInt16()
-        $expectedMachine = if ($Runtime -eq 'win-x64') { 0x8664 } else { 0xaa64 }
-        if ($machine -ne $expectedMachine) { throw 'WebView2 runtime architecture does not match the application.' }
-    } finally { $reader.Dispose(); $stream.Dispose() }
     if ($needsUpstream) { Invoke-Checked dotnet @('run', '--project', 'tools/Mdv.EngineProbe', '-c', 'Release', '--', $original) }
     $version = ([xml](Get-Content src/Mdv.App/Mdv.App.csproj -Raw)).SelectSingleNode('/Project/PropertyGroup/Version').InnerText
     $results = @()
@@ -61,9 +46,8 @@ try {
         if (Test-Path $payload) { Remove-Item -LiteralPath $payload -Recurse -Force }
         New-Item -ItemType Directory -Path $payload | Out-Null
         Copy-Item $renderer -Destination (Join-Path $payload 'Renderer') -Recurse
-        if ($variant -ne 'custom') { Copy-Item -LiteralPath $original -Destination (Join-Path $payload 'OriginalEngines') -Recurse }
+        if ($variant -eq 'dual') { Copy-Item -LiteralPath $original -Destination (Join-Path $payload 'OriginalEngines') -Recurse }
         Copy-Item samples -Destination (Join-Path $payload 'Samples') -Recurse
-        Copy-Item $fixedRuntime -Destination (Join-Path $payload 'WebView2Runtime') -Recurse
         Copy-Item README.md, README.en.md, LICENSE -Destination $payload
         Copy-Item docs -Destination $payload -Recurse
         Invoke-Checked node @('scripts/collect-native-licenses.mjs', $payload, $Runtime)
@@ -86,10 +70,7 @@ try {
         Write-Host "Built: $($exe.FullName)"
     }
     if ($Edition -eq 'all') {
-        $customBytes = ($results | Where-Object { $_.edition -eq 'custom' }).bytes
-        $publishCustom = ($customBytes -lt ($results | Where-Object { $_.edition -eq 'dual' }).bytes) -and ($customBytes -lt ($results | Where-Object { $_.edition -eq 'upstream' }).bytes)
-        $report = [ordered]@{ version = $version; runtime = $Runtime; compression = $CompressionCodec; quality = $quality; files = $results; publishCustom = $publishCustom }
+        $report = [ordered]@{ version = $version; runtime = $Runtime; compression = $CompressionCodec; quality = $quality; files = $results }
         $report | ConvertTo-Json -Depth 5 | Set-Content "artifacts/edition-sizes-$Runtime.json" -Encoding utf8
-        Write-Host "Publish custom edition: $publishCustom (strictly smaller than both other editions)."
     }
 } finally { Pop-Location }

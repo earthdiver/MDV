@@ -6,29 +6,30 @@ These steps are unnecessary when using a distribution EXE. Run commands from the
 
 ## Requirements
 
-Use Windows x64, .NET 10 SDK, Node.js 22 or newer, and PowerShell 7. The dual and upstream editions also require Ruby 3.4.11 x64, Bundler 2.6.9, a native gem build environment such as RubyInstaller Devkit, and Git. Initial dependency and runtime downloads require internet access.
+Use Windows 11 x64, .NET 10 SDK, Node.js 22 or newer, and PowerShell 7. The dual edition also require Ruby 3.4.11 x64, Bundler 2.6.9, a native gem build environment such as RubyInstaller Devkit, and Git. Initial dependency and runtime downloads require internet access.
 
 ## Build distribution EXEs
 
 ```powershell
 # Use a destination directory that does not exist yet
 .\scripts\prepare-original-engines.ps1 -RubyDirectory C:\Ruby34-x64
-# Release build: all three editions, maximum Zstandard level
+# Release build: both editions, maximum Zstandard level
 .\scripts\build.ps1 -Edition all -OriginalEngineDirectory artifacts/OriginalEngines -CompressionCodec zstd -CompressionQuality 22
 ```
 
-Outputs are `artifacts/MDV-<edition>-win-x64/MDV-v0.3.5-<edition>-win-x64.exe` and SHA-256 files. Output directories are recreated: do not keep personal settings or actively used EXEs there. Distribute dual and upstream; distribute custom only when it is strictly smaller than both. Sizes and the selection are recorded in `artifacts/edition-sizes-win-x64.json`. The script does not upload files.
+Outputs are `artifacts/MDV-<edition>-win-x64/MDV-v0.4.0-<edition>-win-x64.exe` and SHA-256 files. Output directories are recreated: do not keep personal settings or actively used EXEs there. Distribute dual and custom. Sizes are recorded in `artifacts/edition-sizes-win-x64.json`. The script does not upload files.
 
 Development builds default to Zstandard level 3. Explicitly select `-CompressionQuality 22` for releases. Every compressed payload file is verified against its original SHA-256. .NET single-file publishing is also used.
 
 | Option | Purpose |
 | --- | --- |
-| `-Edition dual` / `upstream` / `custom` | Build one edition; default: dual. Custom does not require Ruby assets |
-| `-FixedRuntimeDirectory C:\SDK\WebView2Fixed-x64` | Reuse a downloaded WebView2 runtime |
+| `-Edition dual` / `custom` | Build one edition; default: dual. Custom does not require Ruby assets |
 | `-CompressionQuality 3` | Faster development compression |
 | `-SkipTests` | Skip pre-build tests during development only |
 
-Custom can be built with `-Runtime win-arm64` and a matching Fixed Runtime, but ARM64 is outside the distribution and device-validation scope.
+Custom can be built with `-Runtime win-arm64`, but ARM64 is outside the distribution and device-validation scope.
+
+Custom decompresses bundled assets into memory on each launch without creating a payload cache. HTML, JS, CSS, and fonts are served to WebView2 through memory streams; samples and licenses are also read from memory. Compression defaults and release settings are unchanged.
 
 ## Repository layout
 
@@ -43,7 +44,7 @@ Custom can be built with `-Runtime win-arm64` and a matching Fixed Runtime, but 
 | `third_party` | External assets and licenses |
 | `docs` | Current usage, limitations, and build instructions |
 
-JavaScript dependencies are pinned in `package-lock.json`, Ruby dependencies in `engines/original/Gemfile.lock`, and WebView2 in `scripts/webview2-runtime.json`. Test-data sources and licenses are recorded in `tests/compatibility/sources.lock.json` and accompanying license files. Keep generated files, downloaded articles, and verification reports under `artifacts/`, outside Git.
+JavaScript dependencies are pinned in `package-lock.json` and Ruby dependencies in `engines/original/Gemfile.lock`. WebView2 uses the installed Evergreen Runtime; no Fixed Version runtime is downloaded or bundled. Evergreen updates may change rendering results. Test-data sources and licenses are recorded in `tests/compatibility/sources.lock.json` and accompanying license files. Keep generated files, downloaded articles, and verification reports under `artifacts/`, outside Git.
 
 ## Development launch
 
@@ -55,18 +56,18 @@ npm run build -- custom
 dotnet run --project src/Mdv.App -p:MdvEdition=custom
 ```
 
-For dual/upstream, copy the prepared `OriginalEngines` to `src/Mdv.App/OriginalEngines` and select the same edition for both renderer and application builds.
+For dual, copy the prepared `OriginalEngines` to `src/Mdv.App/OriginalEngines` and select the same edition for both renderer and application builds.
 
 ## Release verification
 
-Pull requests automatically run **Check pull requests**: JavaScript unit tests, compatibility checks against the saved HTML baseline, and core tests for all three editions on Windows. Distribution builds and browser/native verification remain part of the release verification below.
+Pull requests automatically run **Check pull requests**: JavaScript unit tests, compatibility checks against the saved HTML baseline, and core tests for both editions on Windows. Distribution builds and browser/native verification remain part of the release verification below.
 
 If `artifacts/OriginalEngines` was already prepared above, skip the `prepare-original-engines.ps1` command below.
 
 ```powershell
 npm test
 npm run compat:check
-'dual', 'custom', 'upstream' | ForEach-Object {
+'dual', 'custom' | ForEach-Object {
     dotnet run --project tests/Mdv.Core.Tests -c Release "-p:MdvEdition=$_"
 }
 npm run upstream:setup
@@ -78,7 +79,7 @@ npm run test:browser
 .\scripts\prepare-original-engines.ps1 -RubyDirectory C:\Ruby34-x64
 .\scripts\build.ps1 -Edition all -OriginalEngineDirectory artifacts/OriginalEngines -CompressionCodec zstd -CompressionQuality 22
 npm run test:editions
-'dual', 'custom', 'upstream' | ForEach-Object {
+'dual', 'custom' | ForEach-Object {
     .\scripts\smoke-windows.ps1 -BuildDirectory "artifacts/MDV-$_-win-x64" -Report "artifacts/verification/$_/native-smoke.json"
 }
 ```
@@ -119,7 +120,7 @@ For Qiita, set `MDV_RUBY` and run `npm run test:browser -- renderer/test/browser
 
 ## Measuring repeat startup time
 
-Place instrumented builds at `<BuildRoot>/dual/MDV.exe`, `custom/MDV.exe`, and `upstream/MDV.exe`, then run on Windows:
+Place instrumented builds at `<BuildRoot>/dual/MDV.exe` and `custom/MDV.exe`, then run on Windows:
 
 ```powershell
 .\scripts\measure-startup.ps1 -BuildRoot artifacts/startup-profile -OutputDirectory artifacts/startup-profile/results -Runs 3

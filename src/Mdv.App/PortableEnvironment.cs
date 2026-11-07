@@ -1,8 +1,6 @@
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
-using System.Security.AccessControl;
-using System.Security.Principal;
 using Mdv.Core;
 
 namespace Mdv.App;
@@ -10,9 +8,9 @@ namespace Mdv.App;
 internal sealed class PortableEnvironment
 {
     internal string Assets { get; private set; } = AppContext.BaseDirectory;
-    internal string? Runtime { get; private set; }
     internal string UserData { get; } = Path.Combine(Path.GetTempPath(), "MDV", "sessions", Guid.NewGuid().ToString("N"));
-    internal bool Bundled => Runtime != null;
+    internal bool Bundled { get; private set; }
+    internal MemoryPayload? MemoryAssets { get; private set; }
     internal TimeSpan PreparationTime { get; private set; }
     // Older hosts never acquire a lease. Keep their cache separate, even when
     // the payload hash is identical, so they cannot race managed cache cleanup.
@@ -33,32 +31,50 @@ internal sealed class PortableEnvironment
             using var reader = new StreamReader(hashStream);
             var hash = (await reader.ReadToEndAsync()).Trim();
             var compression = zstdPayload != null ? PayloadCompression.Zstandard : PayloadCompression.Brotli;
-            _payloadLease = await Task.Run(() => PayloadCache.ExtractAndLease(payload, CacheRoot, hash, compression));
-            Assets = _payloadLease.Path;
-            Runtime = Path.Combine(Assets, "WebView2Runtime");
-            // Fixed Version 120+ requires these read/execute ACLs for its Windows 10 sandbox.
-            if (!OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22000))
+            Bundled = true;
+            if (BuildEdition.UsesMemoryAssets)
             {
-                var directory = new DirectoryInfo(Runtime);
-                var security = directory.GetAccessControl();
-                foreach (var sid in new[] { "S-1-15-2-1", "S-1-15-2-2" })
-                    security.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(sid), FileSystemRights.ReadAndExecute,
-                        InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, PropagationFlags.None, AccessControlType.Allow));
-                directory.SetAccessControl(security);
+                MemoryAssets = await Task.Run(() => MemoryPayload.Load(payload, hash, compression));
+                // A stable virtual path gives bundled samples normal tab/history identities.
+                // This directory is never created.
+                Assets = Path.Combine(AppContext.BaseDirectory, ".mdv-bundled");
+            }
+            else
+            {
+                _payloadLease = await Task.Run(() => PayloadCache.ExtractAndLease(payload, CacheRoot, hash, compression));
+                Assets = _payloadLease.Path;
             }
         }
         else if (!File.Exists(Path.Combine(Assets, "Renderer", "index.html")))
             throw new IOException(UiLanguage.Text("描画資材がありません。開発時は npm run build を実行してください。", "Rendering assets are missing. Run npm run build for development."));
-        using var rendererManifest = System.Text.Json.JsonDocument.Parse(await File.ReadAllTextAsync(Path.Combine(Assets, "Renderer", "bundle-manifest.json")));
+        using var rendererManifest = System.Text.Json.JsonDocument.Parse(ReadText("Renderer/bundle-manifest.json"));
         if (rendererManifest.RootElement.GetProperty("edition").GetString() != BuildEdition.Id)
             throw new IOException(UiLanguage.Text("アプリと表示資材の配布版が一致しません。同じ版でビルドし直してください。", "The application and renderer editions do not match. Rebuild both with the same edition."));
         Directory.CreateDirectory(UserData);
         // Per-process overrides prevent a pre-existing environment variable from moving MDV's
-        // profile elsewhere. The distributed build always chooses its own Fixed Version runtime.
+        // profile elsewhere. Clear any inherited fixed-runtime override for Evergreen discovery.
         Environment.SetEnvironmentVariable("WEBVIEW2_USER_DATA_FOLDER", UserData);
-        if (Runtime != null) Environment.SetEnvironmentVariable("WEBVIEW2_BROWSER_EXECUTABLE_FOLDER", Runtime);
+        Environment.SetEnvironmentVariable("WEBVIEW2_BROWSER_EXECUTABLE_FOLDER", null);
         PreparationTime = Stopwatch.GetElapsedTime(started);
     }
+
+    internal string ReadText(string name) => MemoryAssets?.ReadText(name) ?? File.ReadAllText(Path.Combine(Assets, name));
+    internal IEnumerable<string> AssetNames => MemoryAssets?.Names ?? Directory.EnumerateFiles(Assets, "*", SearchOption.AllDirectories).Select(path => Path.GetRelativePath(Assets, path).Replace('\\', '/'));
+    internal bool IsMemorySample(string path) => MemoryAssets != null &&
+        Path.GetRelativePath(Assets, Path.GetFullPath(path)).Replace('\\', '/') is var name && name.StartsWith("Samples/", StringComparison.Ordinal) && MemoryAssets.Contains(name);
+    internal MarkdownDocument? ReadMemorySample(string path) => IsMemorySample(path)
+        ? new MarkdownDocument(Path.GetFullPath(path), ReadText(Path.GetRelativePath(Assets, path).Replace('\\', '/')), "UTF-8") : null;
+
+    internal string? ResolveSampleLink(string document, string href, bool imagesOnly = false)
+    {
+        if (!IsMemorySample(document)) return null;
+        var name = Uri.UnescapeDataString(href.Split('?', '#')[0]);
+        if (!MemoryPayload.ValidName(name)) return null;
+        var path = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(document)!, name));
+        return IsMemorySample(path) && (!imagesOnly || LocalAssets.ContentType(path) != "application/octet-stream") ? path : null;
+    }
+    internal Stream? OpenSampleAsset(string path) => IsMemorySample(path)
+        ? MemoryAssets!.Open(Path.GetRelativePath(Assets, path).Replace('\\', '/')) : null;
 
     internal async Task CleanupAsync(uint? browserProcessId)
     {
@@ -79,6 +95,6 @@ internal sealed class PortableEnvironment
                 catch (Exception error) when (error is IOException or UnauthorizedAccessException) { await Task.Delay(150); }
             }
         }
-        finally { _payloadLease?.Dispose(); _payloadLease = null; }
+        finally { _payloadLease?.Dispose(); _payloadLease = null; MemoryAssets = null; }
     }
 }

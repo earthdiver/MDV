@@ -31,7 +31,7 @@ jobs:
       - name: Verify core behavior in every edition
         shell: pwsh
         run: |
-          foreach ($edition in @('dual', 'custom', 'upstream')) {
+          foreach ($edition in @('dual', 'custom')) {
             dotnet run --project tests/Mdv.Core.Tests -c Release "-p:MdvEdition=$edition"
             if ($LASTEXITCODE -ne 0) { throw "Core tests failed: $edition" }
           }

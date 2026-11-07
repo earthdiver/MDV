@@ -5,8 +5,8 @@ import { mkdir, cp, readFile, writeFile, readdir, rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
 const edition = process.argv[2] || 'dual';
-if (!['dual', 'custom', 'upstream'].includes(edition)) throw new Error('Edition must be dual, custom or upstream');
-const custom = edition !== 'upstream', upstream = edition !== 'custom';
+if (!['dual', 'custom'].includes(edition)) throw new Error('Edition must be dual or custom');
+const custom = true, upstream = edition === 'dual';
 const out = resolve(process.argv[3] || 'src/Mdv.App/Renderer');
 await rm(out, { recursive: true, force: true });
 await mkdir(out, { recursive: true });
@@ -17,16 +17,15 @@ const result = await build({
   loader: { '.svg': 'text', '.wasm':'binary', '.scm':'text' }, target: 'es2022', minify: true, legalComments: 'linked', metafile: true,
 });
 const inputs = Object.keys(result.metafile.inputs);
-if (!custom && inputs.includes('renderer/markdown.mjs')) throw new Error('Custom converter leaked into upstream edition');
 if (!upstream && inputs.includes('renderer/upstream-display.mjs')) throw new Error('Upstream converter leaked into custom edition');
 await buildGithubAssets(out);
-for (const name of ['github-host.css', 'qiita.css', 'qiita-host.css', 'diagram.css']) await cp(join('renderer', name), join(out, name));
+for (const name of ['github-host.css', 'diagram.css', 'qiita.css', 'qiita-host.css']) await cp(join('renderer', name), join(out, name));
 let html = await readFile('renderer/index.html', 'utf8');
 await writeFile(join(out, 'index.html'), html);
 await cp('third_party/font-awesome', join(out, 'qiita/font-awesome'), { recursive: true });
 await cp('node_modules/mathjax/es5', join(out, 'mathjax'), { recursive: true });
 // License notices follow the packages actually bundled in this edition.
-// Mermaid itself uses KaTeX, including in the upstream edition.
+// Mermaid itself uses KaTeX in every edition.
 const lock = JSON.parse(await readFile('package-lock.json', 'utf8'));
 const packages = new Set(inputs.flatMap(input => {
   const match = input.match(/^(.*node_modules\/(?:@[^/]+\/)?[^/]+)\//);
@@ -35,7 +34,8 @@ const packages = new Set(inputs.flatMap(input => {
 for (const name of ['@primer/css', '@primer/primitives', '@primer/octicons']) packages.add('node_modules/' + name);
 packages.add('node_modules/mathjax');
 const shellLicense=await readFile('third_party/atom-shellscript/LICENSE.md','utf8');
-const licenses = ['atom/language-shellscript 35dc1aa1371ab75ece08fd0837330eb62e1f9da9\n'+shellLicense,'Qiita article presentation: independently implemented by MDV (MIT).\nFont Awesome 4.7.0 by Dave Gandy: CSS MIT; font SIL OFL 1.1. See qiita/font-awesome/.'];
+const licenses = ['atom/language-shellscript 35dc1aa1371ab75ece08fd0837330eb62e1f9da9\n'+shellLicense];
+licenses.push('Qiita article presentation: independently implemented by MDV (MIT).\nFont Awesome 4.7.0 by Dave Gandy: CSS MIT; font SIL OFL 1.1. See qiita/font-awesome/.');
 for (const path of [...packages].sort()) {
   const metadata = lock.packages[path];
   if (!metadata) throw new Error(`Missing locked package: ${path}`);

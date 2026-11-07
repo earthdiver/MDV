@@ -24,7 +24,7 @@ static class PayloadCacheTests
             using var output = new MemoryStream();
             using (var compressed = new BrotliStream(output, CompressionLevel.Fastest, leaveOpen: true))
             using (var tar = new TarWriter(compressed, leaveOpen: true))
-                foreach (var name in new[] { "Renderer/index.html", "WebView2Runtime/msedgewebview2.exe" })
+                foreach (var name in new[] { "Renderer/index.html" })
                 {
                     using var contents = new MemoryStream("asset"u8.ToArray());
                     tar.WriteEntry(new PaxTarEntry(TarEntryType.RegularFile, name) { DataStream = contents });
@@ -177,8 +177,6 @@ static class PayloadCacheTests
             {
                 var root = Path.Combine(folder, "cache-lease-link-" + existingTarget);
                 var path = Create(root, 'a');
-                Directory.CreateDirectory(Path.Combine(path, "WebView2Runtime"));
-                File.WriteAllText(Path.Combine(path, "WebView2Runtime", "msedgewebview2.exe"), "runtime");
                 var target = Path.Combine(folder, "lease-link-target-" + existingTarget);
                 if (existingTarget) File.WriteAllText(target, "keep");
                 var link = Path.Combine(path, ".in-use");
@@ -204,8 +202,6 @@ static class PayloadCacheTests
         {
             var root = Path.Combine(folder, "cache-marker-link");
             var path = Create(root, 'a');
-            Directory.CreateDirectory(Path.Combine(path, "WebView2Runtime"));
-            File.WriteAllText(Path.Combine(path, "WebView2Runtime", "msedgewebview2.exe"), "runtime");
             var target = Path.Combine(folder, "marker-link-target");
             File.WriteAllText(target, new string('a', 64));
             var marker = Path.Combine(path, ".complete");
@@ -225,8 +221,6 @@ static class PayloadCacheTests
         {
             var root = Path.Combine(folder, "cache-parent-link-target");
             var path = Create(root, 'a');
-            Directory.CreateDirectory(Path.Combine(path, "WebView2Runtime"));
-            File.WriteAllText(Path.Combine(path, "WebView2Runtime", "msedgewebview2.exe"), "runtime");
             var link = Path.Combine(folder, "cache-parent-link");
             try { Directory.CreateSymbolicLink(link, root); }
             catch (Exception error) when (OperatingSystem.IsWindows() && error is IOException or UnauthorizedAccessException)

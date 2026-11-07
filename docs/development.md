@@ -6,29 +6,30 @@
 
 ## 必要な環境
 
-Windows x64、.NET 10 SDK、Node.js 22以降、PowerShell 7を使用します。公開実装を含むdual・upstream版には、Ruby 3.4.11 x64、Bundler 2.6.9、RubyInstaller Devkitなどのネイティブgemのビルド環境、Gitが必要です。依存パッケージと実行資材の初回取得には通信します。
+Windows 11 x64、.NET 10 SDK、Node.js 22以降、PowerShell 7を使用します。公開実装を含むdual版には、Ruby 3.4.11 x64、Bundler 2.6.9、RubyInstaller Devkitなどのネイティブgemのビルド環境、Gitが必要です。依存パッケージと実行資材の初回取得には通信します。
 
 ## 配布EXEの作成
 
 ```powershell
 # 出力先は未作成のフォルダを指定
 .\scripts\prepare-original-engines.ps1 -RubyDirectory C:\Ruby34-x64
-# リリース用：3版すべてをZstandardの最高レベルで圧縮
+# リリース用：2版すべてをZstandardの最高レベルで圧縮
 .\scripts\build.ps1 -Edition all -OriginalEngineDirectory artifacts/OriginalEngines -CompressionCodec zstd -CompressionQuality 22
 ```
 
-出力は `artifacts/MDV-<版>-win-x64/MDV-v0.3.5-<版>-win-x64.exe` とSHA-256ファイルです。各出力フォルダは再作成するため、使用中のEXEや個人設定を置かないでください。dual・upstreamを配布し、customは他の2版より厳密に小さい場合に配布します。サイズと判定は `artifacts/edition-sizes-win-x64.json` に記録されます。スクリプトはアップロードを行いません。
+出力は `artifacts/MDV-<版>-win-x64/MDV-v0.4.0-<版>-win-x64.exe` とSHA-256ファイルです。各出力フォルダは再作成するため、使用中のEXEや個人設定を置かないでください。dual・customの2版を配布します。サイズは `artifacts/edition-sizes-win-x64.json` に記録されます。スクリプトはアップロードを行いません。
 
 開発時の既定値はZstandardレベル3です。リリース時は必ず `-CompressionQuality 22` を指定します。圧縮後に全資材のSHA-256を元ファイルと照合します。.NETの単一EXE化も使用します。
 
 | オプション | 用途 |
 | --- | --- |
-| `-Edition dual` / `upstream` / `custom` | 個別の版を作成。省略時はdual。customではRuby資材の指定不要 |
-| `-FixedRuntimeDirectory C:\SDK\WebView2Fixed-x64` | 取得済みのWebView2を使う |
+| `-Edition dual` / `custom` | 個別の版を作成。省略時はdual。customではRuby資材の指定不要 |
 | `-CompressionQuality 3` | 開発用の高速な圧縮 |
 | `-SkipTests` | 開発時のみ、ビルド前テストを省略 |
 
-customでは `-Runtime win-arm64` と対応するFixed Runtimeを指定できますが、ARM64は配布・実機検証の対象外です。
+customでは `-Runtime win-arm64` を指定できますが、ARM64は配布・実機検証の対象外です。
+
+custom版は圧縮資材を毎回メモリに読み込み、ディスク資材キャッシュを作りません。HTML・JS・CSS・フォントはWebView2へメモリストリームで配信し、サンプルとライセンスもメモリから読みます。圧縮方式・レベルの既定値とリリース設定は変更していません。
 
 ## 構成
 
@@ -43,7 +44,7 @@ customでは `-Runtime win-arm64` と対応するFixed Runtimeを指定できま
 | `third_party` | 外部資材とライセンス |
 | `docs` | 現在の使い方・制限・ビルド手順 |
 
-JavaScript依存は `package-lock.json`、Ruby依存は `engines/original/Gemfile.lock`、WebView2は `scripts/webview2-runtime.json` で固定しています。試験データの出典・ライセンスは `tests/compatibility/sources.lock.json` と同梱ライセンスを参照してください。生成物・取得した記事・検証レポートは `artifacts/` に置き、Gitへ追加しません。
+JavaScript依存は `package-lock.json`、Ruby依存は `engines/original/Gemfile.lock` で固定しています。WebView2はPC側のEvergreen Runtimeを使用し、固定版の取得・同梱は行いません。Evergreenの更新により描画結果が変わる可能性があります。試験データの出典・ライセンスは `tests/compatibility/sources.lock.json` と同梱ライセンスを参照してください。生成物・取得した記事・検証レポートは `artifacts/` に置き、Gitへ追加しません。
 
 ## 開発用の起動
 
@@ -55,18 +56,18 @@ npm run build -- custom
 dotnet run --project src/Mdv.App -p:MdvEdition=custom
 ```
 
-dual・upstreamの場合は準備した `OriginalEngines` を `src/Mdv.App/OriginalEngines` にコピーし、レンダラーとアプリの両方で同じ版を指定します。
+dualの場合は準備した `OriginalEngines` を `src/Mdv.App/OriginalEngines` にコピーし、レンダラーとアプリの両方で同じ版を指定します。
 
 ## リリース前の検証
 
-PRでは `Check pull requests` が自動で実行され、JavaScriptの単体テスト、保存済みHTML基準との互換性チェック、Windows上での3版の共通処理テストを確認します。配布EXEの作成とブラウザー・実機検証は、引き続き以下のリリース前検証で行います。
+PRでは `Check pull requests` が自動で実行され、JavaScriptの単体テスト、保存済みHTML基準との互換性チェック、Windows上での2版の共通処理テストを確認します。配布EXEの作成とブラウザー・実機検証は、引き続き以下のリリース前検証で行います。
 
 先の手順で `artifacts/OriginalEngines` を準備済みの場合は、次の `prepare-original-engines.ps1` の実行を省略してください。
 
 ```powershell
 npm test
 npm run compat:check
-'dual', 'custom', 'upstream' | ForEach-Object {
+'dual', 'custom' | ForEach-Object {
     dotnet run --project tests/Mdv.Core.Tests -c Release "-p:MdvEdition=$_"
 }
 npm run upstream:setup
@@ -78,7 +79,7 @@ npm run test:browser
 .\scripts\prepare-original-engines.ps1 -RubyDirectory C:\Ruby34-x64
 .\scripts\build.ps1 -Edition all -OriginalEngineDirectory artifacts/OriginalEngines -CompressionCodec zstd -CompressionQuality 22
 npm run test:editions
-'dual', 'custom', 'upstream' | ForEach-Object {
+'dual', 'custom' | ForEach-Object {
     .\scripts\smoke-windows.ps1 -BuildDirectory "artifacts/MDV-$_-win-x64" -Report "artifacts/verification/$_/native-smoke.json"
 }
 ```
@@ -119,7 +120,7 @@ Qiitaの両エンジンの比較は、`MDV_RUBY` を設定して `npm run test:b
 
 ## ２回目以降の起動時間の計測
 
-計測対応ビルドの各版を `<BuildRoot>/dual/MDV.exe`、`custom/MDV.exe`、`upstream/MDV.exe` に配置し、Windowsで実行します。
+計測対応ビルドの各版を `<BuildRoot>/dual/MDV.exe`、`custom/MDV.exe` に配置し、Windowsで実行します。
 
 ```powershell
 .\scripts\measure-startup.ps1 -BuildRoot artifacts/startup-profile -OutputDirectory artifacts/startup-profile/results -Runs 3

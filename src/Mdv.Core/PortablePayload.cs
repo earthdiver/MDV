@@ -32,8 +32,7 @@ public static class PortablePayload
             catch (AbandonedMutexException) { acquired = true; }
             if (!acquired) throw new IOException(UiLanguage.Text("描画資材の展開待ちがタイムアウトしました。もう一度起動してください。", "Timed out waiting to extract rendering assets. Please restart MDV."));
             if (File.Exists(marker) && File.ReadAllText(marker) == expectedHash &&
-                File.Exists(Path.Combine(target, "Renderer", "index.html")) &&
-                File.Exists(Path.Combine(target, "WebView2Runtime", "msedgewebview2.exe"))) return target;
+                File.Exists(Path.Combine(target, "Renderer", "index.html"))) return target;
             var actualHash = Convert.ToHexString(SHA256.HashData(archive)).ToLowerInvariant();
             if (actualHash != expectedHash) throw new InvalidDataException(UiLanguage.Text("EXE内の描画資材が破損しています。配布ファイルを取得し直してください。", "The bundled rendering assets are damaged. Please download MDV again."));
             archive.Position = 0;
@@ -64,8 +63,7 @@ public static class PortablePayload
                     // cannot be hidden behind the TAR end markers.
                     decompressor.CopyTo(Stream.Null);
                 }
-                if (!File.Exists(Path.Combine(staging, "Renderer", "index.html")) ||
-                    !File.Exists(Path.Combine(staging, "WebView2Runtime", "msedgewebview2.exe")))
+                if (!File.Exists(Path.Combine(staging, "Renderer", "index.html")))
                     throw new InvalidDataException(UiLanguage.Text("同梱の描画資材が不足しています。", "Bundled rendering assets are missing."));
                 File.WriteAllText(Path.Combine(staging, ".complete"), expectedHash);
                 if (Directory.Exists(target)) RetryTransientAccess(() => Directory.Delete(target, true));

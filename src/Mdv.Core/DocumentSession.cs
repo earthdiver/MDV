@@ -97,8 +97,9 @@ public static class DocumentSession
     }
 
     public static async Task<int> RestoreAsync(DocumentWorkspace workspace, SessionSnapshot snapshot,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default, Func<string, CancellationToken, Task<MarkdownDocument>>? readDocument = null)
     {
+        readDocument ??= DocumentReader.ReadAsync;
         snapshot = Normalize(snapshot);
         var restored = new List<DocumentTab>();
         DocumentTab? active = null;
@@ -113,7 +114,7 @@ public static class DocumentSession
                 try
                 {
                     // Opening disconnected shares can block before ReadAsync first yields.
-                    var document = await Task.Run(() => DocumentReader.ReadAsync(saved.FilePath, cancellationToken), cancellationToken)
+                    var document = await Task.Run(() => readDocument(saved.FilePath, cancellationToken), cancellationToken)
                         .WaitAsync(TimeSpan.FromSeconds(5), cancellationToken);
                     tab.SetDocument(document);
                     tab.History.Visit(document.FilePath);

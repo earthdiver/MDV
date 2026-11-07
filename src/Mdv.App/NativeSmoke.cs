@@ -48,15 +48,26 @@ internal static class NativeSmoke
             using var currentProcess = Process.GetCurrentProcess();
             var startupMilliseconds = window.StartupMilliseconds;
             checks.Add("WPF window and WebView2 ready");
-            if (!window.Portable.Bundled) throw new InvalidOperationException("The portable test requires an embedded Fixed Version runtime.");
+            if (!window.Portable.Bundled) throw new InvalidOperationException("The portable test requires embedded rendering assets.");
             using var browser = Process.GetProcessById(checked((int)window.Preview.CoreWebView2.BrowserProcessId));
             var browserPath = browser.MainModule?.FileName ?? throw new IOException("Browser process path is unavailable.");
-            if (!string.Equals(Path.GetDirectoryName(browserPath), window.Portable.Runtime, StringComparison.OrdinalIgnoreCase))
-                throw new InvalidOperationException("The installed WebView2 runtime was used instead of the embedded runtime.");
-            checks.Add("Embedded Fixed Version runtime is actually running");
+            if (!string.Equals(Path.GetFileName(browserPath), "msedgewebview2.exe", StringComparison.OrdinalIgnoreCase) ||
+                Path.GetFullPath(browserPath).StartsWith(Path.TrimEndingDirectorySeparator(window.Portable.Assets) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("Expected an installed WebView2 Evergreen runtime outside the bundled assets.");
+            checks.Add("Installed WebView2 Evergreen runtime is running: " + browserPath);
             if (!File.Exists(window.SettingsPath) || Path.GetDirectoryName(window.SettingsPath) != Path.GetDirectoryName(Environment.ProcessPath))
                 throw new IOException("INI was not created beside the executable.");
             checks.Add("INI created beside the executable");
+            if ((window.CacheMenu.Visibility == Visibility.Visible) == BuildEdition.UsesMemoryAssets)
+                throw new InvalidOperationException("Incorrect asset-management menu visibility.");
+            if (BuildEdition.UsesMemoryAssets)
+            {
+                if (window.Portable.MemoryAssets == null || Directory.Exists(window.Portable.Assets))
+                    throw new InvalidOperationException("Memory edition must not extract its payload.");
+                if (window.Portable.ReadText("LICENSE").Length == 0 || window.Portable.ReadText("Renderer/THIRD-PARTY-NOTICES.txt").Length == 0)
+                    throw new InvalidOperationException("In-memory licenses are unavailable.");
+                checks.Add("Payload and licenses are in memory; no extracted assets directory or management menu");
+            }
             if (args.Contains("--smoke-link-hover"))
             {
                 var title = window.Title;
@@ -316,8 +327,8 @@ internal static class NativeSmoke
                 var path = ReportPath(args);
                 Directory.CreateDirectory(Path.GetDirectoryName(path)!);
                 await File.WriteAllTextAsync(path, JsonSerializer.Serialize(new { success = true, checks,
-                    settingsPath = window.SettingsPath, runtime = window.Portable.Runtime, userData = window.Portable.UserData,
-                    browserPath, assets = window.Portable.Assets, startupMilliseconds,
+                    settingsPath = window.SettingsPath, runtime = Path.GetDirectoryName(browserPath), userData = window.Portable.UserData,
+                    browserPath, assets = window.Portable.Assets, memoryAssets = window.Portable.MemoryAssets != null, startupMilliseconds,
                     edition = BuildEdition.Id, engine = window.Settings.Engine, mode = window.Settings.Mode,
                     document = window.Workspace.Active.Document?.FileName, startupStagesMilliseconds = window.StartupTimings,
                     rubyWarmupMilliseconds = window.RubyWarmupMilliseconds,

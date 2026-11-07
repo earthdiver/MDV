@@ -49,7 +49,7 @@ try {
     Rename-Item -LiteralPath (Join-Path $moved 'MDV.ini') -NewName 'Reader.ini'
     $restartReport = Join-Path $logs 'portable-restart.json'
     $restart = Invoke-Portable (Join-Path $moved 'Reader.exe') $restartReport -Restart
-    if ($first.assets -ne $restart.assets) { throw 'The payload cache was not reused after relocation.' }
+    if ($first.edition -eq 'dual' -and $first.assets -ne $restart.assets) { throw 'The payload cache was not reused after relocation.' }
     $readonlyIni = Get-Item (Join-Path $moved 'Reader.ini')
     $readonlyIni.IsReadOnly = $true
     $readonlyReport = Join-Path $logs 'portable-readonly.json'
@@ -57,7 +57,7 @@ try {
     finally { $readonlyIni.IsReadOnly = $false }
     $legacyAfter = if (Test-Path $legacyIni) { (Get-FileHash $legacyIni).Hash } else { '' }
     if ($legacyBefore -ne $legacyAfter) { throw 'Legacy AppData settings were changed.' }
-    Write-Host 'PASS: single EXE, fixed runtime, INI, relocation, rename, restart, profile cleanup, read-only errors, legacy settings unchanged.'
+    Write-Host 'PASS: single EXE, installed Evergreen runtime, INI, relocation, rename, restart, profile cleanup, read-only errors, legacy settings unchanged.'
 }
 finally {
     New-Item -ItemType Directory -Force -Path (Split-Path $reportPath -Parent) | Out-Null

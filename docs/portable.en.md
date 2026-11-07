@@ -4,7 +4,7 @@
 
 ## Editions and engines
 
-Check **Help → About MDV** or the window title for the current edition. In the dual edition, **View → Use upstream engine** switches engines. The custom and upstream editions have a fixed engine. Every edition supports GitHub and Qiita syntax modes.
+Check **Help → About MDV** or the window title for the current edition. In the dual edition, **View → Use upstream engine** switches engines. Custom uses the custom engine.
 
 ## Open and read documents
 
@@ -111,11 +111,9 @@ To update, close all MDV instances, replace the EXE, and keep the INI. If the ve
 
 The first launch extracts required files into the Windows temporary folder, so it may take longer than later launches.
 
-In v0.3.3, the extracted startup files total approximately 0.74 GB for custom and 0.81 GB for dual/upstream (1 GB = one billion bytes). Storage for the EXE itself is separate.
+MDV shares the installed WebView2 Evergreen Runtime, so WebView2 is no longer part of its extracted assets. Allow space for the EXE, extracted assets, and working data. Using multiple editions or updating MDV can leave previously extracted files behind.
 
-Running MDV also uses working space. **Allow around 1 GB of free space per edition on the drive containing the temporary folder.** This is not a fixed minimum requirement; working data may require more space. Using multiple editions or updating MDV can leave previously extracted files behind.
-
-Use **Help → Manage extracted files…** to review startup file storage and remove unused versions. Use each entry’s checkbox to select files for deletion. Select all / Clear all checks or unchecks all eligible entries. Delete selected files… asks for confirmation once for the selection. Right-click an entry to choose Copy path or Open in Explorer. For older versions, confirm that all other MDV windows are closed before proceeding. Files detected as in use are protected. Starting a removed version extracts its required files again.
+In dual, use **Help → Manage extracted files…** to review startup file storage and remove unused versions. Use each entry’s checkbox to select files for deletion. Select all / Clear all checks or unchecks all eligible entries. Delete selected files… asks for confirmation once for the selection. Right-click an entry to choose Copy path or Open in Explorer. For older versions, confirm that all other MDV windows are closed before proceeding. Files detected as in use are protected. Starting a removed version extracts its required files again.
 
 If display fails or you want to clean up temporary files, close all MDV instances and enter `%TEMP%` in Explorer's address bar. You can remove:
 
@@ -125,3 +123,5 @@ If display fails or you want to clean up temporary files, close all MDV instance
 | Folder under `.net` matching the MDV executable name | Extracted runtime files. Leave other applications' folders intact |
 
 Required files are recreated at the next launch. This does not delete settings or original Markdown documents.
+
+Custom loads rendering assets, samples, and licenses into memory on each launch and releases them at exit. It has no payload cache or asset-management menu. Native DLL extraction and WebView2 working folders remain in use.

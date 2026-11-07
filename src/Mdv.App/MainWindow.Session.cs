@@ -22,7 +22,7 @@ public partial class MainWindow
             _updatingTabControls = true;
             try
             {
-                var missing = await DocumentSession.RestoreAsync(_workspace, snapshot, _lifetime.Token);
+                var missing = await DocumentSession.RestoreAsync(_workspace, snapshot, _lifetime.Token, (path, token) => _portable.ReadMemorySample(path) is { } sample ? Task.FromResult(sample) : DocumentReader.ReadAsync(path, token));
                 if (missing > 0) _sessionNotice = UiLanguage.Text($"前回の文書 {missing} 件を開けなかったため、省略しました。", $"Skipped {missing} unavailable document(s) from the previous session.");
             }
             finally { _updatingTabControls = false; }

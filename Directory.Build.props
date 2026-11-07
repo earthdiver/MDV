@@ -2,7 +2,6 @@
   <PropertyGroup>
     <MdvEdition Condition="'$(MdvEdition)' == ''">dual</MdvEdition>
     <DefineConstants Condition="'$(MdvEdition)' == 'custom'">$(DefineConstants);MDV_CUSTOM</DefineConstants>
-    <DefineConstants Condition="'$(MdvEdition)' == 'upstream'">$(DefineConstants);MDV_UPSTREAM</DefineConstants>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>

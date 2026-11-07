@@ -5,11 +5,13 @@ import { resolve, extname, sep } from 'node:path';
 import assert from 'node:assert/strict';
 import { OriginalEngine } from './upstream/client.mjs';
 const repo=process.cwd();
+const editions=process.argv.length>2?process.argv.slice(2):['dual','custom'];
+assert.ok(editions.every(edition=>['dual','custom'].includes(edition)), 'Unknown edition');
 const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2','.woff':'font/woff'};
 const browser=await chromium.launch();
 const results=[];
 try {
-  for(const edition of ['dual','custom','upstream']) {
+  for(const edition of editions) {
     const root=resolve(repo,`artifacts/renderer-${edition}`);
     const server=createServer(async(req,res)=>{try {const p=resolve(root,'.'+new URL(req.url,'http://localhost').pathname.replace(/\/$/,'/index.html'));if(!p.startsWith(root+sep))throw Error();res.setHeader('Content-Type',mime[extname(p)]||'application/octet-stream');res.end(await readFile(p));}catch{res.writeHead(404);res.end();}});
     await new Promise(r=>server.listen(0,'127.0.0.1',r));
@@ -19,7 +21,7 @@ try {
       assert.equal(await page.evaluate(()=>window.mdv.edition),edition);
       for(const mode of ['github','qiita']) {
         const markdown='# 見出し\n\n**本文** $x^2$\n\n```mermaid\nflowchart LR\nA --> B\n```\n\n:::note info\n補足\n:::';
-        const engine=edition==='custom'?'legacy':'original';let worker;
+        const engine=edition==='dual'?'original':'legacy';let worker;
         try {
           const original=engine==='original'?(worker=await OriginalEngine.start(mode,{desktop:true}),{...await worker.render(markdown),metadata:worker.metadata}):undefined;
           const result=await page.evaluate(o=>window.mdv.render(o),{mode,markdown,engine:edition==='dual'?engine:engine==='legacy'?'original':'legacy',original});
@@ -36,5 +38,5 @@ try {
       assert.deepEqual(errors,[]);
     } finally {await page.close();await new Promise(r=>server.close(r));}
   }
-  await writeFile(`${repo}/artifacts/verification/edition-browser.json`,JSON.stringify(results,null,2)+'\n');console.log('PASS: all 3 editions in both modes, unavailable-engine normalization, math, diagrams, search, no missing assets.');
+  await writeFile(`${repo}/artifacts/verification/edition-browser.json`,JSON.stringify(results,null,2)+'\n');console.log(`PASS: ${editions.join(', ')} in supported modes, unavailable-engine normalization, math, diagrams, search, no missing assets.`);
 } finally {await browser.close();}

@@ -227,6 +227,7 @@ try
         Equal(true, File.ReadAllText(path).Contains("[Viewer]"));
     });
     Check("Engine settings respect the compiled edition", () => {
+        Equal(BuildEdition.Id != "dual", BuildEdition.UsesMemoryAssets);
         Equal(BuildEdition.DefaultEngine, new UserSettings().Engine);
         foreach (var requested in new[] { "legacy", "original", "invalid" }) {
             var value = new UserSettings { Engine = requested };
@@ -239,7 +240,7 @@ try
         foreach (var saved in new[] { "legacy", "original" }) {
             // Simulate an INI copied from another edition, without normalizing it first.
             File.WriteAllText(path, "[Viewer]\nEngine=" + saved);
-            var expected = BuildEdition.Id switch { "custom" => "legacy", "upstream" => "original", _ => saved };
+            var expected = BuildEdition.ResolveEngine(saved);
             Equal(expected, UserSettings.Load(path).Engine);
         }
     });
@@ -395,7 +396,44 @@ try
                 }
             return memory.ToArray();
         }
-        var payload = Archive(("Renderer/index.html", "preview"), ("WebView2Runtime/msedgewebview2.exe", "runtime"));
+        var memoryArchive = Archive(("Renderer/index.html", "preview"), ("Renderer/bundle-manifest.json", "{}"), ("Renderer/viewer.js", "export {}"), ("Samples/welcome.md", "# sample"), ("LICENSE", "license"));
+        var memoryHash = Convert.ToHexString(SHA256.HashData(memoryArchive));
+        MemoryPayload ReadMemory(byte[] bytes) => MemoryPayload.Load(new MemoryStream(bytes), Convert.ToHexString(SHA256.HashData(bytes)), compression);
+        Check("Memory payload serves assets without filesystem extraction: " + compression, () => {
+            var assets = ReadMemory(memoryArchive);
+            Equal("# sample", assets.ReadText("Samples/welcome.md"));
+            var virtualPath = Path.Combine(temp, "never-extracted", "Samples", "welcome.md");
+            var workspace = new DocumentWorkspace("github", 1);
+            var snapshot = new SessionSnapshot(1, 0, [new SessionTab(virtualPath, "github", 1.25)]);
+            var missing = DocumentSession.RestoreAsync(workspace, snapshot, readDocument: (path, _) =>
+                Task.FromResult(new MarkdownDocument(path, assets.ReadText("Samples/welcome.md"), "UTF-8"))).GetAwaiter().GetResult();
+            Equal(0, missing);
+            Equal("# sample", workspace.Active.Document!.Text);
+            Equal(1.25, workspace.Active.Zoom);
+            Equal(false, Directory.Exists(Path.GetDirectoryName(virtualPath)));
+            using var response = assets.OpenRenderer(new Uri("https://app.mdv.invalid/viewer.js?v=1"));
+            Equal("export {}", new StreamReader(response!).ReadToEnd());
+            using var second = assets.OpenRenderer(new Uri("https://app.mdv.invalid/viewer.js"));
+            Equal(0L, second!.Position);
+            Equal(false, second.CanWrite);
+            Equal("text/javascript; charset=utf-8", MemoryPayload.ContentType("viewer.js"));
+            Equal("font/woff2", MemoryPayload.ContentType("font.woff2"));
+            Equal(true, assets.OpenRenderer(new Uri("https://app.mdv.invalid/missing.js")) == null);
+            Equal(true, assets.OpenRenderer(new Uri("https://document.mdv.invalid/viewer.js")) == null);
+            Equal(true, assets.OpenRenderer(new Uri("https://app.mdv.invalid:444/viewer.js")) == null);
+            Equal(true, assets.OpenRenderer(new Uri("https://app.mdv.invalid/%2e%2e%2fLICENSE")) == null);
+        });
+        Check("Memory payload validates integrity: " + compression, () => {
+            Throws<InvalidDataException>(() => MemoryPayload.Load(new MemoryStream(memoryArchive), new string('0',64), compression));
+            Throws<InvalidDataException>(() => MemoryPayload.Load(new MemoryStream(memoryArchive[..^4]), memoryHash, compression));
+            Throws<InvalidDataException>(() => ReadMemory(Archive(("Renderer/index.html", "missing manifest"))));
+        });
+        Check("Memory payload rejects duplicate and unsafe names: " + compression, () => {
+            Throws<InvalidDataException>(() => ReadMemory(Archive(("a", "first"), ("a", "second"))));
+            foreach (var name in new[] { "../escape", "/absolute", "C:/drive", "Renderer\\evil.js", "a//b", "a/./b" })
+                Throws<InvalidDataException>(() => ReadMemory(Archive((name, "unsafe"))));
+        });
+        var payload = Archive(("Renderer/index.html", "preview"));
         var hash = Convert.ToHexString(SHA256.HashData(payload));
         var cache = Path.Combine(temp, "cache-" + compression);
         Check("Portable resources extract to a versioned temporary cache", () => {
@@ -447,13 +485,13 @@ try
             Equal(0, Directory.GetDirectories(cache, "*.pending-*").Length);
         });
         Check("Incomplete compressed payload is not marked complete", () => {
-            var data = Archive(("Renderer/index.html", "preview")); var invalidHash = Convert.ToHexString(SHA256.HashData(data));
+            var data = Archive(("Samples/example.md", "preview")); var invalidHash = Convert.ToHexString(SHA256.HashData(data));
             using var stream = new MemoryStream(data); Throws<InvalidDataException>(() => Extract(stream, cache, invalidHash));
             Equal(false, Directory.Exists(Path.Combine(cache, invalidHash.ToLowerInvariant())));
         });
         Check("Compressed payload preserves long Unicode file names and contents", () => {
             var name = "Samples/" + new string('あ', 80) + ".md";
-            var data = Archive(("Renderer/index.html", "preview"), ("WebView2Runtime/msedgewebview2.exe", "runtime"), (name, "# 日本語 🌸\n"));
+            var data = Archive(("Renderer/index.html", "preview"), (name, "# 日本語 🌸\n"));
             var dataHash = Convert.ToHexString(SHA256.HashData(data)); using var stream = new MemoryStream(data);
             var extracted = Extract(stream, cache, dataHash); Equal("# 日本語 🌸\n", File.ReadAllText(Path.Combine(extracted, name)));
             Equal(0, Directory.GetFiles(extracted, "*.tar", SearchOption.AllDirectories).Length);

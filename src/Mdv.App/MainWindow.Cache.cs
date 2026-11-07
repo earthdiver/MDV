@@ -9,6 +9,7 @@ public partial class MainWindow
 {
     private void Cache_Click(object sender, RoutedEventArgs e)
     {
+        if (BuildEdition.UsesMemoryAssets) return;
         var dialog = new Window
         {
             Title = UiLanguage.Text("MDV — 展開ファイルを管理", "MDV — Manage extracted files"),

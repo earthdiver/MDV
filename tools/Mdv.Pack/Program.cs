@@ -20,7 +20,7 @@ var destination = Path.GetFullPath(args[1]);
 var codec = Codec(destination);
 var quality = args.Length == 3 ? int.Parse(args[2], System.Globalization.CultureInfo.InvariantCulture) : codec == PayloadCompression.Brotli ? 11 : 3;
 if (quality < (codec == PayloadCompression.Brotli ? 0 : 1) || quality > (codec == PayloadCompression.Brotli ? 11 : 22)) throw new ArgumentOutOfRangeException(nameof(quality));
-foreach (var name in new[] { "Renderer/index.html", "Samples/welcome.md", "WebView2Runtime/msedgewebview2.exe", "LICENSE" })
+foreach (var name in new[] { "Renderer/index.html", "Samples/welcome.md", "LICENSE" })
     if (!File.Exists(Path.Combine(source, name))) throw new FileNotFoundException("Missing payload file: " + name);
 Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
 var temporary = destination + ".tmp";
@@ -30,9 +30,6 @@ try
 {
     if (File.Exists(temporary)) File.Delete(temporary);
     using (var output = File.Create(temporary))
-    // Keep the complete Fixed Version WebView2 distribution, including locale
-    // data and software rendering fallbacks. Spend build time on lossless
-    // compression instead of removing files needed on other Windows systems.
     using (var compressor = Compress(output, codec, quality))
     using (var archive = new TarWriter(compressor, TarEntryFormat.Pax))
     {

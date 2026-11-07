@@ -4,7 +4,7 @@ import { resolve, join, relative } from 'node:path';
 // Operate on the staging copy only, never on the installed Ruby or gem source.
 const root = resolve(process.argv[2] || '');
 if (!process.argv[2]) throw new Error('Usage: node scripts/optimize-payload.mjs PAYLOAD [--apply] [--report=FILE]');
-for (const file of ['Renderer/index.html', 'WebView2Runtime/msedgewebview2.exe', 'LICENSE']) await stat(join(root, file));
+for (const file of ['Renderer/index.html', 'LICENSE']) await stat(join(root, file));
 const apply = process.argv.includes('--apply');
 const files = [];
 async function walk(directory) {
@@ -52,7 +52,6 @@ for (const file of removed) {
 }
 const beforeBytes = files.reduce((sum, file) => sum + file.bytes, 0);
 const removedBytes = removed.reduce((sum, file) => sum + file.bytes, 0);
-// Never change any part of the vendor WebView2 distribution.
 if (apply) for (const file of removed) await rm(join(root, file.path));
 const report = { applied: apply, rubyAbi, beforeBytes, afterBytes: beforeBytes - removedBytes, removedBytes, beforeFiles: files.length, afterFiles: files.length - removed.length, groups, removed };
 const reportPath = process.argv.find(arg => arg.startsWith('--report='))?.slice('--report='.length);
