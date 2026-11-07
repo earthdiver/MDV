@@ -33,11 +33,14 @@ public partial class MainWindow
         var remove = new Button { Content = UiLanguage.Text("選択した資材を削除…", "Delete selected files…"), IsEnabled = false, Padding = new Thickness(12, 5, 12, 5) };
         var refresh = new Button { Content = UiLanguage.Text("更新", "Refresh"), Margin = new Thickness(8, 0, 0, 0), Padding = new Thickness(12, 5, 12, 5) };
         var close = new Button { Content = UiLanguage.Text("閉じる", "Close"), IsCancel = true, Margin = new Thickness(8, 0, 0, 0), Padding = new Thickness(12, 5, 12, 5) };
-        var open = new Button { Content = UiLanguage.Text("フォルダを開く", "Open folder"), IsEnabled = false, Padding = new Thickness(12, 5, 12, 5) };
-        buttons.Children.Add(open); buttons.Children.Add(remove); buttons.Children.Add(refresh); buttons.Children.Add(close);
+        buttons.Children.Add(remove); buttons.Children.Add(refresh); buttons.Children.Add(close);
         DockPanel.SetDock(buttons, Dock.Bottom);
         panel.Children.Add(buttons);
-        var listing = new ListBox { SelectionMode = SelectionMode.Extended, Padding = new Thickness(10) };
+        var selectAll = new CheckBox { Content = UiLanguage.Text("全選択／全解除", "Select all / Clear all"), Margin = new Thickness(0, 0, 0, 8) };
+        DockPanel.SetDock(selectAll, Dock.Top);
+        panel.Children.Add(selectAll);
+        var checks = new Dictionary<CheckBox, PayloadCacheEntry>();
+        var listing = new ListBox { SelectionMode = SelectionMode.Single, Padding = new Thickness(10) };
         panel.Children.Add(listing);
         dialog.Content = panel;
         IReadOnlyList<PayloadCacheEntry> entries = [];
@@ -45,35 +48,40 @@ public partial class MainWindow
         var closed = false;
         dialog.Closed += (_, _) => closed = true;
         close.Click += (_, _) => dialog.Close();
-        PayloadCacheEntry[] Selected() => listing.SelectedItems.Cast<ListBoxItem>().Select(item => (PayloadCacheEntry)item.Tag).ToArray();
+        PayloadCacheEntry[] Selected() => checks.Where(pair => pair.Key.IsChecked == true).Select(pair => pair.Value).ToArray();
         void UpdateButtons()
         {
-            var selected = Selected();
-            open.IsEnabled = !busy && selected.Length == 1;
-            remove.IsEnabled = !busy && selected.Length > 0 && selected.All(entry => entry.State is PayloadCacheState.Unused or PayloadCacheState.Untracked);
+            var eligible = checks.Keys.Where(check => check.IsEnabled).ToArray();
+            var count = eligible.Count(check => check.IsChecked == true);
+            remove.IsEnabled = !busy && count > 0;
+            selectAll.IsEnabled = !busy && eligible.Length > 0;
+            selectAll.IsChecked = count == 0 ? false : count == eligible.Length ? true : null;
         }
-        listing.SelectionChanged += (_, _) => UpdateButtons();
-        open.Click += (_, _) =>
+        selectAll.Click += (_, _) =>
         {
-            var selected = Selected();
-            if (busy || selected.Length != 1) return;
+            var value = selectAll.IsChecked == true;
+            foreach (var check in checks.Keys.Where(check => check.IsEnabled)) check.IsChecked = value;
+            UpdateButtons();
+        };
+        void OpenFolder(string path)
+        {
             try
             {
-                if (!Directory.Exists(selected[0].Path)) throw new IOException(UiLanguage.Text("フォルダが見つかりません。更新してください。", "Folder not found. Refresh the list."));
+                if (!Directory.Exists(path)) throw new IOException(UiLanguage.Text("フォルダが見つかりません。更新してください。", "Folder not found. Refresh the list."));
                 var start = new System.Diagnostics.ProcessStartInfo("explorer.exe") { UseShellExecute = true };
-                start.ArgumentList.Add(selected[0].Path);
+                start.ArgumentList.Add(path);
                 System.Diagnostics.Process.Start(start)?.Dispose();
             }
             catch (Exception error) when (error is IOException or System.ComponentModel.Win32Exception)
             { MessageBox.Show(dialog, error.Message, dialog.Title, MessageBoxButton.OK, MessageBoxImage.Warning); }
-        };
+        }
 
         static string Size(long bytes) => $"{bytes / 1_000_000_000d:0.00} GB ({bytes / 1_000_000d:N0} MB)";
         async Task RefreshAsync(string? result = null)
         {
             if (busy) return;
             busy = true;
-            remove.IsEnabled = refresh.IsEnabled = open.IsEnabled = listing.IsEnabled = false;
+            remove.IsEnabled = refresh.IsEnabled = selectAll.IsEnabled = listing.IsEnabled = false;
             summary.Text = UiLanguage.Text("使用容量を確認しています…", "Checking storage…");
             try
             {
@@ -87,6 +95,7 @@ public partial class MainWindow
                     $"Total: {Size(entries.Sum(entry => entry.Bytes))}   Removable: {Size(available)}");
                 if (entries.Any(entry => entry.State == PayloadCacheState.Unavailable))
                     summary.Text += UiLanguage.Text("\n確認できないファイルは容量に含めず、削除しません。", "\nFiles that cannot be checked are excluded from totals and kept.");
+                checks.Clear();
                 listing.Items.Clear();
                 foreach (var entry in entries)
                 {
@@ -99,7 +108,35 @@ public partial class MainWindow
                             _ => UiLanguage.Text("未使用", "Unused"),
                         };
                         var date = entry.ModifiedUtc == DateTime.MinValue ? "" : entry.ModifiedUtc.ToLocalTime().ToString("g") + "  ·  ";
-                        listing.Items.Add(new ListBoxItem { Tag = entry, Content = new TextBlock { Text = $"{date}{Size(entry.Bytes)}  ·  {state}\n{entry.Path}", TextWrapping = TextWrapping.Wrap }, ToolTip = entry.Path });
+                        var check = new CheckBox
+                        {
+                            IsEnabled = entry.State is PayloadCacheState.Unused or PayloadCacheState.Untracked,
+                            Margin = new Thickness(0, 0, 10, 0), VerticalAlignment = VerticalAlignment.Center,
+                        };
+                        System.Windows.Automation.AutomationProperties.SetName(check, UiLanguage.Text("削除対象に選択 ", "Select for deletion ") + entry.Path);
+                        checks.Add(check, entry);
+                        check.Checked += (_, _) => UpdateButtons();
+                        check.Unchecked += (_, _) => UpdateButtons();
+                        var row = new DockPanel();
+                        DockPanel.SetDock(check, Dock.Left);
+                        row.Children.Add(check);
+                        row.Children.Add(new TextBlock { Text = $"{date}{Size(entry.Bytes)}  ·  {state}\n{entry.Path}", TextWrapping = TextWrapping.Wrap });
+                        var item = new ListBoxItem { Tag = entry, Content = row, ToolTip = entry.Path, HorizontalContentAlignment = HorizontalAlignment.Stretch };
+                        var menu = new ContextMenu();
+                        var copyPath = new MenuItem { Header = UiLanguage.Text("パスをコピー", "Copy path") };
+                        copyPath.Click += (_, _) =>
+                        {
+                            try { Clipboard.SetText(entry.Path); }
+                            catch (System.Runtime.InteropServices.COMException error)
+                            { MessageBox.Show(dialog, error.Message, dialog.Title, MessageBoxButton.OK, MessageBoxImage.Warning); }
+                        };
+                        var openFolder = new MenuItem { Header = UiLanguage.Text("エクスプローラーで開く", "Open in Explorer") };
+                        openFolder.Click += (_, _) => OpenFolder(entry.Path);
+                        menu.Items.Add(copyPath);
+                        menu.Items.Add(openFolder);
+                        item.ContextMenu = menu;
+                        item.PreviewMouseRightButtonDown += (_, _) => { item.IsSelected = true; item.Focus(); };
+                        listing.Items.Add(item);
                 }
             }
             catch (Exception error) when (error is IOException or UnauthorizedAccessException)
@@ -117,7 +154,7 @@ public partial class MainWindow
                 confirmation += UiLanguage.Text("\n\n旧版の使用状況は完全には確認できません。他のMDVをすべて終了し、削除中は起動しないでください。削除後、次回起動時に再展開します。", "\n\nOlder versions cannot be fully tracked. Close all other MDV windows and do not start them during deletion. Files will be extracted again on the next launch.");
             if (MessageBox.Show(dialog, confirmation, dialog.Title, MessageBoxButton.OKCancel, MessageBoxImage.Warning, MessageBoxResult.Cancel) != MessageBoxResult.OK) return;
             busy = true;
-            remove.IsEnabled = refresh.IsEnabled = open.IsEnabled = listing.IsEnabled = false;
+            remove.IsEnabled = refresh.IsEnabled = selectAll.IsEnabled = listing.IsEnabled = false;
             summary.Text = UiLanguage.Text("選択した資材を削除しています…", "Deleting selected files…");
             string result;
             try
